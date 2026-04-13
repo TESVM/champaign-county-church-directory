@@ -1,0 +1,239 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SuggestedChangeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum UserRole {
+  ADMIN
+  REVIEWER
+  SUPPORT
+  EDITOR
+  CHURCH_OWNER
+  CHURCH_EDITOR
+}
+
+enum ClaimRequestStatus {
+  PENDING
+  APPROVED
+  MORE_INFO
+  DENIED
+}
+
+enum VerificationMethod {
+  DOMAIN_EMAIL
+  PUBLIC_PHONE
+  MANUAL_REVIEW
+}
+
+enum MembershipStatus {
+  PENDING
+  ACTIVE
+  REVOKED
+}
+
+model City {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  county    String
+  state     String
+  churches  Church[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Church {
+  id               String            @id @default(cuid())
+  name             String
+  slug             String            @unique
+  cityId           String
+  denomination     String?
+  description      String?
+  address1         String?
+  address2         String?
+  city             String
+  state            String
+  zip              String?
+  phone            String?
+  email            String?
+  websiteUrl       String?
+  appUrl           String?
+  livestreamUrl    String?
+  logoUrl          String?
+  featuredImageUrl String?
+  seniorPastorId   String?           @unique
+  verified         Boolean           @default(false)
+  claimed          Boolean           @default(false)
+  lastScannedAt    DateTime?
+  lastUpdatedAt    DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  cityRecord       City              @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  seniorPastor     Pastor?           @relation("SeniorPastor", fields: [seniorPastorId], references: [id])
+  leaders          Pastor[]          @relation("ChurchLeaders")
+  ministries       Ministry[]
+  serviceTimes     ServiceTime[]
+  socialLinks      SocialLink[]
+  suggestedChanges SuggestedChange[]
+  claimRequests    ClaimRequest[]
+  memberships      ChurchMembership[]
+  updateLogs       UpdateLog[]
+}
+
+model Pastor {
+  id               String   @id @default(cuid())
+  firstName        String?
+  lastName         String?
+  fullName         String
+  title            String?
+  bio              String?
+  photoUrl         String?
+  churchId         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  churchLeadership Church?  @relation("ChurchLeaders", fields: [churchId], references: [id])
+  seniorForChurch  Church?  @relation("SeniorPastor")
+}
+
+model ServiceTime {
+  id          String   @id @default(cuid())
+  churchId    String
+  serviceName String
+  dayOfWeek   String
+  startTime   String
+  endTime     String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  church      Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+}
+
+model SocialLink {
+  id        String   @id @default(cuid())
+  churchId  String
+  platform  String
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  church    Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+}
+
+model Ministry {
+  id          String   @id @default(cuid())
+  churchId    String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  church      Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+}
+
+model SuggestedChange {
+  id              String                @id @default(cuid())
+  churchId        String
+  fieldName       String
+  oldValue        String?
+  newValue        String?
+  sourceUrl       String?
+  confidenceScore Float?
+  status          SuggestedChangeStatus @default(PENDING)
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  church          Church                @relation(fields: [churchId], references: [id], onDelete: Cascade)
+}
+
+model Submission {
+  id                String           @id @default(cuid())
+  churchName        String
+  contactName       String
+  contactEmail      String
+  contactPhone      String?
+  message           String?
+  submittedDataJson Json
+  status            SubmissionStatus @default(PENDING)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model User {
+  id             String            @id @default(cuid())
+  name           String?
+  email          String            @unique
+  role           UserRole          @default(EDITOR)
+  memberships    ChurchMembership[]
+  claimRequests  ClaimRequest[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model ClaimRequest {
+  id                 String             @id @default(cuid())
+  churchId           String
+  userId             String?
+  applicantName      String
+  applicantEmail     String
+  applicantRole      String
+  verificationMethod VerificationMethod
+  evidenceSummary    String
+  status             ClaimRequestStatus @default(PENDING)
+  reviewerNote       String?
+  submittedAt        DateTime           @default(now())
+  reviewedAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  church             Church             @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  user               User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model ChurchMembership {
+  id         String           @id @default(cuid())
+  churchId    String
+  userId      String
+  role       UserRole
+  status     MembershipStatus @default(PENDING)
+  grantedAt  DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  church     Church           @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([churchId, userId])
+}
+
+model SiteContent {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  area      String
+  label     String
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UpdateLog {
+  id          String   @id @default(cuid())
+  churchId     String
+  action      String
+  details     String?
+  performedBy String?
+  createdAt   DateTime @default(now())
+  church      Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+}

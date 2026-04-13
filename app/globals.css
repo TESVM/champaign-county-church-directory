@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-body: "Source Sans 3";
+  --font-display: "Fraunces";
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(47, 143, 136, 0.16), transparent 24%),
+    radial-gradient(circle at 85% 10%, rgba(242, 139, 102, 0.12), transparent 22%),
+    linear-gradient(180deg, #fcfdfa 0%, #eef5f7 46%, #e7eff2 100%);
+  @apply text-ink antialiased;
+}
+
+a {
+  @apply transition-colors;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+::selection {
+  @apply bg-brand-300 text-brand-900;
+}
+
+.skip-link {
+  @apply absolute left-4 top-4 z-[100] rounded-full bg-brand-900 px-4 py-3 text-sm font-semibold text-white opacity-0 shadow-card transition;
+}
+
+.skip-link:focus {
+  @apply opacity-100;
+}
+
+.section-wash {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(47, 143, 136, 0.14), transparent 22%),
+    radial-gradient(circle at 75% 0%, rgba(242, 139, 102, 0.12), transparent 18%),
+    rgba(255, 253, 248, 0.78);
+  backdrop-filter: blur(6px);
+}
+
+.section-strong {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(47, 143, 136, 0.26), transparent 22%),
+    radial-gradient(circle at 86% 12%, rgba(242, 139, 102, 0.2), transparent 18%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(215, 236, 235, 0.82));
+  backdrop-filter: blur(10px);
+}
+
+.tint-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(238, 248, 248, 0.86)),
+    linear-gradient(135deg, rgba(47, 143, 136, 0.06), rgba(242, 139, 102, 0.06));
+}
+
+.focus-ring {
+  @apply focus:outline-none focus:ring-4 focus:ring-brand-700 focus:ring-offset-2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

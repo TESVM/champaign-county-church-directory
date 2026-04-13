@@ -1,0 +1,99 @@
+import Link from "next/link";
+import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { auth, signIn } from "@/lib/auth";
+
+export default async function LoginPage({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const loginError = Array.isArray(resolvedSearchParams.error) ? resolvedSearchParams.error[0] : resolvedSearchParams.error;
+  const session = await auth();
+
+  if (session?.user?.email) {
+    redirect("/dashboard");
+  }
+
+  async function authenticate(formData: FormData) {
+    "use server";
+
+    try {
+      await signIn("credentials", {
+        email: formData.get("email"),
+        password: formData.get("password"),
+        redirectTo: "/dashboard"
+      });
+    } catch (error) {
+      if (error instanceof AuthError) {
+        redirect("/login?error=invalid");
+      }
+
+      throw error;
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+      <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr]">
+        <Card className="section-strong border-white/70 p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-700">Church Access</p>
+          <h1 className="mt-4 font-display text-5xl">Claimed churches get a secure editing dashboard.</h1>
+          <p className="mt-4 max-w-2xl text-lg leading-8 text-stone-600">
+            Pastors and delegated admins can review listing details, stage updates, manage staff access, and keep their church page current after verification.
+          </p>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {[
+              ["Claim verification", "Domain email, public phone, or manual review before edit access is granted."],
+              ["Shared staff access", "Owners can invite editors while keeping a single accountable owner on the record."],
+              ["Review-safe updates", "High-risk fields stay in review so public trust stays intact."]
+            ].map(([title, body]) => (
+              <div key={title} className="rounded-[24px] bg-white/80 p-5 ring-1 ring-brand-100">
+                <p className="font-semibold text-ink">{title}</p>
+                <p className="mt-2 text-sm leading-6 text-stone-600">{body}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 rounded-[28px] bg-brand-900 p-6 text-white">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-300">Need access?</p>
+            <p className="mt-3 text-sm leading-7 text-white/82">
+              If your church is not yet claimed, start with the public claim request flow and provide a verification method that reasonably proves you are authorized to manage the listing.
+            </p>
+            <Button asChild variant="secondary" className="mt-4">
+              <Link href="/claim">Claim a church listing</Link>
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="border-white/70 bg-gradient-to-br from-white via-brand-50 to-sky/30 p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-700">Sign in</p>
+          <h2 className="mt-4 font-display text-3xl">Church editors and directory admins</h2>
+          <form action={authenticate} className="mt-8 space-y-4">
+            <Input name="email" type="email" placeholder="Email address" />
+            <Input name="password" type="password" placeholder="Password" />
+            {loginError ? (
+              <div className="rounded-2xl bg-rose/10 px-4 py-3 text-sm text-rose">
+                Sign-in failed. Check the email and password, or start with a claim request if your church has not been verified yet.
+              </div>
+            ) : null}
+            <Button type="submit" className="w-full">
+              Sign in
+            </Button>
+          </form>
+          <div className="mt-6 rounded-2xl bg-white/70 p-4 text-sm leading-6 text-stone-700 ring-1 ring-brand-100">
+            <p className="font-semibold text-ink">Demo accounts</p>
+            <p className="mt-2"><code>admin@countychurchdirectory.local / admin</code></p>
+            <p><code>reviewer@countychurchdirectory.local / review</code></p>
+            <p><code>office@sherifftemple.example / church</code></p>
+            <p className="mt-3 text-xs uppercase tracking-[0.16em] text-brand-700">Temporary church access</p>
+            <p className="mt-1 text-sm text-stone-600">Approved church-owner and church-editor records stored in the database can sign in with their email and the temporary password <code>church</code> until a full passwordless or email-link auth flow replaces this MVP path.</p>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
