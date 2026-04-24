@@ -9,8 +9,11 @@ import { ServiceTimesList } from "@/components/directory/service-times-list";
 import { SocialIcons } from "@/components/directory/social-icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getPersistedChurchMediaBySlug } from "@/lib/data/admin-store";
 import { getChurchBySlug, churches } from "@/lib/data/queries";
 import { absoluteUrl, externalUrl } from "@/lib/utils";
+
+export const revalidate = 3600;
 
 export function generateStaticParams() {
   return churches.map((church) => ({ slug: church.slug }));
@@ -23,6 +26,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {};
   }
 
+  const persistedMedia = await getPersistedChurchMediaBySlug(slug);
+  const featuredImageUrl = persistedMedia?.featuredImageUrl ?? church.featuredImageUrl;
+
   return {
     title: `${church.name} | Champaign County Church Directory`,
     description: `${church.name} in ${church.city}, Illinois. View senior pastor, service times, website, app, social links, and directions.`,
@@ -33,7 +39,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: church.name,
       description: church.shortDescription,
       url: absoluteUrl(`/churches/${church.slug}`),
-      images: church.featuredImageUrl ? [{ url: church.featuredImageUrl }] : undefined
+      images: featuredImageUrl ? [{ url: featuredImageUrl }] : undefined
     }
   };
 }
@@ -50,6 +56,14 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
     notFound();
   }
 
+  const persistedMedia = await getPersistedChurchMediaBySlug(slug);
+  const featuredImageUrl = persistedMedia?.featuredImageUrl ?? church.featuredImageUrl;
+  const logoUrl = persistedMedia?.logoUrl ?? church.logoUrl;
+  const heroImage =
+    featuredImageUrl ??
+    logoUrl ??
+    "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1200&q=80";
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Church",
@@ -64,7 +78,7 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
     telephone: church.phone,
     email: church.email,
     url: church.websiteUrl,
-    image: church.featuredImageUrl,
+    image: featuredImageUrl ?? logoUrl,
     sameAs: church.socialLinks.map((link) => link.url)
   };
 
@@ -73,7 +87,7 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="overflow-hidden rounded-[36px] border border-white/70 bg-surface shadow-soft">
         <div className="relative h-80">
-          <Image src={church.featuredImageUrl ?? church.logoUrl ?? "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1200&q=80"} alt={church.name} fill className="object-cover" />
+          <Image src={heroImage} alt={church.name} fill className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-900/70 via-brand-700/20 to-transparent" />
         </div>
         <div className="grid gap-10 p-8 lg:grid-cols-[1.2fr_0.8fr]">

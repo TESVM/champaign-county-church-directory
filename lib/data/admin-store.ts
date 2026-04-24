@@ -144,6 +144,35 @@ export async function getPersistedClaimRequestByChurchSlug(churchSlug: string) {
   return claims.find((claim) => claim.churchSlug === churchSlug);
 }
 
+export async function getPersistedChurchMediaBySlug(churchSlug: string) {
+  return withFallback(
+    async () => {
+      const record = await prisma.church.findUnique({
+        where: {
+          slug: churchSlug
+        },
+        select: {
+          featuredImageUrl: true,
+          logoUrl: true,
+          lastUpdatedAt: true,
+          updatedAt: true
+        }
+      });
+
+      if (!record) {
+        return null;
+      }
+
+      return {
+        featuredImageUrl: record.featuredImageUrl ?? undefined,
+        logoUrl: record.logoUrl ?? undefined,
+        lastUpdatedAt: (record.lastUpdatedAt ?? record.updatedAt).toISOString()
+      };
+    },
+    null
+  );
+}
+
 export async function getPersistedMembershipsByEmail(email: string) {
   return withFallback(
     async () => {
@@ -270,6 +299,30 @@ export async function saveSiteContentRecord(input: {
       label: input.label,
       value: input.value,
       area: input.area
+    }
+  });
+}
+
+export async function saveChurchMediaRecord(input: {
+  churchSlug: string;
+  featuredImageUrl?: string;
+  logoUrl?: string;
+}) {
+  if (!hasDatabaseUrl()) {
+    return null;
+  }
+
+  return prisma.church.update({
+    where: {
+      slug: input.churchSlug
+    },
+    data: {
+      featuredImageUrl: input.featuredImageUrl || null,
+      logoUrl: input.logoUrl || null,
+      lastUpdatedAt: new Date()
+    },
+    select: {
+      slug: true
     }
   });
 }

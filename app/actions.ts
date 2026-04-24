@@ -2,10 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { externalUrl } from "@/lib/utils";
 import { contactSchema, claimSchema, submitListingSchema } from "@/lib/validation/forms";
 import {
   createPersistedClaimRequest,
   reviewPersistedClaimRequest,
+  saveChurchMediaRecord,
   saveSiteContentRecord
 } from "@/lib/data/admin-store";
 
@@ -97,4 +100,38 @@ export async function saveSiteContentAction(formData: FormData) {
   revalidatePath("/admin/content");
   revalidatePath("/");
   revalidatePath("/directory");
+}
+
+export async function saveChurchMediaAction(formData: FormData) {
+  const churchSlug = formData.get("churchSlug")?.toString();
+
+  if (!churchSlug) {
+    return;
+  }
+
+  const session = await auth();
+
+  if (!session?.user?.email) {
+    redirect("/login");
+  }
+
+  const canManageChurch =
+    session.user.role === "ADMIN" ||
+    session.user.role === "REVIEWER" ||
+    session.user.role === "SUPPORT" ||
+    (session.user.churchSlugs ?? []).includes(churchSlug);
+
+  if (!canManageChurch) {
+    redirect("/dashboard");
+  }
+
+  await saveChurchMediaRecord({
+    churchSlug,
+    featuredImageUrl: externalUrl(formData.get("featuredImageUrl")?.toString()) ?? undefined,
+    logoUrl: externalUrl(formData.get("logoUrl")?.toString()) ?? undefined
+  });
+
+  revalidatePath(`/admin/churches/${churchSlug}`);
+  revalidatePath(`/dashboard/churches/${churchSlug}`);
+  revalidatePath(`/churches/${churchSlug}`);
 }

@@ -1,3 +1,5 @@
+import Image from "next/image";
+import { saveChurchMediaAction } from "@/app/actions";
 import { notFound } from "next/navigation";
 import { ChurchDashboardSidebar } from "@/components/dashboard/church-dashboard-sidebar";
 import { Button } from "@/components/ui/button";
@@ -7,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { requireChurchAccess } from "@/lib/auth-guards";
 import { getChurchBySlug } from "@/lib/data/queries";
 import {
+  getPersistedChurchMediaBySlug,
   getPersistedClaimRequestByChurchSlug,
   getPersistedMembershipsByChurchSlug,
   getPersistedMembershipsByEmail
@@ -26,6 +29,13 @@ export default async function ChurchWorkspacePage({
     notFound();
   }
 
+  const persistedMedia = await getPersistedChurchMediaBySlug(slug);
+  const featuredImageUrl = persistedMedia?.featuredImageUrl ?? church.featuredImageUrl ?? "";
+  const logoUrl = persistedMedia?.logoUrl ?? church.logoUrl ?? "";
+  const previewImage =
+    featuredImageUrl ||
+    logoUrl ||
+    "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1200&q=80";
   const memberships = await getPersistedMembershipsByEmail(session.user.email ?? "");
   const team = await getPersistedMembershipsByChurchSlug(slug);
   const claim = await getPersistedClaimRequestByChurchSlug(slug);
@@ -59,22 +69,36 @@ export default async function ChurchWorkspacePage({
               <p className="mt-3 text-sm leading-7 text-stone-600">
                 This MVP stages a church-owned editing experience. Public-safe fields can be edited here; sensitive changes can be routed to review in the next persistence pass.
               </p>
-              <form className="mt-8 grid gap-4 md:grid-cols-2">
-                <Input defaultValue={church.name} aria-label="Church name" />
-                <Input defaultValue={church.pastor.fullName} aria-label="Lead pastor" />
-                <Input defaultValue={church.websiteUrl} aria-label="Website URL" />
-                <Input defaultValue={church.phone} aria-label="Public phone" />
-                <Input defaultValue={church.email} aria-label="Public email" />
-                <Input defaultValue={church.livestreamUrl} aria-label="Livestream URL" />
-                <div className="md:col-span-2">
-                  <Textarea defaultValue={church.description} aria-label="Description" />
+              <div className="mt-8 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+                <div className="space-y-4">
+                  <div className="relative h-60 overflow-hidden rounded-[28px] border border-white/70 bg-white">
+                    <Image src={previewImage} alt={church.name} fill className="object-cover" />
+                  </div>
+                  <form action={saveChurchMediaAction} className="space-y-4 rounded-[24px] bg-white/80 p-5 ring-1 ring-brand-100">
+                    <input type="hidden" name="churchSlug" value={church.slug} />
+                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">Church images</p>
+                    <Input name="featuredImageUrl" defaultValue={featuredImageUrl} aria-label="Featured image URL" placeholder="https://example.com/front-of-church.jpg" />
+                    <Input name="logoUrl" defaultValue={logoUrl} aria-label="Logo image URL" placeholder="https://example.com/church-logo.png" />
+                    <Button type="submit">Save image</Button>
+                  </form>
                 </div>
-                <div className="md:col-span-2 flex flex-wrap gap-3">
-                  <Button type="button">Save draft</Button>
-                  <Button type="button" variant="secondary">Submit for review</Button>
-                  <Button type="button" variant="secondary">Invite editor</Button>
-                </div>
-              </form>
+                <form className="grid gap-4 md:grid-cols-2">
+                  <Input defaultValue={church.name} aria-label="Church name" />
+                  <Input defaultValue={church.pastor.fullName} aria-label="Lead pastor" />
+                  <Input defaultValue={church.websiteUrl} aria-label="Website URL" />
+                  <Input defaultValue={church.phone} aria-label="Public phone" />
+                  <Input defaultValue={church.email} aria-label="Public email" />
+                  <Input defaultValue={church.livestreamUrl} aria-label="Livestream URL" />
+                  <div className="md:col-span-2">
+                    <Textarea defaultValue={church.description} aria-label="Description" />
+                  </div>
+                  <div className="md:col-span-2 flex flex-wrap gap-3">
+                    <Button type="button">Save draft</Button>
+                    <Button type="button" variant="secondary">Submit for review</Button>
+                    <Button type="button" variant="secondary">Invite editor</Button>
+                  </div>
+                </form>
+              </div>
             </Card>
 
             <div className="space-y-6">
