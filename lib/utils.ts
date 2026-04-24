@@ -56,6 +56,10 @@ export function externalUrl(value?: string | null) {
   return `https://${trimmedValue.replace(/^\/+/, "")}`;
 }
 
+export function isInlineImageUrl(value?: string | null) {
+  return Boolean(value && /^data:image\//i.test(value));
+}
+
 export function churchDirectoryUrl(path = "/") {
   const base = normalizeBaseUrl(
     process.env.NEXT_PUBLIC_CHURCH_DIRECTORY_URL,

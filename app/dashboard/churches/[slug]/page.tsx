@@ -16,7 +16,7 @@ import {
   getPersistedMembershipsByChurchSlug,
   getPersistedMembershipsByEmail
 } from "@/lib/data/admin-store";
-import { formatDate } from "@/lib/utils";
+import { formatDate, isInlineImageUrl } from "@/lib/utils";
 
 export default async function ChurchWorkspacePage({
   params,
@@ -42,6 +42,7 @@ export default async function ChurchWorkspacePage({
     featuredImageUrl ||
     logoUrl ||
     "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1200&q=80";
+  const unoptimizedPreviewImage = isInlineImageUrl(previewImage);
   const memberships = await getPersistedMembershipsByEmail(session.user.email ?? "");
   const team = await getPersistedMembershipsByChurchSlug(slug);
   const claim = await getPersistedClaimRequestByChurchSlug(slug);
@@ -84,7 +85,7 @@ export default async function ChurchWorkspacePage({
               <div className="mt-8 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
                 <div className="space-y-4">
                   <div className="relative h-60 overflow-hidden rounded-[28px] border border-white/70 bg-white">
-                    <Image src={previewImage} alt={church.name} fill className="object-cover" />
+                    <Image src={previewImage} alt={church.name} fill className="object-cover" unoptimized={unoptimizedPreviewImage} />
                   </div>
                   <ChurchMediaForm
                     action={saveChurchMediaAction}

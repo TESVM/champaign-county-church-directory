@@ -8,7 +8,7 @@ import { PastorBadge } from "@/components/directory/pastor-badge";
 import { SocialIcons } from "@/components/directory/social-icons";
 import { VerifiedBadge } from "@/components/directory/verified-badge";
 import { SectionHeading } from "@/components/layout/section-heading";
-import { externalUrl } from "@/lib/utils";
+import { externalUrl, isInlineImageUrl } from "@/lib/utils";
 
 export function ChurchOfTheWeek({ church }: { church: ChurchRecord }) {
   const imageSrc =
@@ -18,6 +18,7 @@ export function ChurchOfTheWeek({ church }: { church: ChurchRecord }) {
   const websiteUrl = externalUrl(church.websiteUrl);
   const appUrl = externalUrl(church.appUrl);
   const livestreamUrl = externalUrl(church.livestreamUrl);
+  const unoptimizedImage = isInlineImageUrl(imageSrc);
 
   return (
     <section className="section-wash rounded-[40px] px-6 py-8 sm:px-8">
@@ -29,7 +30,7 @@ export function ChurchOfTheWeek({ church }: { church: ChurchRecord }) {
       <Card className="mt-10 overflow-hidden border-white/70 bg-white/90 shadow-soft">
         <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="relative min-h-[320px]">
-            <Image src={imageSrc} alt={church.name} fill className="object-cover" />
+            <Image src={imageSrc} alt={church.name} fill className="object-cover" unoptimized={unoptimizedImage} />
             <div className="absolute inset-0 bg-gradient-to-t from-brand-900/75 via-brand-700/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
               <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-100">{church.city}, Illinois</p>

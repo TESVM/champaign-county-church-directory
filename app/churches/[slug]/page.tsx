@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getPersistedChurchMediaBySlug } from "@/lib/data/admin-store";
 import { getChurchBySlug, churches } from "@/lib/data/queries";
-import { absoluteUrl, externalUrl } from "@/lib/utils";
+import { absoluteUrl, externalUrl, isInlineImageUrl } from "@/lib/utils";
 
 export const revalidate = 3600;
 
@@ -28,6 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const persistedMedia = await getPersistedChurchMediaBySlug(slug);
   const featuredImageUrl = persistedMedia?.featuredImageUrl ?? church.featuredImageUrl;
+  const metadataImage = isInlineImageUrl(featuredImageUrl) ? undefined : featuredImageUrl;
 
   return {
     title: `${church.name} | Champaign County Church Directory`,
@@ -39,7 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: church.name,
       description: church.shortDescription,
       url: absoluteUrl(`/churches/${church.slug}`),
-      images: featuredImageUrl ? [{ url: featuredImageUrl }] : undefined
+      images: metadataImage ? [{ url: metadataImage }] : undefined
     }
   };
 }
@@ -63,6 +64,7 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
     featuredImageUrl ??
     logoUrl ??
     "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1200&q=80";
+  const unoptimizedHeroImage = isInlineImageUrl(heroImage);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -78,7 +80,7 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
     telephone: church.phone,
     email: church.email,
     url: church.websiteUrl,
-    image: featuredImageUrl ?? logoUrl,
+    image: isInlineImageUrl(featuredImageUrl ?? logoUrl) ? undefined : featuredImageUrl ?? logoUrl,
     sameAs: church.socialLinks.map((link) => link.url)
   };
 
@@ -87,7 +89,7 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="overflow-hidden rounded-[36px] border border-white/70 bg-surface shadow-soft">
         <div className="relative h-80">
-          <Image src={heroImage} alt={church.name} fill className="object-cover" />
+          <Image src={heroImage} alt={church.name} fill className="object-cover" unoptimized={unoptimizedHeroImage} />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-900/70 via-brand-700/20 to-transparent" />
         </div>
         <div className="grid gap-10 p-8 lg:grid-cols-[1.2fr_0.8fr]">

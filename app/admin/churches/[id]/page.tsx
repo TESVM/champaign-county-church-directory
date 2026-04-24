@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { requireAdminAccess } from "@/lib/auth-guards";
 import { getChurchBySlug } from "@/lib/data/queries";
 import { getPersistedChurchMediaBySlug } from "@/lib/data/admin-store";
+import { isInlineImageUrl } from "@/lib/utils";
 
 export default async function AdminChurchEditPage({
   params,
@@ -36,6 +37,7 @@ export default async function AdminChurchEditPage({
     featuredImageUrl ||
     logoUrl ||
     "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1200&q=80";
+  const unoptimizedPreviewImage = isInlineImageUrl(previewImage);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
@@ -60,7 +62,7 @@ export default async function AdminChurchEditPage({
             <div className="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
               <div className="space-y-4">
                 <div className="relative h-72 overflow-hidden rounded-[28px] border border-white/70 bg-white">
-                  <Image src={previewImage} alt={church.name} fill className="object-cover" />
+                  <Image src={previewImage} alt={church.name} fill className="object-cover" unoptimized={unoptimizedPreviewImage} />
                 </div>
                 <div className="rounded-[24px] bg-white/85 p-5 ring-1 ring-brand-100">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">Current image</p>

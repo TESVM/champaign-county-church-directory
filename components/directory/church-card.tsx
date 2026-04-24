@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PastorBadge } from "@/components/directory/pastor-badge";
 import { SocialIcons } from "@/components/directory/social-icons";
 import { VerifiedBadge } from "@/components/directory/verified-badge";
-import { externalUrl } from "@/lib/utils";
+import { externalUrl, isInlineImageUrl } from "@/lib/utils";
 
 const cityGradients: Record<string, string> = {
   champaign: "from-brand-700 via-brand-500 to-rose",
@@ -29,11 +29,12 @@ export function ChurchCard({ church }: { church: ChurchRecord }) {
   const websiteUrl = externalUrl(church.websiteUrl);
   const appUrl = externalUrl(church.appUrl);
   const livestreamUrl = externalUrl(church.livestreamUrl);
+  const unoptimizedImage = isInlineImageUrl(imageSrc);
 
   return (
     <Card className="overflow-hidden border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(238,248,248,0.88))] shadow-soft">
       <div className="relative h-52">
-        <Image src={imageSrc} alt={church.name} fill className="object-cover" />
+        <Image src={imageSrc} alt={church.name} fill className="object-cover" unoptimized={unoptimizedImage} />
         <div className={`absolute inset-0 bg-gradient-to-t ${gradient} opacity-45`} />
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
           <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-brand-900">
