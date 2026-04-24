@@ -2,6 +2,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { saveChurchMediaAction } from "@/app/actions";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { ChurchMediaForm } from "@/components/forms/church-media-form";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,18 +54,13 @@ export default async function AdminChurchEditPage({ params }: { params: Promise<
                 </div>
               </div>
               <div className="space-y-6">
-                <form action={saveChurchMediaAction} className="grid gap-4 md:grid-cols-2">
-                  <input type="hidden" name="churchSlug" value={church.slug} />
-                  <div className="md:col-span-2">
-                    <Input name="featuredImageUrl" defaultValue={featuredImageUrl} aria-label="Featured image URL" placeholder="https://example.com/church-photo.jpg" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Input name="logoUrl" defaultValue={logoUrl} aria-label="Logo image URL" placeholder="https://example.com/church-logo.png" />
-                  </div>
-                  <div className="md:col-span-2 flex gap-3">
-                    <Button type="submit">Save images</Button>
-                  </div>
-                </form>
+                <ChurchMediaForm
+                  action={saveChurchMediaAction}
+                  churchSlug={church.slug}
+                  featuredImageUrl={featuredImageUrl}
+                  logoUrl={logoUrl}
+                  submitLabel="Save images"
+                />
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <Input defaultValue={church.name} aria-label="Church name" />

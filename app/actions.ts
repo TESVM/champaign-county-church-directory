@@ -102,6 +102,24 @@ export async function saveSiteContentAction(formData: FormData) {
   revalidatePath("/directory");
 }
 
+async function fileToDataUrl(file: File | null) {
+  if (!file || file.size === 0) {
+    return undefined;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    return undefined;
+  }
+
+  if (file.size > 4 * 1024 * 1024) {
+    return undefined;
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString("base64");
+  return `data:${file.type};base64,${base64}`;
+}
+
 export async function saveChurchMediaAction(formData: FormData) {
   const churchSlug = formData.get("churchSlug")?.toString();
 
@@ -125,9 +143,16 @@ export async function saveChurchMediaAction(formData: FormData) {
     redirect("/dashboard");
   }
 
+  const featuredImageFile = formData.get("featuredImageFile");
+  const uploadedFeaturedImage =
+    featuredImageFile instanceof File ? await fileToDataUrl(featuredImageFile) : undefined;
+
   await saveChurchMediaRecord({
     churchSlug,
-    featuredImageUrl: externalUrl(formData.get("featuredImageUrl")?.toString()) ?? undefined,
+    featuredImageUrl:
+      uploadedFeaturedImage ??
+      externalUrl(formData.get("featuredImageUrl")?.toString()) ??
+      undefined,
     logoUrl: externalUrl(formData.get("logoUrl")?.toString()) ?? undefined
   });
 

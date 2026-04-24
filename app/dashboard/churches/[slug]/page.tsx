@@ -2,6 +2,7 @@ import Image from "next/image";
 import { saveChurchMediaAction } from "@/app/actions";
 import { notFound } from "next/navigation";
 import { ChurchDashboardSidebar } from "@/components/dashboard/church-dashboard-sidebar";
+import { ChurchMediaForm } from "@/components/forms/church-media-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -74,13 +75,12 @@ export default async function ChurchWorkspacePage({
                   <div className="relative h-60 overflow-hidden rounded-[28px] border border-white/70 bg-white">
                     <Image src={previewImage} alt={church.name} fill className="object-cover" />
                   </div>
-                  <form action={saveChurchMediaAction} className="space-y-4 rounded-[24px] bg-white/80 p-5 ring-1 ring-brand-100">
-                    <input type="hidden" name="churchSlug" value={church.slug} />
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">Church images</p>
-                    <Input name="featuredImageUrl" defaultValue={featuredImageUrl} aria-label="Featured image URL" placeholder="https://example.com/front-of-church.jpg" />
-                    <Input name="logoUrl" defaultValue={logoUrl} aria-label="Logo image URL" placeholder="https://example.com/church-logo.png" />
-                    <Button type="submit">Save image</Button>
-                  </form>
+                  <ChurchMediaForm
+                    action={saveChurchMediaAction}
+                    churchSlug={church.slug}
+                    featuredImageUrl={featuredImageUrl}
+                    logoUrl={logoUrl}
+                  />
                 </div>
                 <form className="grid gap-4 md:grid-cols-2">
                   <Input defaultValue={church.name} aria-label="Church name" />
