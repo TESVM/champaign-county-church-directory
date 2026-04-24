@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import {
   AdminUserRecord,
   AuditLogRecord,
@@ -18,6 +18,20 @@ import type { ChurchRecord } from "@/lib/types";
 
 export function hasDatabaseUrl() {
   return Boolean(process.env.DATABASE_URL);
+}
+
+async function getPrismaClient(): Promise<PrismaClient | null> {
+  if (!hasDatabaseUrl()) {
+    return null;
+  }
+
+  try {
+    const { prisma } = await import("@/lib/prisma/client");
+    return prisma;
+  } catch (error) {
+    console.error("Prisma client unavailable.", error);
+    return null;
+  }
 }
 
 function findFallbackChurch(churchSlug: string) {
@@ -44,13 +58,15 @@ function applyFallbackChurchUpdate(
   return { slug: church.slug };
 }
 
-async function withFallback<T>(loader: () => Promise<T>, fallback: T): Promise<T> {
-  if (!hasDatabaseUrl()) {
+async function withFallback<T>(loader: (prisma: PrismaClient) => Promise<T>, fallback: T): Promise<T> {
+  const prisma = await getPrismaClient();
+
+  if (!prisma) {
     return fallback;
   }
 
   try {
-    return await loader();
+    return await loader(prisma);
   } catch (error) {
     console.error("DB fallback activated", error);
     return fallback;
@@ -143,7 +159,7 @@ function mapSiteContent(record: {
 
 export async function getPersistedClaimRequests() {
   return withFallback(
-    async () => {
+    async (prisma) => {
       const records = await prisma.claimRequest.findMany({
         include: {
           church: {
@@ -171,7 +187,7 @@ export async function getPersistedClaimRequestByChurchSlug(churchSlug: string) {
 
 export async function getPersistedChurchMediaBySlug(churchSlug: string) {
   return withFallback(
-    async () => {
+    async (prisma) => {
       const record = await prisma.church.findUnique({
         where: {
           slug: churchSlug
@@ -200,7 +216,7 @@ export async function getPersistedChurchMediaBySlug(churchSlug: string) {
 
 export async function getPersistedMembershipsByEmail(email: string) {
   return withFallback(
-    async () => {
+    async (prisma) => {
       const records = await prisma.churchMembership.findMany({
         where: {
           user: {
@@ -231,7 +247,7 @@ export async function getPersistedMembershipsByEmail(email: string) {
 
 export async function getPersistedMembershipsByChurchSlug(churchSlug: string) {
   return withFallback(
-    async () => {
+    async (prisma) => {
       const records = await prisma.churchMembership.findMany({
         where: {
           church: {
@@ -262,7 +278,7 @@ export async function getPersistedMembershipsByChurchSlug(churchSlug: string) {
 
 export async function getPersistedAdminUsers() {
   return withFallback(
-    async () => {
+    async (prisma) => {
       const records = await prisma.user.findMany({
         include: {
           memberships: {
@@ -288,7 +304,7 @@ export async function getPersistedAdminUsers() {
 
 export async function getPersistedSiteContent() {
   return withFallback(
-    async () => {
+    async (prisma) => {
       const records = await prisma.siteContent.findMany({
         orderBy: [{ area: "asc" }, { key: "asc" }]
       });
@@ -306,7 +322,9 @@ export async function saveSiteContentRecord(input: {
   value: string;
   area: SiteContentRecord["area"];
 }) {
-  if (!hasDatabaseUrl()) {
+  const prisma = await getPrismaClient();
+
+  if (!prisma) {
     return null;
   }
 
@@ -333,7 +351,9 @@ export async function saveChurchMediaRecord(input: {
   featuredImageUrl?: string;
   logoUrl?: string;
 }) {
-  if (!hasDatabaseUrl()) {
+  const prisma = await getPrismaClient();
+
+  if (!prisma) {
     return null;
   }
 
@@ -366,7 +386,9 @@ export async function saveChurchListingRecord(input: {
   email?: string;
   description?: string;
 }) {
-  if (!hasDatabaseUrl()) {
+  const prisma = await getPrismaClient();
+
+  if (!prisma) {
     return null;
   }
 
@@ -438,7 +460,9 @@ export async function saveChurchStatusRecord(input: {
   verified?: boolean;
   claimed?: boolean;
 }) {
-  if (!hasDatabaseUrl()) {
+  const prisma = await getPrismaClient();
+
+  if (!prisma) {
     return null;
   }
 
@@ -468,7 +492,9 @@ export async function createPersistedClaimRequest(input: {
   verificationMethod: ClaimRequestRecord["verificationMethod"];
   evidence: string;
 }) {
-  if (!hasDatabaseUrl()) {
+  const prisma = await getPrismaClient();
+
+  if (!prisma) {
     return null;
   }
 
@@ -504,7 +530,9 @@ export async function reviewPersistedClaimRequest(input: {
   decision: "APPROVED" | "MORE_INFO" | "DENIED";
   reviewerNote?: string;
 }) {
-  if (!hasDatabaseUrl()) {
+  const prisma = await getPrismaClient();
+
+  if (!prisma) {
     return null;
   }
 
@@ -581,7 +609,7 @@ export async function getPersistedAuditLogs() {
 
 export async function getPersistedAdminStats() {
   return withFallback(
-    async () => {
+    async (prisma) => {
       const [
         churches,
         verified,
@@ -624,7 +652,7 @@ export async function getPersistedAdminStats() {
 
 export async function getPersistedUnclaimedChurches() {
   return withFallback(
-    async () => {
+    async (prisma) => {
       const records = await prisma.church.findMany({
         where: {
           claimed: false
@@ -649,7 +677,7 @@ export async function getPersistedUnclaimedChurches() {
 
 export async function getPersistedListingsNeedingRefresh() {
   return withFallback(
-    async () => {
+    async (prisma) => {
       const records = await prisma.church.findMany({
         orderBy: {
           lastUpdatedAt: "asc"
