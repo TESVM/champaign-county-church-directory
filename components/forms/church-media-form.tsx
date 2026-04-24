@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 type ChurchMediaFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   churchSlug: string;
+  returnPath: string;
   featuredImageUrl?: string;
   logoUrl?: string;
   submitLabel?: string;
@@ -16,6 +17,7 @@ type ChurchMediaFormProps = {
 export function ChurchMediaForm({
   action,
   churchSlug,
+  returnPath,
   featuredImageUrl,
   logoUrl,
   submitLabel = "Save image"
@@ -41,6 +43,7 @@ export function ChurchMediaForm({
   return (
     <form action={action} className="space-y-4 rounded-[24px] bg-white/80 p-5 ring-1 ring-brand-100">
       <input type="hidden" name="churchSlug" value={churchSlug} />
+      <input type="hidden" name="returnPath" value={returnPath} />
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">Church images</p>
       {previewImage ? (
         <div className="overflow-hidden rounded-2xl border border-line bg-brand-50">

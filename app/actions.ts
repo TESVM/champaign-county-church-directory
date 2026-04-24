@@ -9,6 +9,8 @@ import {
   createPersistedClaimRequest,
   reviewPersistedClaimRequest,
   saveChurchMediaRecord,
+  saveChurchListingRecord,
+  saveChurchStatusRecord,
   saveSiteContentRecord
 } from "@/lib/data/admin-store";
 
@@ -120,13 +122,12 @@ async function fileToDataUrl(file: File | null) {
   return `data:${file.type};base64,${base64}`;
 }
 
-export async function saveChurchMediaAction(formData: FormData) {
-  const churchSlug = formData.get("churchSlug")?.toString();
+function normalizedReturnPath(value: FormDataEntryValue | null, fallback: string) {
+  const path = value?.toString();
+  return path?.startsWith("/") ? path : fallback;
+}
 
-  if (!churchSlug) {
-    return;
-  }
-
+async function requireChurchManageAccess(churchSlug: string) {
   const session = await auth();
 
   if (!session?.user?.email) {
@@ -142,6 +143,19 @@ export async function saveChurchMediaAction(formData: FormData) {
   if (!canManageChurch) {
     redirect("/dashboard");
   }
+
+  return session;
+}
+
+export async function saveChurchMediaAction(formData: FormData) {
+  const churchSlug = formData.get("churchSlug")?.toString();
+
+  if (!churchSlug) {
+    return;
+  }
+
+  await requireChurchManageAccess(churchSlug);
+  const returnPath = normalizedReturnPath(formData.get("returnPath"), `/admin/churches/${churchSlug}`);
 
   const featuredImageFile = formData.get("featuredImageFile");
   const uploadedFeaturedImage =
@@ -159,4 +173,63 @@ export async function saveChurchMediaAction(formData: FormData) {
   revalidatePath(`/admin/churches/${churchSlug}`);
   revalidatePath(`/dashboard/churches/${churchSlug}`);
   revalidatePath(`/churches/${churchSlug}`);
+
+  redirect(`${returnPath}?saved=media`);
+}
+
+export async function saveChurchListingAction(formData: FormData) {
+  const churchSlug = formData.get("churchSlug")?.toString();
+
+  if (!churchSlug) {
+    return;
+  }
+
+  await requireChurchManageAccess(churchSlug);
+  const returnPath = normalizedReturnPath(formData.get("returnPath"), `/admin/churches/${churchSlug}`);
+
+  await saveChurchListingRecord({
+    churchSlug,
+    name: formData.get("name")?.toString(),
+    city: formData.get("city")?.toString(),
+    pastorFullName: formData.get("pastorFullName")?.toString(),
+    denomination: formData.get("denomination")?.toString(),
+    websiteUrl: externalUrl(formData.get("websiteUrl")?.toString()) ?? undefined,
+    appUrl: externalUrl(formData.get("appUrl")?.toString()) ?? undefined,
+    livestreamUrl: externalUrl(formData.get("livestreamUrl")?.toString()) ?? undefined,
+    phone: formData.get("phone")?.toString(),
+    email: formData.get("email")?.toString(),
+    description: formData.get("description")?.toString()
+  });
+
+  revalidatePath(`/admin/churches/${churchSlug}`);
+  revalidatePath(`/dashboard/churches/${churchSlug}`);
+  revalidatePath(`/churches/${churchSlug}`);
+  revalidatePath("/directory");
+
+  redirect(`${returnPath}?saved=record`);
+}
+
+export async function saveChurchStatusAction(formData: FormData) {
+  const churchSlug = formData.get("churchSlug")?.toString();
+  const field = formData.get("field")?.toString();
+
+  if (!churchSlug || (field !== "verified" && field !== "claimed")) {
+    return;
+  }
+
+  await requireChurchManageAccess(churchSlug);
+  const returnPath = normalizedReturnPath(formData.get("returnPath"), `/admin/churches/${churchSlug}`);
+
+  await saveChurchStatusRecord({
+    churchSlug,
+    ...(field === "verified" ? { verified: true } : {}),
+    ...(field === "claimed" ? { claimed: true } : {})
+  });
+
+  revalidatePath(`/admin/churches/${churchSlug}`);
+  revalidatePath(`/dashboard/churches/${churchSlug}`);
+  revalidatePath(`/churches/${churchSlug}`);
+  revalidatePath("/directory");
+
+  redirect(`${returnPath}?saved=${field}`);
 }

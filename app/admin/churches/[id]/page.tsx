@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { saveChurchMediaAction } from "@/app/actions";
+import { saveChurchListingAction, saveChurchMediaAction, saveChurchStatusAction } from "@/app/actions";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { ChurchMediaForm } from "@/components/forms/church-media-form";
 import { Card } from "@/components/ui/card";
@@ -11,10 +11,18 @@ import { requireAdminAccess } from "@/lib/auth-guards";
 import { getChurchBySlug } from "@/lib/data/queries";
 import { getPersistedChurchMediaBySlug } from "@/lib/data/admin-store";
 
-export default async function AdminChurchEditPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminChurchEditPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   await requireAdminAccess();
 
   const { id } = await params;
+  const resolvedSearchParams = await searchParams;
+  const savedState = Array.isArray(resolvedSearchParams.saved) ? resolvedSearchParams.saved[0] : resolvedSearchParams.saved;
   const church = getChurchBySlug(id);
 
   if (!church) {
@@ -41,6 +49,14 @@ export default async function AdminChurchEditPage({ params }: { params: Promise<
               <span className="rounded-full bg-brand-900 px-4 py-2 text-sm font-semibold text-white">{church.city}</span>
               <span className="rounded-full bg-white px-4 py-2 text-sm font-medium text-stone-700 ring-1 ring-brand-100">{church.pastor.fullName}</span>
             </div>
+            {savedState ? (
+              <div className="mt-5 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-900 ring-1 ring-brand-100">
+                {savedState === "media" && "Church image saved."}
+                {savedState === "record" && "Church details saved."}
+                {savedState === "verified" && "Church marked verified."}
+                {savedState === "claimed" && "Church marked claimed."}
+              </div>
+            ) : null}
             <div className="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
               <div className="space-y-4">
                 <div className="relative h-72 overflow-hidden rounded-[28px] border border-white/70 bg-white">
@@ -57,28 +73,44 @@ export default async function AdminChurchEditPage({ params }: { params: Promise<
                 <ChurchMediaForm
                   action={saveChurchMediaAction}
                   churchSlug={church.slug}
+                  returnPath={`/admin/churches/${church.slug}`}
                   featuredImageUrl={featuredImageUrl}
                   logoUrl={logoUrl}
                   submitLabel="Save images"
                 />
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Input defaultValue={church.name} aria-label="Church name" />
-                  <Input defaultValue={church.city} aria-label="City" />
-                  <Input defaultValue={church.pastor.fullName} aria-label="Senior pastor" />
-                  <Input defaultValue={church.denomination} aria-label="Denomination" />
-                  <Input defaultValue={church.websiteUrl} aria-label="Website URL" />
-                  <Input defaultValue={church.appUrl} aria-label="App URL" />
-                  <Input defaultValue={church.phone} aria-label="Phone" />
-                  <Input defaultValue={church.email} aria-label="Email" />
+                <form action={saveChurchListingAction} className="grid gap-4 md:grid-cols-2">
+                  <input type="hidden" name="churchSlug" value={church.slug} />
+                  <input type="hidden" name="returnPath" value={`/admin/churches/${church.slug}`} />
+                  <Input name="name" defaultValue={church.name} aria-label="Church name" />
+                  <Input name="city" defaultValue={church.city} aria-label="City" />
+                  <Input name="pastorFullName" defaultValue={church.pastor.fullName} aria-label="Senior pastor" />
+                  <Input name="denomination" defaultValue={church.denomination} aria-label="Denomination" />
+                  <Input name="websiteUrl" defaultValue={church.websiteUrl} aria-label="Website URL" />
+                  <Input name="appUrl" defaultValue={church.appUrl} aria-label="App URL" />
+                  <Input name="phone" defaultValue={church.phone} aria-label="Phone" />
+                  <Input name="email" defaultValue={church.email} aria-label="Email" />
+                  <Input name="livestreamUrl" defaultValue={church.livestreamUrl} aria-label="Livestream URL" className="md:col-span-2" />
                   <div className="md:col-span-2">
-                    <Textarea defaultValue={church.description} aria-label="Description" />
+                    <Textarea name="description" defaultValue={church.description} aria-label="Description" />
                   </div>
                   <div className="md:col-span-2 flex gap-3">
-                    <Button type="button" variant="secondary">Save full record later</Button>
-                    <Button type="button" variant="secondary">Mark verified</Button>
-                    <Button type="button" variant="secondary">Mark claimed</Button>
+                    <Button type="submit" variant="secondary">Save full record</Button>
                   </div>
+                </form>
+                <div className="flex gap-3">
+                  <form action={saveChurchStatusAction}>
+                    <input type="hidden" name="churchSlug" value={church.slug} />
+                    <input type="hidden" name="returnPath" value={`/admin/churches/${church.slug}`} />
+                    <input type="hidden" name="field" value="verified" />
+                    <Button type="submit" variant="secondary">Mark verified</Button>
+                  </form>
+                  <form action={saveChurchStatusAction}>
+                    <input type="hidden" name="churchSlug" value={church.slug} />
+                    <input type="hidden" name="returnPath" value={`/admin/churches/${church.slug}`} />
+                    <input type="hidden" name="field" value="claimed" />
+                    <Button type="submit" variant="secondary">Mark claimed</Button>
+                  </form>
                 </div>
               </div>
             </div>

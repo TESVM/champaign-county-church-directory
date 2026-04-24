@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { saveChurchMediaAction } from "@/app/actions";
+import Link from "next/link";
+import { saveChurchListingAction, saveChurchMediaAction } from "@/app/actions";
 import { notFound } from "next/navigation";
 import { ChurchDashboardSidebar } from "@/components/dashboard/church-dashboard-sidebar";
 import { ChurchMediaForm } from "@/components/forms/church-media-form";
@@ -18,11 +19,15 @@ import {
 import { formatDate } from "@/lib/utils";
 
 export default async function ChurchWorkspacePage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const savedState = Array.isArray(resolvedSearchParams.saved) ? resolvedSearchParams.saved[0] : resolvedSearchParams.saved;
   const session = await requireChurchAccess(slug);
   const church = getChurchBySlug(slug);
 
@@ -62,6 +67,12 @@ export default async function ChurchWorkspacePage({
                 {church.claimed ? "Claimed listing" : "Pending claim setup"}
               </span>
             </div>
+            {savedState ? (
+              <div className="mt-5 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-900 ring-1 ring-brand-100">
+                {savedState === "media" && "Church image saved."}
+                {savedState === "record" && "Listing changes saved."}
+              </div>
+            ) : null}
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -78,24 +89,31 @@ export default async function ChurchWorkspacePage({
                   <ChurchMediaForm
                     action={saveChurchMediaAction}
                     churchSlug={church.slug}
+                    returnPath={`/dashboard/churches/${church.slug}`}
                     featuredImageUrl={featuredImageUrl}
                     logoUrl={logoUrl}
                   />
                 </div>
-                <form className="grid gap-4 md:grid-cols-2">
-                  <Input defaultValue={church.name} aria-label="Church name" />
-                  <Input defaultValue={church.pastor.fullName} aria-label="Lead pastor" />
-                  <Input defaultValue={church.websiteUrl} aria-label="Website URL" />
-                  <Input defaultValue={church.phone} aria-label="Public phone" />
-                  <Input defaultValue={church.email} aria-label="Public email" />
-                  <Input defaultValue={church.livestreamUrl} aria-label="Livestream URL" />
+                <form action={saveChurchListingAction} className="grid gap-4 md:grid-cols-2">
+                  <input type="hidden" name="churchSlug" value={church.slug} />
+                  <input type="hidden" name="returnPath" value={`/dashboard/churches/${church.slug}`} />
+                  <Input name="name" defaultValue={church.name} aria-label="Church name" />
+                  <Input name="pastorFullName" defaultValue={church.pastor.fullName} aria-label="Lead pastor" />
+                  <Input name="websiteUrl" defaultValue={church.websiteUrl} aria-label="Website URL" />
+                  <Input name="phone" defaultValue={church.phone} aria-label="Public phone" />
+                  <Input name="email" defaultValue={church.email} aria-label="Public email" />
+                  <Input name="livestreamUrl" defaultValue={church.livestreamUrl} aria-label="Livestream URL" />
                   <div className="md:col-span-2">
-                    <Textarea defaultValue={church.description} aria-label="Description" />
+                    <Textarea name="description" defaultValue={church.description} aria-label="Description" />
                   </div>
                   <div className="md:col-span-2 flex flex-wrap gap-3">
-                    <Button type="button">Save draft</Button>
-                    <Button type="button" variant="secondary">Submit for review</Button>
-                    <Button type="button" variant="secondary">Invite editor</Button>
+                    <Button type="submit">Save draft</Button>
+                    <Button asChild variant="secondary">
+                      <Link href={`/claim?church=${church.slug}`}>Request review</Link>
+                    </Button>
+                    <Button asChild variant="secondary">
+                      <Link href={`/claim?church=${church.slug}`}>Invite editor</Link>
+                    </Button>
                   </div>
                 </form>
               </div>
