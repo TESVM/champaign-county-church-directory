@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,23 +19,31 @@ export function LoginForm({ error, nextPath }: LoginFormProps) {
     startTransition(async () => {
       setLoginError(undefined);
 
-      const email = formData.get("email");
-      const password = formData.get("password");
-      const destination = nextPath === "/admin" ? "/admin" : "/dashboard";
-
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-        redirectTo: destination
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: formData.get("email"),
+          password: formData.get("password"),
+          nextPath
+        })
       });
 
-      if (!result || result.error) {
+      if (!response.ok) {
         setLoginError("invalid");
         return;
       }
 
-      router.push(result.url ?? destination);
+      const result = (await response.json()) as { ok?: boolean; url?: string };
+
+      if (!result.ok) {
+        setLoginError("invalid");
+        return;
+      }
+
+      router.push(result.url ?? (nextPath === "/admin" ? "/admin" : "/dashboard"));
       router.refresh();
     });
   }
