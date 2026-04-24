@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { auth, signIn } from "@/lib/auth";
+import { LoginForm } from "@/components/forms/login-form";
+import { auth } from "@/lib/auth";
 import type { DirectoryRole } from "@/lib/types";
 
 function canAccessAdmin(role?: DirectoryRole) {
@@ -27,24 +26,6 @@ export default async function LoginPage({
     }
 
     redirect("/dashboard");
-  }
-
-  async function authenticate(formData: FormData) {
-    "use server";
-
-    try {
-      await signIn("credentials", {
-        email: formData.get("email"),
-        password: formData.get("password"),
-        redirectTo: nextPath === "/admin" ? "/admin" : "/dashboard"
-      });
-    } catch (error) {
-      if (error instanceof AuthError) {
-        redirect(nextPath === "/admin" ? "/login?next=/admin&error=invalid" : "/login?error=invalid");
-      }
-
-      throw error;
-    }
   }
 
   return (
@@ -82,19 +63,7 @@ export default async function LoginPage({
         <Card className="border-white/70 bg-gradient-to-br from-white via-brand-50 to-sky/30 p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-700">Sign in</p>
           <h2 className="mt-4 font-display text-3xl">Church editors and directory admins</h2>
-          <form action={authenticate} className="mt-8 space-y-4">
-            {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
-            <Input name="email" type="email" placeholder="Email address" />
-            <Input name="password" type="password" placeholder="Password" />
-            {loginError ? (
-              <div className="rounded-2xl bg-rose/10 px-4 py-3 text-sm text-rose">
-                Sign-in failed. Check the email and password, or start with a claim request if your church has not been verified yet.
-              </div>
-            ) : null}
-            <Button type="submit" className="w-full">
-              Sign in
-            </Button>
-          </form>
+          <LoginForm error={loginError} nextPath={nextPath} />
           <div className="mt-6 rounded-2xl bg-white/70 p-4 text-sm leading-6 text-stone-700 ring-1 ring-brand-100">
             <p className="font-semibold text-ink">Demo accounts</p>
             <p className="mt-2"><code>admin@countychurchdirectory.local / admin</code></p>
