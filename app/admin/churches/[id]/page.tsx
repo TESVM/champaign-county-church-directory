@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { requireAdminAccess } from "@/lib/auth-guards";
 import { getChurchBySlug } from "@/lib/data/queries";
-import { getPersistedChurchMediaBySlug } from "@/lib/data/admin-store";
+import { getPersistedChurchMediaBySlug, hasDatabaseUrl } from "@/lib/data/admin-store";
 import { isInlineImageUrl } from "@/lib/utils";
 
 export default async function AdminChurchEditPage({
@@ -24,6 +24,7 @@ export default async function AdminChurchEditPage({
   const { id } = await params;
   const resolvedSearchParams = await searchParams;
   const savedState = Array.isArray(resolvedSearchParams.saved) ? resolvedSearchParams.saved[0] : resolvedSearchParams.saved;
+  const canPersistChanges = hasDatabaseUrl();
   const church = getChurchBySlug(id);
 
   if (!church) {
@@ -57,6 +58,12 @@ export default async function AdminChurchEditPage({
                 {savedState === "record" && "Church details saved."}
                 {savedState === "verified" && "Church marked verified."}
                 {savedState === "claimed" && "Church marked claimed."}
+                {savedState === "needs-db" && "This site needs DATABASE_URL in Vercel before church photos and profile edits can persist."}
+              </div>
+            ) : null}
+            {!canPersistChanges ? (
+              <div className="mt-5 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">
+                Persistent church edits are currently disabled because `DATABASE_URL` is not configured for this deployment.
               </div>
             ) : null}
             <div className="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">

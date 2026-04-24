@@ -16,7 +16,7 @@ import {
 } from "@/lib/data/access";
 import type { ChurchRecord } from "@/lib/types";
 
-function hasDatabaseUrl() {
+export function hasDatabaseUrl() {
   return Boolean(process.env.DATABASE_URL);
 }
 
@@ -333,14 +333,8 @@ export async function saveChurchMediaRecord(input: {
   featuredImageUrl?: string;
   logoUrl?: string;
 }) {
-  const applyMediaFallback = () =>
-    applyFallbackChurchUpdate(input.churchSlug, (church) => {
-      church.featuredImageUrl = normalizeOptionalText(input.featuredImageUrl);
-      church.logoUrl = normalizeOptionalText(input.logoUrl);
-    });
-
   if (!hasDatabaseUrl()) {
-    return applyMediaFallback();
+    return null;
   }
 
   const result = await prisma.church.update({
@@ -356,8 +350,6 @@ export async function saveChurchMediaRecord(input: {
       slug: true
     }
   });
-
-  applyMediaFallback();
   return result;
 }
 
@@ -374,24 +366,8 @@ export async function saveChurchListingRecord(input: {
   email?: string;
   description?: string;
 }) {
-  const applyListingFallback = () =>
-    applyFallbackChurchUpdate(input.churchSlug, (church) => {
-      church.name = normalizeOptionalText(input.name) ?? church.name;
-      church.city = normalizeOptionalText(input.city) ?? church.city;
-      church.pastor.fullName = normalizeOptionalText(input.pastorFullName) ?? church.pastor.fullName;
-      church.denomination = normalizeOptionalText(input.denomination);
-      church.websiteUrl = normalizeOptionalText(input.websiteUrl);
-      church.appUrl = normalizeOptionalText(input.appUrl);
-      church.livestreamUrl = normalizeOptionalText(input.livestreamUrl);
-      church.phone = normalizeOptionalText(input.phone);
-      church.email = normalizeOptionalText(input.email);
-      church.description = normalizeOptionalText(input.description) ?? church.description;
-      church.shortDescription =
-        normalizeOptionalText(input.description)?.slice(0, 140) ?? church.shortDescription;
-    });
-
   if (!hasDatabaseUrl()) {
-    return applyListingFallback();
+    return null;
   }
 
   const existingChurch = await prisma.church.findUnique({
@@ -454,7 +430,6 @@ export async function saveChurchListingRecord(input: {
     }
   });
 
-  applyListingFallback();
   return result;
 }
 
@@ -463,19 +438,8 @@ export async function saveChurchStatusRecord(input: {
   verified?: boolean;
   claimed?: boolean;
 }) {
-  const applyStatusFallback = () =>
-    applyFallbackChurchUpdate(input.churchSlug, (church) => {
-      if (typeof input.verified === "boolean") {
-        church.verified = input.verified;
-      }
-
-      if (typeof input.claimed === "boolean") {
-        church.claimed = input.claimed;
-      }
-    });
-
   if (!hasDatabaseUrl()) {
-    return applyStatusFallback();
+    return null;
   }
 
   const result = await prisma.church.update({
@@ -492,7 +456,6 @@ export async function saveChurchStatusRecord(input: {
     }
   });
 
-  applyStatusFallback();
   return result;
 }
 

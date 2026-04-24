@@ -7,6 +7,7 @@ import { externalUrl } from "@/lib/utils";
 import { contactSchema, claimSchema, submitListingSchema } from "@/lib/validation/forms";
 import {
   createPersistedClaimRequest,
+  hasDatabaseUrl,
   reviewPersistedClaimRequest,
   saveChurchMediaRecord,
   saveChurchListingRecord,
@@ -157,6 +158,10 @@ export async function saveChurchMediaAction(formData: FormData) {
   await requireChurchManageAccess(churchSlug);
   const returnPath = normalizedReturnPath(formData.get("returnPath"), `/admin/churches/${churchSlug}`);
 
+  if (!hasDatabaseUrl()) {
+    redirect(`${returnPath}?saved=needs-db`);
+  }
+
   const featuredImageFile = formData.get("featuredImageFile");
   const uploadedFeaturedImage =
     featuredImageFile instanceof File ? await fileToDataUrl(featuredImageFile) : undefined;
@@ -186,6 +191,10 @@ export async function saveChurchListingAction(formData: FormData) {
 
   await requireChurchManageAccess(churchSlug);
   const returnPath = normalizedReturnPath(formData.get("returnPath"), `/admin/churches/${churchSlug}`);
+
+  if (!hasDatabaseUrl()) {
+    redirect(`${returnPath}?saved=needs-db`);
+  }
 
   await saveChurchListingRecord({
     churchSlug,
@@ -219,6 +228,10 @@ export async function saveChurchStatusAction(formData: FormData) {
 
   await requireChurchManageAccess(churchSlug);
   const returnPath = normalizedReturnPath(formData.get("returnPath"), `/admin/churches/${churchSlug}`);
+
+  if (!hasDatabaseUrl()) {
+    redirect(`${returnPath}?saved=needs-db`);
+  }
 
   await saveChurchStatusRecord({
     churchSlug,

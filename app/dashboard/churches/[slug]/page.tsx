@@ -14,7 +14,8 @@ import {
   getPersistedChurchMediaBySlug,
   getPersistedClaimRequestByChurchSlug,
   getPersistedMembershipsByChurchSlug,
-  getPersistedMembershipsByEmail
+  getPersistedMembershipsByEmail,
+  hasDatabaseUrl
 } from "@/lib/data/admin-store";
 import { formatDate, isInlineImageUrl } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ export default async function ChurchWorkspacePage({
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
   const savedState = Array.isArray(resolvedSearchParams.saved) ? resolvedSearchParams.saved[0] : resolvedSearchParams.saved;
+  const canPersistChanges = hasDatabaseUrl();
   const session = await requireChurchAccess(slug);
   const church = getChurchBySlug(slug);
 
@@ -72,6 +74,12 @@ export default async function ChurchWorkspacePage({
               <div className="mt-5 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-900 ring-1 ring-brand-100">
                 {savedState === "media" && "Church image saved."}
                 {savedState === "record" && "Listing changes saved."}
+                {savedState === "needs-db" && "This site needs DATABASE_URL in Vercel before church photos and profile edits can persist."}
+              </div>
+            ) : null}
+            {!canPersistChanges ? (
+              <div className="mt-5 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">
+                Persistent church edits are currently disabled because `DATABASE_URL` is not configured for this deployment.
               </div>
             ) : null}
           </div>
