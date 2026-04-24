@@ -42,11 +42,15 @@ Copy `.env.example` to `.env.local` and update values as needed.
 Important values:
 
 - `DATABASE_URL`
+- `AUTH_SECRET`
 - `NEXTAUTH_SECRET`
+- `AUTH_URL`
 - `NEXTAUTH_URL`
 - `NEXT_PUBLIC_CHURCH_DIRECTORY_URL`
 - `NEXT_PUBLIC_MUSICIAN_DIRECTORY_URL`
 - `CRON_SECRET`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
 
 ## Project Structure
 

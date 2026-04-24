@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PastorBadge } from "@/components/directory/pastor-badge";
 import { SocialIcons } from "@/components/directory/social-icons";
 import { VerifiedBadge } from "@/components/directory/verified-badge";
+import { externalUrl } from "@/lib/utils";
 
 const cityGradients: Record<string, string> = {
   champaign: "from-brand-700 via-brand-500 to-rose",
@@ -25,6 +26,9 @@ export function ChurchCard({ church }: { church: ChurchRecord }) {
     church.serviceTimes.length
       ? church.serviceTimes.map((service) => `${service.dayOfWeek} ${service.startTime}`).join(" • ")
       : "Service times not yet listed";
+  const websiteUrl = externalUrl(church.websiteUrl);
+  const appUrl = externalUrl(church.appUrl);
+  const livestreamUrl = externalUrl(church.livestreamUrl);
 
   return (
     <Card className="overflow-hidden border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(238,248,248,0.88))] shadow-soft">
@@ -74,28 +78,28 @@ export function ChurchCard({ church }: { church: ChurchRecord }) {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {church.websiteUrl ? (
+          {websiteUrl ? (
             <Button asChild size="sm" className="bg-gradient-to-r from-brand-700 to-brand-900">
-              <Link href={church.websiteUrl} target="_blank" rel="noreferrer">
+              <a href={websiteUrl} target="_blank" rel="noreferrer">
                 <Globe className="mr-2 h-4 w-4" />
                 Website
-              </Link>
+              </a>
             </Button>
           ) : null}
-          {church.appUrl ? (
+          {appUrl ? (
             <Button asChild size="sm" variant="secondary">
-              <Link href={church.appUrl} target="_blank" rel="noreferrer">
+              <a href={appUrl} target="_blank" rel="noreferrer">
                 <Smartphone className="mr-2 h-4 w-4" />
                 App
-              </Link>
+              </a>
             </Button>
           ) : null}
-          {church.livestreamUrl ? (
+          {livestreamUrl ? (
             <Button asChild size="sm" variant="secondary">
-              <Link href={church.livestreamUrl} target="_blank" rel="noreferrer">
+              <a href={livestreamUrl} target="_blank" rel="noreferrer">
                 <PlayCircle className="mr-2 h-4 w-4" />
                 Livestream
-              </Link>
+              </a>
             </Button>
           ) : null}
         </div>

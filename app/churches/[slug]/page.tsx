@@ -10,7 +10,7 @@ import { SocialIcons } from "@/components/directory/social-icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getChurchBySlug, churches } from "@/lib/data/queries";
-import { absoluteUrl } from "@/lib/utils";
+import { absoluteUrl, externalUrl } from "@/lib/utils";
 
 export function generateStaticParams() {
   return churches.map((church) => ({ slug: church.slug }));
@@ -41,6 +41,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function ChurchProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const church = getChurchBySlug(slug);
+
+  const websiteUrl = externalUrl(church?.websiteUrl);
+  const appUrl = externalUrl(church?.appUrl);
+  const livestreamUrl = externalUrl(church?.livestreamUrl);
 
   if (!church) {
     notFound();
@@ -77,28 +81,28 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
             <ChurchProfileHeader church={church} />
             <p className="mt-6 max-w-3xl text-lg leading-8 text-stone-600">{church.description}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              {church.websiteUrl ? (
+              {websiteUrl ? (
                 <Button asChild>
-                  <Link href={church.websiteUrl} target="_blank" rel="noreferrer">
+                  <a href={websiteUrl} target="_blank" rel="noreferrer">
                     <Globe className="mr-2 h-4 w-4" />
                     Visit Website
-                  </Link>
+                  </a>
                 </Button>
               ) : null}
-              {church.appUrl ? (
+              {appUrl ? (
                 <Button asChild variant="secondary">
-                  <Link href={church.appUrl} target="_blank" rel="noreferrer">
+                  <a href={appUrl} target="_blank" rel="noreferrer">
                     <Smartphone className="mr-2 h-4 w-4" />
                     Open App
-                  </Link>
+                  </a>
                 </Button>
               ) : null}
-              {church.livestreamUrl ? (
+              {livestreamUrl ? (
                 <Button asChild variant="secondary">
-                  <Link href={church.livestreamUrl} target="_blank" rel="noreferrer">
+                  <a href={livestreamUrl} target="_blank" rel="noreferrer">
                     <PlayCircle className="mr-2 h-4 w-4" />
                     Watch Livestream
-                  </Link>
+                  </a>
                 </Button>
               ) : null}
               <Button asChild variant="secondary">

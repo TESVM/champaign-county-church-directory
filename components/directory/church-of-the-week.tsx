@@ -8,12 +8,16 @@ import { PastorBadge } from "@/components/directory/pastor-badge";
 import { SocialIcons } from "@/components/directory/social-icons";
 import { VerifiedBadge } from "@/components/directory/verified-badge";
 import { SectionHeading } from "@/components/layout/section-heading";
+import { externalUrl } from "@/lib/utils";
 
 export function ChurchOfTheWeek({ church }: { church: ChurchRecord }) {
   const imageSrc =
     church.featuredImageUrl ??
     church.logoUrl ??
     "https://images.unsplash.com/photo-1438032005730-c779502df39b?auto=format&fit=crop&w=1200&q=80";
+  const websiteUrl = externalUrl(church.websiteUrl);
+  const appUrl = externalUrl(church.appUrl);
+  const livestreamUrl = externalUrl(church.livestreamUrl);
 
   return (
     <section className="section-wash rounded-[40px] px-6 py-8 sm:px-8">
@@ -68,28 +72,28 @@ export function ChurchOfTheWeek({ church }: { church: ChurchRecord }) {
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              {church.websiteUrl ? (
+              {websiteUrl ? (
                 <Button asChild className="bg-gradient-to-r from-brand-700 to-brand-900">
-                  <Link href={church.websiteUrl} target="_blank" rel="noreferrer">
+                  <a href={websiteUrl} target="_blank" rel="noreferrer">
                     <Globe className="mr-2 h-4 w-4" />
                     Visit Website
-                  </Link>
+                  </a>
                 </Button>
               ) : null}
-              {church.appUrl ? (
+              {appUrl ? (
                 <Button asChild variant="secondary">
-                  <Link href={church.appUrl} target="_blank" rel="noreferrer">
+                  <a href={appUrl} target="_blank" rel="noreferrer">
                     <Smartphone className="mr-2 h-4 w-4" />
                     Open App
-                  </Link>
+                  </a>
                 </Button>
               ) : null}
-              {church.livestreamUrl ? (
+              {livestreamUrl ? (
                 <Button asChild variant="secondary">
-                  <Link href={church.livestreamUrl} target="_blank" rel="noreferrer">
+                  <a href={livestreamUrl} target="_blank" rel="noreferrer">
                     <PlayCircle className="mr-2 h-4 w-4" />
                     Livestream
-                  </Link>
+                  </a>
                 </Button>
               ) : null}
             </div>

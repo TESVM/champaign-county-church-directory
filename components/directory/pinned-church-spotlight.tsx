@@ -4,8 +4,11 @@ import { ChurchRecord } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { PastorBadge } from "@/components/directory/pastor-badge";
 import { Button } from "@/components/ui/button";
+import { externalUrl } from "@/lib/utils";
 
 export function PinnedChurchSpotlight({ church }: { church: ChurchRecord }) {
+  const websiteUrl = externalUrl(church.websiteUrl);
+
   return (
     <Card className="border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_24%),linear-gradient(135deg,#12363e_0%,#1f5f63_36%,#f28b66_100%)] p-8 text-white shadow-soft">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -24,11 +27,11 @@ export function PinnedChurchSpotlight({ church }: { church: ChurchRecord }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          {church.websiteUrl ? (
+          {websiteUrl ? (
             <Button asChild variant="secondary" className="bg-white text-brand-900 hover:bg-brand-50">
-              <Link href={church.websiteUrl} target="_blank" rel="noreferrer">
+              <a href={websiteUrl} target="_blank" rel="noreferrer">
                 Visit Church Website
-              </Link>
+              </a>
             </Button>
           ) : null}
           <Button asChild className="bg-white/15 text-white ring-1 ring-white/30 hover:bg-white/20">

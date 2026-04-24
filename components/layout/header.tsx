@@ -39,6 +39,9 @@ export function Header() {
               Find Musicians
             </a>
           </Button>
+          <Button asChild variant="secondary">
+            <Link href="/login?next=/admin">Admin Login</Link>
+          </Button>
           <Button asChild>
             <Link href="/submit">Submit a Church</Link>
           </Button>
@@ -63,6 +66,12 @@ export function Header() {
               >
                 Find Musicians
               </a>
+              <Link href="/login?next=/admin" className="rounded-2xl px-4 py-3 text-sm font-medium text-stone-700 hover:bg-brand-50 focus-ring">
+                Admin Login
+              </Link>
+              <Link href="/submit" className="rounded-2xl px-4 py-3 text-sm font-medium text-stone-700 hover:bg-brand-50 focus-ring">
+                Submit a Church
+              </Link>
             </nav>
           </div>
         </details>

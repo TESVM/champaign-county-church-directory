@@ -2,9 +2,52 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { mockCredentials } from "@/lib/data/access";
 import type { DirectoryRole } from "@/lib/types";
-import { prisma } from "@/lib/prisma/client";
+
+const authSecret =
+  process.env.AUTH_SECRET ??
+  process.env.NEXTAUTH_SECRET ??
+  (process.env.NODE_ENV === "production"
+    ? "champaign-county-church-directory-production-fallback-secret"
+    : "champaign-county-church-directory-dev-secret");
+
+const adminEmail = (process.env.ADMIN_EMAIL ?? "admin@countychurchdirectory.local").toLowerCase();
+const adminPassword = process.env.ADMIN_PASSWORD ?? "admin";
+
+async function findDbChurchUser(email: string) {
+  if (!process.env.DATABASE_URL) {
+    return null;
+  }
+
+  try {
+    const { prisma } = await import("@/lib/prisma/client");
+    return await prisma.user.findUnique({
+      where: {
+        email
+      },
+      include: {
+        memberships: {
+          where: {
+            status: "ACTIVE"
+          },
+          include: {
+            church: {
+              select: {
+                slug: true
+              }
+            }
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Database-backed auth lookup failed.", error);
+    return null;
+  }
+}
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
+  secret: authSecret,
+  trustHost: true,
   session: {
     strategy: "jwt"
   },
@@ -23,7 +66,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           return null;
         }
 
-        if (email === process.env.ADMIN_EMAIL && password === "admin") {
+        if (email === adminEmail && password === adminPassword) {
           return {
             id: "admin-user",
             name: "Directory Admin",
@@ -47,26 +90,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           };
         }
 
-        if (process.env.DATABASE_URL && password === "church") {
-          const dbUser = await prisma.user.findUnique({
-            where: {
-              email
-            },
-            include: {
-              memberships: {
-                where: {
-                  status: "ACTIVE"
-                },
-                include: {
-                  church: {
-                    select: {
-                      slug: true
-                    }
-                  }
-                }
-              }
-            }
-          });
+        if (password === "church") {
+          const dbUser = await findDbChurchUser(email);
 
           if (dbUser && (dbUser.role === "CHURCH_OWNER" || dbUser.role === "CHURCH_EDITOR")) {
             return {

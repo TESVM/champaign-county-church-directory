@@ -5,6 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { auth, signIn } from "@/lib/auth";
+import type { DirectoryRole } from "@/lib/types";
+
+function canAccessAdmin(role?: DirectoryRole) {
+  return role === "ADMIN" || role === "REVIEWER" || role === "SUPPORT";
+}
 
 export default async function LoginPage({
   searchParams
@@ -13,9 +18,14 @@ export default async function LoginPage({
 }) {
   const resolvedSearchParams = await searchParams;
   const loginError = Array.isArray(resolvedSearchParams.error) ? resolvedSearchParams.error[0] : resolvedSearchParams.error;
+  const nextPath = Array.isArray(resolvedSearchParams.next) ? resolvedSearchParams.next[0] : resolvedSearchParams.next;
   const session = await auth();
 
   if (session?.user?.email) {
+    if (nextPath === "/admin" && canAccessAdmin(session.user.role)) {
+      redirect("/admin");
+    }
+
     redirect("/dashboard");
   }
 
@@ -26,11 +36,11 @@ export default async function LoginPage({
       await signIn("credentials", {
         email: formData.get("email"),
         password: formData.get("password"),
-        redirectTo: "/dashboard"
+        redirectTo: nextPath === "/admin" ? "/admin" : "/dashboard"
       });
     } catch (error) {
       if (error instanceof AuthError) {
-        redirect("/login?error=invalid");
+        redirect(nextPath === "/admin" ? "/login?next=/admin&error=invalid" : "/login?error=invalid");
       }
 
       throw error;
@@ -73,6 +83,7 @@ export default async function LoginPage({
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-700">Sign in</p>
           <h2 className="mt-4 font-display text-3xl">Church editors and directory admins</h2>
           <form action={authenticate} className="mt-8 space-y-4">
+            {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
             <Input name="email" type="email" placeholder="Email address" />
             <Input name="password" type="password" placeholder="Password" />
             {loginError ? (
@@ -91,6 +102,7 @@ export default async function LoginPage({
             <p><code>office@sherifftemple.example / church</code></p>
             <p className="mt-3 text-xs uppercase tracking-[0.16em] text-brand-700">Temporary church access</p>
             <p className="mt-1 text-sm text-stone-600">Approved church-owner and church-editor records stored in the database can sign in with their email and the temporary password <code>church</code> until a full passwordless or email-link auth flow replaces this MVP path.</p>
+            <p className="mt-3 text-xs text-stone-500">Production can override the admin credentials with <code>ADMIN_EMAIL</code> and <code>ADMIN_PASSWORD</code>.</p>
           </div>
         </Card>
       </div>
