@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   return {
-    title: `${city.name} Churches | Champaign County Church Directory`,
+    title: `${city.name} Churches`,
     description: `Browse churches in ${city.name}, Illinois with pastor info, service times, websites, and directions.`,
     alternates: {
       canonical: absoluteUrl(`/cities/${city.slug}`)

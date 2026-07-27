@@ -46,7 +46,7 @@ export async function generateMetadata({
   const metadataImage = isInlineImageUrl(image) ? undefined : image;
 
   return {
-    title: `${church.name} | Champaign County Church Directory`,
+    title: church.name,
     description: `${church.name} in ${church.city.name}, Illinois. View pastor, service times, website, app, social links, and directions.`,
     alternates: { canonical: absoluteUrl(`/churches/${church.slug}`) },
     openGraph: {

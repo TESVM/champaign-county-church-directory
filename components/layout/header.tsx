@@ -24,7 +24,7 @@ export function Header() {
           </div>
         </Link>
 
-        <nav aria-label="Primary" className="hidden items-center gap-6 xl:flex">
+        <nav aria-label="Primary" className="hidden items-center gap-6 lg:flex">
           {nav.map((item) => (
             <Link key={item.href} href={item.href} className="text-sm font-medium text-stone-700 hover:text-brand-900 focus-ring">
               {item.label}
@@ -32,7 +32,7 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           <Button asChild variant="ghost">
             <a href={musicianDirectoryUrl("/")} target="_blank" rel="noreferrer">
               <Music2 className="mr-2 h-4 w-4" />
@@ -47,7 +47,7 @@ export function Header() {
           </Button>
         </div>
 
-        <details className="md:hidden">
+        <details className="lg:hidden">
           <summary className="focus-ring cursor-pointer list-none rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-ink">
             Menu
           </summary>
