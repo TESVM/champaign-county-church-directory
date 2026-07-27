@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Facebook, Instagram, Youtube, Music2, MessageCircleMore } from "lucide-react";
-import { ChurchRecord } from "@/lib/types";
+import type { ChurchDetail } from "@cccd/shared";
 import { externalUrl } from "@/lib/utils";
 
 const iconMap = {
@@ -11,7 +11,13 @@ const iconMap = {
   tiktok: Music2
 } as const;
 
-export function SocialIcons({ links }: { links: ChurchRecord["socialLinks"] }) {
+export function SocialIcons({
+  links,
+  churchName
+}: {
+  links: ChurchDetail["socialLinks"];
+  churchName?: string;
+}) {
   return (
     <div className="flex flex-wrap gap-2">
       {links.map((link) => {
@@ -23,9 +29,9 @@ export function SocialIcons({ links }: { links: ChurchRecord["socialLinks"] }) {
             key={link.url}
             href={href}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-stone-600 hover:border-brand-700 hover:text-brand-900"
-            aria-label={link.platform}
+            aria-label={churchName ? `${churchName} on ${link.platform}` : link.platform}
           >
             <Icon className="h-4 w-4" />
           </a>

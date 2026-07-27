@@ -2,7 +2,7 @@ import Link from "next/link";
 import { MapPinned } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function MapSection({ query }: { query: string }) {
+export function MapSection({ query, churchName }: { query: string; churchName?: string }) {
   const encoded = encodeURIComponent(query);
   const embed = `https://www.google.com/maps?q=${encoded}&output=embed`;
   const directions = `https://www.google.com/maps/search/?api=1&query=${encoded}`;
@@ -15,14 +15,14 @@ export function MapSection({ query }: { query: string }) {
           <p className="mt-2 text-stone-600">Get directions and preview the church location.</p>
         </div>
         <Button asChild variant="secondary">
-          <Link href={directions} target="_blank" rel="noreferrer">
+          <Link href={directions} target="_blank" rel="noopener noreferrer">
             <MapPinned className="mr-2 h-4 w-4" />
             Open Maps
           </Link>
         </Button>
       </div>
       <div className="overflow-hidden rounded-[28px] border border-line shadow-card">
-        <iframe title="Map" src={embed} className="h-[380px] w-full" loading="lazy" />
+        <iframe title={churchName ? `Map showing the location of ${churchName}` : "Map"} src={embed} className="h-[380px] w-full" loading="lazy" />
       </div>
     </section>
   );

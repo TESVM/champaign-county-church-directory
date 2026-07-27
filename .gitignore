@@ -14,3 +14,4 @@ mobile/.expo
 mobile/ios
 mobile/android
 mobile/dist
+.pglite-data
