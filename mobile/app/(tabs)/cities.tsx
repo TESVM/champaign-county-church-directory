@@ -35,24 +35,27 @@ export default function CitiesScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`${item.name}, ${item.churchCount} ${item.churchCount === 1 ? "church" : "churches"}`}
-            style={({ pressed }) => [
-              styles.row,
-              {
-                backgroundColor: theme.surfaceRaised,
-                borderColor: theme.border,
-                opacity: pressed ? 0.85 : 1
-              }
-            ]}
+            style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
           >
-            <View style={styles.rowText}>
-              <Text style={[typography.heading, { color: theme.text }]}>{item.name}</Text>
-              <Text style={[typography.caption, { color: theme.textMuted }]}>
-                {item.churchCount} {item.churchCount === 1 ? "church" : "churches"}
+            <View
+              style={[
+                styles.row,
+                { backgroundColor: theme.surfaceRaised, borderColor: theme.border }
+              ]}
+            >
+              <View style={styles.rowText}>
+                <Text style={[typography.heading, { color: theme.text }]}>{item.name}</Text>
+                <Text style={[typography.caption, { color: theme.textMuted }]}>
+                  {item.churchCount} {item.churchCount === 1 ? "church" : "churches"}
+                </Text>
+              </View>
+              <Text
+                style={[typography.title, { color: theme.brand }]}
+                accessibilityElementsHidden
+              >
+                ›
               </Text>
             </View>
-            <Text style={[typography.title, { color: theme.brand }]} accessibilityElementsHidden>
-              ›
-            </Text>
           </Pressable>
         </Link>
       )}

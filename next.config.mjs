@@ -32,6 +32,19 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // The /api/v1 read endpoints are public, unauthenticated, and serve
+        // only data already published on the site, so they are safe to expose
+        // cross-origin. Native clients ignore CORS entirely; this exists for
+        // browser consumers, including Expo's web build.
+        source: "/api/v1/:path*",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET, OPTIONS" },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type, Accept" },
+          { key: "Access-Control-Max-Age", value: "86400" }
+        ]
+      },
+      {
         source: "/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },

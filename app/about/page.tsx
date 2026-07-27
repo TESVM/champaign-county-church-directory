@@ -11,6 +11,7 @@ export default function AboutPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
       <SectionHeading
+          as="h1"
         eyebrow="About"
         title="A local church directory designed to be useful, welcoming, and trustworthy"
         description="The Champaign County Church Directory helps residents, visitors, students, and families discover churches with clearer service information, pastor details, and direct links to websites, apps, and livestreams."

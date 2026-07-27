@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "expo-router";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -28,6 +29,9 @@ export function ChurchCard({
   distanceLabel?: string | null;
 }) {
   const theme = useTheme();
+  // Church-supplied image URLs rot. Falling back only when the URL is absent
+  // left a blank box whenever a link had gone dead, so track load failures too.
+  const [imageFailed, setImageFailed] = useState(false);
 
   const capabilities = [
     church.hasLivestream ? "Livestream" : null,
@@ -36,6 +40,8 @@ export function ChurchCard({
 
   // One label describing the whole card, so a screen reader announces the church
   // once instead of reading six disconnected fragments.
+  const imageUri = church.media.featuredImageUrl ?? church.media.logoUrl ?? null;
+
   const accessibilityLabel = [
     church.name,
     church.denomination,
@@ -53,21 +59,21 @@ export function ChurchCard({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         accessibilityHint="Opens the full church profile"
-        style={({ pressed }) => [
-          styles.card,
-          {
-            backgroundColor: theme.surfaceRaised,
-            borderColor: theme.border,
-            opacity: pressed ? 0.85 : 1
-          }
-        ]}
+        style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
       >
-        {church.media.featuredImageUrl || church.media.logoUrl ? (
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: theme.surfaceRaised, borderColor: theme.border }
+          ]}
+        >
+        {imageUri && !imageFailed ? (
           <Image
-            source={{ uri: church.media.featuredImageUrl ?? church.media.logoUrl ?? undefined }}
+            source={{ uri: imageUri }}
             style={styles.image}
             contentFit="cover"
             transition={180}
+            onError={() => setImageFailed(true)}
             // Decorative: the card's accessibilityLabel already names the church.
             accessible={false}
           />
@@ -114,6 +120,7 @@ export function ChurchCard({
               ))}
             </View>
           )}
+          </View>
         </View>
       </Pressable>
     </Link>

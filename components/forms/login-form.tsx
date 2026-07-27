@@ -51,10 +51,32 @@ export function LoginForm({ error, nextPath }: LoginFormProps) {
   return (
     <form action={handleSubmit} className="mt-8 space-y-4">
       {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
-      <Input name="email" type="email" placeholder="Email address" required />
-      <Input name="password" type="password" placeholder="Password" required />
+      <div className="space-y-2">
+        <label htmlFor="login-email" className="block text-sm font-medium text-stone-700">
+          Email address
+        </label>
+        <Input
+          id="login-email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <label htmlFor="login-password" className="block text-sm font-medium text-stone-700">
+          Password
+        </label>
+        <Input
+          id="login-password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+        />
+      </div>
       {loginError ? (
-        <div className="rounded-2xl bg-rose/10 px-4 py-3 text-sm text-rose">
+        <div role="alert" className="rounded-2xl bg-rose/10 px-4 py-3 text-sm font-medium text-[#B3261E]">
           Sign-in failed. Check the email and password, or start with a claim request if your church has not been verified yet.
         </div>
       ) : null}

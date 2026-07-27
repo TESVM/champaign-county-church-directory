@@ -21,14 +21,17 @@ export default async function DirectoryPage({
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <div className="section-strong overflow-hidden rounded-[36px] border border-white/70 px-6 py-8 shadow-soft sm:px-8">
         <SectionHeading
+          as="h1"
           eyebrow="Directory"
           title="Searchable church directory"
           description="Filter by city, denomination, senior pastor, service day, ministries, website, app, livestream, and verification status."
         />
       </div>
       <div className="mt-10 grid gap-8 lg:grid-cols-[320px_1fr]">
-        <FilterSidebar searchParams={normalized} />
-        <div className="space-y-5">
+        <div className="order-2 lg:order-1">
+          <FilterSidebar searchParams={normalized} />
+        </div>
+        <div className="order-1 space-y-5 lg:order-2">
           <SearchBar defaultValue={normalized.q} />
           <div className="rounded-[24px] border border-white/70 bg-gradient-to-r from-brand-900 via-brand-700 to-brand-500 px-5 py-4 text-white shadow-card">
             <div className="flex flex-wrap items-center justify-between gap-3">

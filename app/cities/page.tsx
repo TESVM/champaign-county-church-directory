@@ -8,6 +8,7 @@ export default function CitiesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <SectionHeading
+          as="h1"
         eyebrow="Cities"
         title="Browse churches by city in Champaign County"
         description="Each city section highlights local churches, quick details, and an easy path to service times, pastor information, and directions."

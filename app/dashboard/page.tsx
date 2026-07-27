@@ -5,6 +5,7 @@ export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <SectionHeading
+          as="h1"
         eyebrow="Church Dashboard"
         title="Sample church owner dashboard"
         description="A simple owner view for managing a claimed church listing, profile freshness, and suggested updates."
