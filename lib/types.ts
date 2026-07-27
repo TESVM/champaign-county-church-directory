@@ -49,6 +49,16 @@ export type ChurchRecord = {
   featuredImageUrl?: string;
   verified: boolean;
   claimed: boolean;
+  /**
+   * Invented record kept for local development and tests.
+   *
+   * Six records use `.example` domains and 555 phone numbers. They must never
+   * reach the public site, the API, or an app-store build: a real directory
+   * that lists churches which do not exist misleads the people relying on it.
+   * Read published data through `getPublishedChurches()` rather than importing
+   * the array directly.
+   */
+  isFixture?: boolean;
   lastUpdatedAt: string;
   lastScannedAt: string;
   pastor: {

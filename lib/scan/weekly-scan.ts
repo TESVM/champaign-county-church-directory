@@ -1,4 +1,4 @@
-import { churches } from "@/lib/data/mock";
+import { publishedChurches as churches } from "@/lib/data/published";
 import { ScanResult } from "@/lib/scan/types";
 
 function inspectChurch(churchSlug: string) {

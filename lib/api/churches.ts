@@ -1,5 +1,5 @@
 import type { ChurchQuery, ChurchSummary } from "@cccd/shared";
-import { churches } from "@/lib/data/mock";
+import { publishedChurches as churches } from "@/lib/data/published";
 import { normalizeDayOfWeek, toChurchSummary } from "@/lib/api/serializers";
 import type { ChurchRecord } from "@/lib/types";
 

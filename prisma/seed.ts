@@ -1,5 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import { churches, countyCities } from "@/lib/data/mock";
+import { getPublishedChurches, getPublishedCities } from "@/lib/data/published";
+
+// Only real records are seeded; development fixtures stay out of any database.
+const churches = getPublishedChurches();
+const countyCities = getPublishedCities();
 import { adminUsers, churchMemberships, claimRequests, siteContent } from "@/lib/data/access";
 
 const prisma = new PrismaClient();

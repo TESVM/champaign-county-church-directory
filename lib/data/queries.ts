@@ -1,4 +1,5 @@
-import { churches, countyCities, submissions, suggestedChanges } from "@/lib/data/mock";
+import { submissions, suggestedChanges } from "@/lib/data/mock";
+import { countyCities, publishedChurches as churches } from "@/lib/data/published";
 import { adminUsers, auditLogs, churchMemberships, claimRequests, siteContent } from "@/lib/data/access";
 
 export { churches, countyCities };

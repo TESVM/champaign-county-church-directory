@@ -6,7 +6,8 @@ import {
   ClaimRequestRecord,
   SiteContentRecord
 } from "@/lib/types";
-import { churches, submissions, suggestedChanges } from "@/lib/data/mock";
+import { submissions, suggestedChanges } from "@/lib/data/mock";
+import { publishedChurches as churches } from "@/lib/data/published";
 import {
   adminUsers as fallbackAdminUsers,
   auditLogs as fallbackAuditLogs,
