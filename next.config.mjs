@@ -18,6 +18,10 @@ const imageHosts = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // @cccd/shared is published as TypeScript source and consumed by both this app
+  // and the Expo client, so Next must compile it rather than expect a build step.
+  transpilePackages: ["@cccd/shared"],
+
   images: {
     remotePatterns: imageHosts.map((hostname) => ({
       protocol: "https",
