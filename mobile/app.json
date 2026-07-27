@@ -8,7 +8,9 @@
     "scheme": "cccdirectory",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.champaigncountychurchdirectory.app",
@@ -29,7 +31,10 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -54,6 +59,11 @@
     },
     "extra": {
       "apiBaseUrl": "https://champaign-county-church-directory.vercel.app"
+    },
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#12363E"
     }
   }
 }
