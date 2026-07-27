@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SignOutButton } from "@/components/layout/sign-out-button";
 import { ChurchMembershipRecord } from "@/lib/types";
 
 export function ChurchDashboardSidebar({
@@ -33,6 +34,9 @@ export function ChurchDashboardSidebar({
             Open admin back office
           </Link>
         ) : null}
+      </div>
+      <div className="mt-5">
+        <SignOutButton returnPath="/" />
       </div>
     </aside>
   );

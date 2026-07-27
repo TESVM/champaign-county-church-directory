@@ -11,15 +11,16 @@ export function Footer() {
             Built for residents, families, students, seniors, and visitors looking for a church home in Champaign County.
           </p>
         </div>
-        <div>
+        <nav aria-label="Footer">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-300">Explore</p>
           <div className="mt-4 flex flex-col gap-2 text-sm">
             <Link href="/directory">Directory</Link>
             <Link href="/cities">Browse Cities</Link>
             <Link href="/submit">Submit Listing</Link>
             <Link href="/claim">Claim Listing</Link>
+            <Link href="/privacy">Privacy Policy</Link>
           </div>
-        </div>
+        </nav>
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-300">Contact</p>
           <div className="mt-4 space-y-2 text-sm text-brand-100">

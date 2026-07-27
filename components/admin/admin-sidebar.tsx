@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SignOutButton } from "@/components/layout/sign-out-button";
 
 const items = [
   { href: "/admin", label: "Overview" },
@@ -28,6 +29,9 @@ export function AdminSidebar() {
       <div className="mt-5 rounded-2xl border border-white/10 bg-black/10 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/70">Workflow</p>
         <p className="mt-2 text-sm leading-6 text-white/82">Website data stays strongest. Social and scan suggestions stay in review until approved.</p>
+      </div>
+      <div className="mt-5">
+        <SignOutButton returnPath="/" />
       </div>
     </aside>
   );
