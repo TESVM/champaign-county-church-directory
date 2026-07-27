@@ -41,32 +41,10 @@ export const adminUsers: AdminUserRecord[] = [
   }
 ];
 
-export const mockCredentials = [
-  {
-    email: "admin@countychurchdirectory.local",
-    password: "admin",
-    role: "ADMIN" as const,
-    churchSlugs: []
-  },
-  {
-    email: "reviewer@countychurchdirectory.local",
-    password: "review",
-    role: "REVIEWER" as const,
-    churchSlugs: []
-  },
-  {
-    email: "office@sherifftemple.example",
-    password: "church",
-    role: "CHURCH_OWNER" as const,
-    churchSlugs: ["sheriff-temple-aoh-church-of-god"]
-  },
-  {
-    email: "fbcchampaign@gmail.com",
-    password: "church",
-    role: "CHURCH_EDITOR" as const,
-    churchSlugs: ["faith-baptist-church-champaign"]
-  }
-];
+// The `mockCredentials` array that used to live here was removed: it granted the
+// ADMIN role on a password published in this repository and printed on the login
+// page, and it included a real church's live email address as a working account.
+// Administrator sign-in now reads ADMIN_EMAIL / ADMIN_PASSWORD via lib/env.ts.
 
 export const churchMemberships: ChurchMembershipRecord[] = [
   {

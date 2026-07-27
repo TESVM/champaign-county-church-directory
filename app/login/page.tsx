@@ -65,13 +65,13 @@ export default async function LoginPage({
           <h2 className="mt-4 font-display text-3xl">Church editors and directory admins</h2>
           <LoginForm error={loginError} nextPath={nextPath} />
           <div className="mt-6 rounded-2xl bg-white/70 p-4 text-sm leading-6 text-stone-700 ring-1 ring-brand-100">
-            <p className="font-semibold text-ink">Demo accounts</p>
-            <p className="mt-2"><code>admin@countychurchdirectory.local / admin</code></p>
-            <p><code>reviewer@countychurchdirectory.local / review</code></p>
-            <p><code>office@sherifftemple.example / church</code></p>
-            <p className="mt-3 text-xs uppercase tracking-[0.16em] text-brand-700">Temporary church access</p>
-            <p className="mt-1 text-sm text-stone-600">Approved church-owner and church-editor records stored in the database can sign in with their email and the temporary password <code>church</code> until a full passwordless or email-link auth flow replaces this MVP path.</p>
-            <p className="mt-3 text-xs text-stone-500">Production can override the admin credentials with <code>ADMIN_EMAIL</code> and <code>ADMIN_PASSWORD</code>.</p>
+            <p className="font-semibold text-ink">Church staff access</p>
+            <p className="mt-2 text-sm text-stone-600">
+              Sign-in for church owners and editors is moving to secure email
+              links, so there is no password to remember or share. If your church
+              is not yet claimed, start with a claim request and we will verify
+              your authorization before granting access.
+            </p>
           </div>
         </Card>
       </div>

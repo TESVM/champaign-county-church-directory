@@ -2,28 +2,37 @@
   "name": "champaign-county-church-directory",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0 <23"
+  },
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1 --port 3004",
     "build": "next build",
-    "start": "next start",
+    "dev": "next dev --hostname 127.0.0.1 --port 3004",
     "lint": "next lint",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
+  "overrides": {
+    "sharp": "^0.35.3",
+    "postcss": "^8.5.23"
+  },
   "dependencies": {
-    "@auth/prisma-adapter": "^2.7.4",
     "@prisma/client": "^6.5.0",
     "@radix-ui/react-slot": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.511.0",
-    "next": "^15.2.0",
-    "next-auth": "^5.0.0-beta.25",
+    "next": "^15.5.22",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.2",
@@ -36,10 +45,11 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^9.22.0",
     "eslint-config-next": "^15.2.0",
-    "postcss": "^8.5.3",
+    "postcss": "^8.5.23",
     "prisma": "^6.5.0",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vitest": "^3.2.7"
   }
 }

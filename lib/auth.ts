@@ -1,17 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
-import { mockCredentials } from "@/lib/data/access";
+import { authSecret, env } from "@/lib/env";
 import type { DirectoryRole } from "@/lib/types";
-
-const authSecret =
-  process.env.AUTH_SECRET ??
-  process.env.NEXTAUTH_SECRET ??
-  (process.env.NODE_ENV === "production"
-    ? "champaign-county-church-directory-production-fallback-secret"
-    : "champaign-county-church-directory-dev-secret");
-
-const adminEmail = (process.env.ADMIN_EMAIL ?? "admin@countychurchdirectory.local").toLowerCase();
-const adminPassword = process.env.ADMIN_PASSWORD ?? "admin";
 
 export const SESSION_COOKIE_NAME = "cccd_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
@@ -28,12 +18,56 @@ export type AuthSession = {
   user: AuthUser;
 };
 
+/** Roles that may appear in a session. Anything else is rejected on decode. */
+const DIRECTORY_ROLES = [
+  "ADMIN",
+  "REVIEWER",
+  "SUPPORT",
+  "CHURCH_OWNER",
+  "CHURCH_EDITOR"
+] as const satisfies readonly DirectoryRole[];
+
+function isDirectoryRole(value: unknown): value is DirectoryRole {
+  return (
+    typeof value === "string" &&
+    (DIRECTORY_ROLES as readonly string[]).includes(value)
+  );
+}
+
+/**
+ * Compares two strings without leaking their contents through timing.
+ *
+ * `timingSafeEqual` throws on length mismatch, so hash both sides to a fixed
+ * width first. That also stops the comparison from revealing the secret's
+ * length.
+ */
+function constantTimeEquals(a: string, b: string) {
+  const aDigest = createHmac("sha256", authSecret).update(a).digest();
+  const bDigest = createHmac("sha256", authSecret).update(b).digest();
+  return timingSafeEqual(aDigest, bDigest);
+}
+
+/** Wire format of the signed session payload. */
+type SessionPayload = AuthUser & {
+  /** Issued-at, seconds since epoch. */
+  iat: number;
+  /** Expiry, seconds since epoch. Enforced on every decode. */
+  exp: number;
+};
+
 function signSessionPayload(payload: string) {
   return createHmac("sha256", authSecret).update(payload).digest("base64url");
 }
 
 function encodeSession(user: AuthUser) {
-  const payload = Buffer.from(JSON.stringify(user)).toString("base64url");
+  const issuedAt = Math.floor(Date.now() / 1000);
+  const claims: SessionPayload = {
+    ...user,
+    iat: issuedAt,
+    exp: issuedAt + SESSION_MAX_AGE_SECONDS
+  };
+
+  const payload = Buffer.from(JSON.stringify(claims)).toString("base64url");
   const signature = signSessionPayload(payload);
   return `${payload}.${signature}`;
 }
@@ -63,15 +97,25 @@ function decodeSession(token?: string | null): AuthUser | null {
 
   try {
     const decoded = Buffer.from(payload, "base64url").toString("utf8");
-    const parsed = JSON.parse(decoded) as Partial<AuthUser>;
+    const parsed = JSON.parse(decoded) as Partial<SessionPayload>;
 
     if (
       !parsed ||
       typeof parsed.id !== "string" ||
       typeof parsed.email !== "string" ||
-      typeof parsed.role !== "string" ||
+      !isDirectoryRole(parsed.role) ||
       !Array.isArray(parsed.churchSlugs)
     ) {
+      return null;
+    }
+
+    // Reject expired tokens. A signature alone must not grant access forever:
+    // without this, a token captured from a shared machine never stops working.
+    if (typeof parsed.exp !== "number" || !Number.isFinite(parsed.exp)) {
+      return null;
+    }
+
+    if (Math.floor(Date.now() / 1000) >= parsed.exp) {
       return null;
     }
 
@@ -79,7 +123,7 @@ function decodeSession(token?: string | null): AuthUser | null {
       id: parsed.id,
       name: typeof parsed.name === "string" ? parsed.name : parsed.email,
       email: parsed.email,
-      role: parsed.role as DirectoryRole,
+      role: parsed.role,
       churchSlugs: parsed.churchSlugs.filter((slug): slug is string => typeof slug === "string")
     };
   } catch (error) {
@@ -88,87 +132,52 @@ function decodeSession(token?: string | null): AuthUser | null {
   }
 }
 
-async function findDbChurchUser(email: string) {
-  if (!process.env.DATABASE_URL) {
-    return null;
-  }
-
-  try {
-    const { prisma } = await import("@/lib/prisma/client");
-    return await prisma.user.findUnique({
-      where: {
-        email
-      },
-      include: {
-        memberships: {
-          where: {
-            status: "ACTIVE"
-          },
-          include: {
-            church: {
-              select: {
-                slug: true
-              }
-            }
-          }
-        }
-      }
-    });
-  } catch (error) {
-    console.error("Database-backed auth lookup failed.", error);
-    return null;
-  }
-}
-
+/**
+ * Authenticates a directory administrator against the configured credentials.
+ *
+ * This is deliberately the *only* credential path. The previous implementation
+ * also accepted a hardcoded account list and a shared literal password for every
+ * church user, both of which were published in the repository and on the login
+ * page. Church-staff sign-in is being rebuilt on email magic links, which needs
+ * no stored password; until that ships there is intentionally no church login.
+ */
 export async function authenticateWithCredentials(emailInput: unknown, passwordInput: unknown) {
   try {
-    const email = emailInput?.toString().toLowerCase();
+    const email = emailInput?.toString().trim().toLowerCase();
     const password = passwordInput?.toString();
 
     if (!email || !password) {
       return null;
     }
 
-    if (email === adminEmail && password === adminPassword) {
+    const { adminEmail, adminPassword } = env;
+
+    // In development these may be unset; production boot already requires them.
+    if (!adminEmail || !adminPassword) {
+      if (env.isProduction) {
+        console.error("Admin credentials are not configured; refusing sign-in.");
+      }
+      return null;
+    }
+
+    // Evaluate both comparisons before branching so a wrong email and a wrong
+    // password take the same time.
+    const emailMatches = constantTimeEquals(email, adminEmail);
+    const passwordMatches = constantTimeEquals(password, adminPassword);
+
+    if (emailMatches && passwordMatches) {
       return {
         id: "admin-user",
         name: "Directory Admin",
-        email,
+        email: adminEmail,
         role: "ADMIN",
         churchSlugs: []
       } satisfies AuthUser;
     }
 
-    const matched = mockCredentials.find(
-      (account) => account.email.toLowerCase() === email && account.password === password
-    );
-
-    if (matched) {
-      return {
-        id: matched.email,
-        name: matched.email,
-        email: matched.email,
-        role: matched.role,
-        churchSlugs: matched.churchSlugs
-      } satisfies AuthUser;
-    }
-
-    if (password === "church") {
-      const dbUser = await findDbChurchUser(email);
-
-      if (dbUser && (dbUser.role === "CHURCH_OWNER" || dbUser.role === "CHURCH_EDITOR")) {
-        return {
-          id: dbUser.id,
-          name: dbUser.name ?? dbUser.email,
-          email: dbUser.email,
-          role: dbUser.role,
-          churchSlugs: dbUser.memberships.map((membership) => membership.church.slug)
-        } satisfies AuthUser;
-      }
-    }
-
     return null;
   } catch (error) {
+    // Never log the submitted credentials.
     console.error("Credential authentication failed.", error);
     return null;
   }

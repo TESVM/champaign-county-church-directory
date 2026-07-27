@@ -1,0 +1,162 @@
+import { z } from "zod";
+
+/**
+ * Validated server environment.
+ *
+ * This module is the single place `process.env` is read on the server. It fails
+ * fast rather than falling back to insecure defaults: a deployment that is
+ * missing `AUTH_SECRET` must refuse to boot, because the alternative is signing
+ * sessions with a value an attacker can guess.
+ *
+ * Validation is relaxed during `next build` (`NEXT_PHASE=phase-production-build`)
+ * because static generation legitimately runs before runtime secrets are bound.
+ * Runtime always validates.
+ */
+
+// This module holds secrets. Importing it from a Client Component would inline
+// ADMIN_PASSWORD and AUTH_SECRET into the browser bundle, so refuse to load
+// anywhere but the server.
+if (typeof window !== "undefined") {
+  throw new Error(
+    "lib/env.ts was imported from client code. It contains secrets and must only be imported from Server Components, server actions, or route handlers."
+  );
+}
+
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+const isProduction = process.env.NODE_ENV === "production";
+
+/** Secrets must be long enough that brute-forcing the HMAC key is impractical. */
+const MIN_SECRET_LENGTH = 32;
+const MIN_ADMIN_PASSWORD_LENGTH = 12;
+
+const optionalString = z.string().trim().min(1).optional();
+
+const baseSchema = z.object({
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+
+  // Session signing. Either name is accepted; NEXTAUTH_SECRET is a legacy alias.
+  AUTH_SECRET: z.string().min(MIN_SECRET_LENGTH).optional(),
+  NEXTAUTH_SECRET: z.string().min(MIN_SECRET_LENGTH).optional(),
+
+  DATABASE_URL: z.string().url().optional(),
+
+  ADMIN_EMAIL: z.string().email().optional(),
+  ADMIN_PASSWORD: z.string().min(MIN_ADMIN_PASSWORD_LENGTH).optional(),
+
+  CRON_SECRET: z.string().min(16).optional(),
+
+  AUTH_URL: z.string().url().optional(),
+  NEXTAUTH_URL: z.string().url().optional(),
+
+  NEXT_PUBLIC_CHURCH_DIRECTORY_URL: optionalString,
+  NEXT_PUBLIC_MUSICIAN_DIRECTORY_URL: optionalString,
+
+  VERCEL_URL: optionalString,
+  VERCEL_PROJECT_PRODUCTION_URL: optionalString
+});
+
+type BaseEnv = z.infer<typeof baseSchema>;
+
+function formatIssues(error: z.ZodError): string {
+  return error.issues
+    .map((issue) => `  - ${issue.path.join(".") || "(root)"}: ${issue.message}`)
+    .join("\n");
+}
+
+function assertProductionRequirements(env: BaseEnv): string[] {
+  const missing: string[] = [];
+
+  if (!env.AUTH_SECRET && !env.NEXTAUTH_SECRET) {
+    missing.push(
+      `AUTH_SECRET (or NEXTAUTH_SECRET) is required in production and must be at least ${MIN_SECRET_LENGTH} characters. Generate one with: openssl rand -base64 48`
+    );
+  }
+
+  if (!env.ADMIN_EMAIL) {
+    missing.push("ADMIN_EMAIL is required in production.");
+  }
+
+  if (!env.ADMIN_PASSWORD) {
+    missing.push(
+      `ADMIN_PASSWORD is required in production and must be at least ${MIN_ADMIN_PASSWORD_LENGTH} characters.`
+    );
+  }
+
+  if (!env.CRON_SECRET) {
+    missing.push(
+      "CRON_SECRET is required in production. Without it the weekly scan endpoint cannot authenticate its caller."
+    );
+  }
+
+  if (!env.DATABASE_URL) {
+    missing.push(
+      "DATABASE_URL is required in production. Without it no write is persisted and admin screens render fallback data."
+    );
+  }
+
+  return missing;
+}
+
+function loadEnv() {
+  const parsed = baseSchema.safeParse(process.env);
+
+  if (!parsed.success) {
+    throw new Error(
+      `Invalid environment configuration:\n${formatIssues(parsed.error)}`
+    );
+  }
+
+  const env = parsed.data;
+
+  if (isProduction && !isBuildPhase) {
+    const missing = assertProductionRequirements(env);
+
+    if (missing.length > 0) {
+      throw new Error(
+        `Refusing to start: required production environment variables are missing or invalid.\n${missing
+          .map((line) => `  - ${line}`)
+          .join("\n")}`
+      );
+    }
+  }
+
+  return env;
+}
+
+const parsedEnv = loadEnv();
+
+/**
+ * Resolved session-signing secret.
+ *
+ * In development a stable, clearly-labelled local value is used so contributors
+ * are not forced to configure secrets to run the app. It is never reachable in
+ * production: `assertProductionRequirements` rejects a production boot without a
+ * real secret before this is evaluated.
+ */
+export const authSecret: string =
+  parsedEnv.AUTH_SECRET ??
+  parsedEnv.NEXTAUTH_SECRET ??
+  "insecure-development-only-secret-do-not-use-in-production";
+
+export const env = {
+  nodeEnv: parsedEnv.NODE_ENV,
+  isProduction,
+  isDevelopment: parsedEnv.NODE_ENV === "development",
+
+  databaseUrl: parsedEnv.DATABASE_URL,
+  hasDatabase: Boolean(parsedEnv.DATABASE_URL),
+
+  adminEmail: parsedEnv.ADMIN_EMAIL?.toLowerCase(),
+  adminPassword: parsedEnv.ADMIN_PASSWORD,
+
+  cronSecret: parsedEnv.CRON_SECRET,
+
+  authUrl: parsedEnv.AUTH_URL ?? parsedEnv.NEXTAUTH_URL,
+  vercelUrl: parsedEnv.VERCEL_URL,
+  vercelProductionUrl: parsedEnv.VERCEL_PROJECT_PRODUCTION_URL,
+
+  churchDirectoryUrl: parsedEnv.NEXT_PUBLIC_CHURCH_DIRECTORY_URL,
+  musicianDirectoryUrl: parsedEnv.NEXT_PUBLIC_MUSICIAN_DIRECTORY_URL
+} as const;
+
+export type Env = typeof env;

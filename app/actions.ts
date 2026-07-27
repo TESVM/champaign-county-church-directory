@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { safeReturnPath } from "@/lib/safe-redirect";
 import { externalUrl } from "@/lib/utils";
 import { contactSchema, claimSchema, submitListingSchema } from "@/lib/validation/forms";
 import {
@@ -124,8 +125,7 @@ async function fileToDataUrl(file: File | null) {
 }
 
 function normalizedReturnPath(value: FormDataEntryValue | null, fallback: string) {
-  const path = value?.toString();
-  return path?.startsWith("/") ? path : fallback;
+  return safeReturnPath(value?.toString(), fallback);
 }
 
 async function requireChurchManageAccess(churchSlug: string) {
