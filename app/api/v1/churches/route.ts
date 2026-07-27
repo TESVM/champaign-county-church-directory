@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { churchQuerySchema } from "@cccd/shared";
-import { listChurches } from "@/lib/api/churches";
+import { fetchChurches } from "@/lib/data/source";
 import {
   apiPaginated,
   apiValidationError,
@@ -19,7 +19,10 @@ export const GET = withApiErrorHandling(async (request: NextRequest) => {
 
   const { cursor, limit, ...filters } = parsed.data;
   const offset = decodeCursor(cursor);
-  const { items, total, nextOffset } = await listChurches(filters, offset, limit);
+
+  // A database failure propagates out of fetchChurches and becomes a structured
+  // 500 rather than being quietly replaced with in-repo records.
+  const { items, total, nextOffset } = await fetchChurches(filters, offset, limit);
 
   return apiPaginated(
     items,
