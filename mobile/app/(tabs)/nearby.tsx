@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import * as Location from "expo-location";
 import { FlatList, StyleSheet, Text, View } from "react-native";
-import type { ChurchSummary } from "@cccd/shared";
+import { formatDistance, sortByDistance } from "@cccd/shared";
 import { ChurchCard } from "@/components/church-card";
 import { EmptyState, ErrorState, LoadingState } from "@/components/states";
 import { useChurches } from "@/queries";
@@ -23,28 +23,6 @@ type LocationState =
   | { status: "granted"; latitude: number; longitude: number }
   | { status: "denied" }
   | { status: "error"; message: string };
-
-const EARTH_RADIUS_MILES = 3958.8;
-
-function toRadians(degrees: number) {
-  return (degrees * Math.PI) / 180;
-}
-
-function distanceInMiles(
-  a: { latitude: number; longitude: number },
-  b: { latitude: number; longitude: number }
-) {
-  const dLat = toRadians(b.latitude - a.latitude);
-  const dLon = toRadians(b.longitude - a.longitude);
-  const lat1 = toRadians(a.latitude);
-  const lat2 = toRadians(b.latitude);
-
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.sin(dLon / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-
-  return 2 * EARTH_RADIUS_MILES * Math.asin(Math.sqrt(h));
-}
 
 export default function NearbyScreen() {
   const theme = useTheme();
@@ -86,29 +64,14 @@ export default function NearbyScreen() {
   const churches = useMemo(() => {
     const all = query.data?.pages.flatMap((page) => page.data) ?? [];
 
-    if (location.status !== "granted") return all;
+    if (location.status !== "granted") {
+      return all.map((church) => ({ ...church, distanceMiles: null }));
+    }
 
-    const origin = { latitude: location.latitude, longitude: location.longitude };
-
-    // Records without coordinates cannot be ranked, so they sort after the ones
-    // that can rather than being dropped from the list entirely.
-    const withDistance = all.map((church: ChurchSummary) => {
-      const { latitude, longitude } = church.address;
-      const distance =
-        latitude !== null && longitude !== null
-          ? distanceInMiles(origin, { latitude, longitude })
-          : null;
-      return { church, distance };
+    return sortByDistance(all, {
+      latitude: location.latitude,
+      longitude: location.longitude
     });
-
-    withDistance.sort((a, b) => {
-      if (a.distance === null && b.distance === null) return 0;
-      if (a.distance === null) return 1;
-      if (b.distance === null) return -1;
-      return a.distance - b.distance;
-    });
-
-    return withDistance.map((entry) => entry.church);
   }, [query.data, location]);
 
   const anyGeocoded = churches.some(
@@ -158,7 +121,14 @@ export default function NearbyScreen() {
     <FlatList
       data={churches}
       keyExtractor={(church) => church.id}
-      renderItem={({ item }) => <ChurchCard church={item} />}
+      renderItem={({ item }) => (
+        <ChurchCard
+          church={item}
+          distanceLabel={
+            item.distanceMiles === null ? null : formatDistance(item.distanceMiles)
+          }
+        />
+      )}
       contentContainerStyle={styles.list}
       ListHeaderComponent={
         anyGeocoded ? null : (

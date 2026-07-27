@@ -40,6 +40,10 @@ export type ChurchRecord = {
   address1: string;
   state: string;
   zip: string;
+  /** WGS84 latitude, set by scripts/geocode-churches.ts. */
+  latitude?: number;
+  /** WGS84 longitude, set by scripts/geocode-churches.ts. */
+  longitude?: number;
   phone?: string;
   email?: string;
   websiteUrl?: string;

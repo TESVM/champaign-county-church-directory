@@ -109,10 +109,11 @@ export function toChurchSummary(church: ChurchRecord): ChurchSummary {
       city: church.city,
       state: church.state,
       zip: emptyToNull(church.zip),
-      // Geocoding is not modelled yet; the contract reserves the fields so
-      // adding them later is not a breaking change for the mobile map view.
-      latitude: null,
-      longitude: null
+      // Two addresses could not be matched by the Census geocoder; those stay
+      // null and sort after located churches rather than being given a guessed
+      // position, which would send someone to the wrong building.
+      latitude: church.latitude ?? null,
+      longitude: church.longitude ?? null
     },
     media: {
       logoUrl: emptyToNull(church.logoUrl),

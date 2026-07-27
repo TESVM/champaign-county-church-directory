@@ -19,7 +19,14 @@ function Tag({ label, tone }: { label: string; tone: "brand" | "success" | "acce
   );
 }
 
-export function ChurchCard({ church }: { church: ChurchSummary }) {
+export function ChurchCard({
+  church,
+  distanceLabel = null
+}: {
+  church: ChurchSummary;
+  /** Rendered on the Near me screen; null elsewhere. */
+  distanceLabel?: string | null;
+}) {
   const theme = useTheme();
 
   const capabilities = [
@@ -33,6 +40,7 @@ export function ChurchCard({ church }: { church: ChurchSummary }) {
     church.name,
     church.denomination,
     `in ${church.city.name}`,
+    distanceLabel ? `${distanceLabel} away` : null,
     church.verified ? "Verified listing" : null,
     church.serviceSummary
   ]
@@ -77,7 +85,9 @@ export function ChurchCard({ church }: { church: ChurchSummary }) {
           </Text>
 
           <Text style={[typography.caption, { color: theme.textMuted }]}>
-            {[church.denomination, church.city.name].filter(Boolean).join(" • ")}
+            {[church.denomination, church.city.name, distanceLabel]
+              .filter(Boolean)
+              .join(" • ")}
           </Text>
 
           {church.seniorPastor ? (

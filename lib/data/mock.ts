@@ -231,6 +231,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-grace-lutheran-champaign",
     slug: "grace-lutheran-champaign",
+    latitude: 40.113355346863,
+    longitude: -88.257894913104,
     name: "Grace Lutheran Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -266,6 +268,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-st-luke-cme",
     slug: "st-luke-cme-champaign",
+    latitude: 40.123241462772,
+    longitude: -88.232190743676,
     name: "St. Luke CME Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -294,6 +298,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-uniplace",
     slug: "uniplace-christian-church",
+    latitude: 40.106787356701,
+    longitude: -88.228904044783,
     name: "UniPlace Christian Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -324,6 +330,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-faith-baptist-champaign",
     slug: "faith-baptist-church-champaign",
+    latitude: 40.156177776292,
+    longitude: -88.239345201473,
     name: "Faith Baptist Church of Champaign",
     citySlug: "champaign",
     city: "Champaign",
@@ -357,6 +365,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-grace-bible-urbana",
     slug: "grace-bible-church-urbana",
+    latitude: 40.155645859143,
+    longitude: -88.200944086067,
     name: "Grace Bible Church",
     citySlug: "urbana",
     city: "Urbana",
@@ -387,6 +397,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-rantoul-nazarene",
     slug: "rantoul-church-of-the-nazarene",
+    latitude: 40.312080711025,
+    longitude: -88.150499806362,
     name: "Rantoul Church of the Nazarene",
     citySlug: "rantoul",
     city: "Rantoul",
@@ -417,6 +429,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-lutheran-mahomet",
     slug: "lutheran-church-of-mahomet",
+    latitude: 40.197549296361,
+    longitude: -88.401468844726,
     name: "The Lutheran Church of Mahomet",
     citySlug: "mahomet",
     city: "Mahomet",
@@ -446,6 +460,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-grace-mahomet",
     slug: "grace-church-of-mahomet",
+    latitude: 40.193028217753,
+    longitude: -88.415091924466,
     name: "Grace Church of Mahomet",
     citySlug: "mahomet",
     city: "Mahomet",
@@ -476,6 +492,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-first-baptist-mahomet",
     slug: "first-baptist-church-mahomet",
+    latitude: 40.192936786399,
+    longitude: -88.403004460964,
     name: "First Baptist Church of Mahomet",
     citySlug: "mahomet",
     city: "Mahomet",
@@ -507,6 +525,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-st-joseph-umc",
     slug: "st-joseph-united-methodist-church",
+    latitude: 40.112334422274,
+    longitude: -88.040581911275,
     name: "St. Joseph United Methodist Church",
     citySlug: "st-joseph",
     city: "St. Joseph",
@@ -536,6 +556,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-cornerstone-savoy",
     slug: "cornerstone-church-savoy",
+    latitude: 40.054634471362,
+    longitude: -88.261655214306,
     name: "Cornerstone Church",
     citySlug: "savoy",
     city: "Savoy",
@@ -572,6 +594,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-tolono-presbyterian",
     slug: "first-presbyterian-church-tolono",
+    latitude: 39.988763108723,
+    longitude: -88.260072159745,
     name: "First Presbyterian Church of Tolono",
     citySlug: "tolono",
     city: "Tolono",
@@ -601,6 +625,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-sidney-christian",
     slug: "sidney-christian-church",
+    latitude: 40.025878199216,
+    longitude: -88.069784020371,
     name: "Sidney Christian Church",
     citySlug: "sidney",
     city: "Sidney",
@@ -634,6 +660,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-river-valley-fisher",
     slug: "river-valley-church-fisher",
+    latitude: 40.309754802878,
+    longitude: -88.344189427079,
     name: "River Valley Church",
     citySlug: "fisher",
     city: "Fisher",
@@ -667,6 +695,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-cu-apostolic-christian",
     slug: "champaign-urbana-apostolic-christian-church",
+    latitude: 40.089607622934,
+    longitude: -88.267578677082,
     name: "Champaign-Urbana Apostolic Christian Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -701,6 +731,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-first-pres-champaign",
     slug: "first-presbyterian-church-champaign",
+    latitude: 40.118314783445,
+    longitude: -88.246931398719,
     name: "First Presbyterian Church of Champaign",
     citySlug: "champaign",
     city: "Champaign",
@@ -733,6 +765,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-fumc-champaign",
     slug: "first-united-methodist-church-champaign",
+    latitude: 40.118323783363,
+    longitude: -88.245406439625,
     name: "First United Methodist Church of Champaign",
     citySlug: "champaign",
     city: "Champaign",
@@ -765,6 +799,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-berean-covenant-urbana",
     slug: "berean-covenant-church-urbana",
+    latitude: 40.11284206243,
+    longitude: -88.199285049142,
     name: "Berean Covenant Church",
     citySlug: "urbana",
     city: "Urbana",
@@ -797,6 +833,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-life-church-cu",
     slug: "life-church-cu",
+    latitude: 40.134325270285,
+    longitude: -88.162972632739,
     name: "Life Church CU",
     citySlug: "urbana",
     city: "Urbana",
@@ -832,6 +870,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-cu-church",
     slug: "cu-church",
+    latitude: 40.094420957551,
+    longitude: -88.238472497918,
     name: "CU Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -866,6 +906,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-sheriff-temple-aoh",
     slug: "sheriff-temple-aoh-church-of-god",
+    latitude: 40.122106190495,
+    longitude: -88.230393312764,
     name: "Sheriff Temple Apostolic Overcoming Holy Church of God",
     citySlug: "champaign",
     city: "Champaign",
@@ -893,6 +935,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-bethel-ame-champaign",
     slug: "bethel-ame-church-champaign",
+    latitude: 40.117291597937,
+    longitude: -88.23369578984,
     name: "Bethel A.M.E. Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -928,6 +972,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-emc-urbana",
     slug: "emc-church-urbana",
+    latitude: 40.11071953131,
+    longitude: -88.205048430363,
     name: "EMC Church",
     citySlug: "urbana",
     city: "Urbana",
@@ -955,6 +1001,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-anchor-champaign",
     slug: "anchor-church-champaign",
+    latitude: 40.121789347836,
+    longitude: -88.228901557055,
     name: "Anchor Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -983,6 +1031,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-webber-street",
     slug: "webber-street-christian-church",
+    latitude: 40.11284206243,
+    longitude: -88.199285049142,
     name: "Webber Street Christian Church",
     citySlug: "urbana",
     city: "Urbana",
@@ -1012,6 +1062,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-liberty-temple-cogic",
     slug: "liberty-temple-cogic-champaign",
+    latitude: 40.103126549614,
+    longitude: -88.278038040364,
     name: "Liberty Temple Church of God in Christ",
     citySlug: "champaign",
     city: "Champaign",
@@ -1037,6 +1089,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-salem-baptist-champaign",
     slug: "salem-baptist-church-champaign",
+    latitude: 40.117414782816,
+    longitude: -88.232031318008,
     name: "Salem Baptist Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1067,6 +1121,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-morning-star-urbana",
     slug: "morning-star-free-will-baptist-urbana",
+    latitude: 40.123174781542,
+    longitude: -88.227376905928,
     name: "Morning Star Free Will Baptist Church",
     citySlug: "urbana",
     city: "Urbana",
@@ -1097,6 +1153,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-twin-city-apostolic",
     slug: "twin-city-apostolic-woh-urbana",
+    latitude: 40.125886188491,
+    longitude: -88.205292315515,
     name: "Twin City Apostolic W.O.H. Church",
     citySlug: "urbana",
     city: "Urbana",
@@ -1126,6 +1184,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-pilgrim-mbc",
     slug: "pilgrim-missionary-baptist-church-champaign",
+    latitude: 40.128904593166,
+    longitude: -88.229957610397,
     name: "Pilgrim Missionary Baptist Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1155,6 +1215,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-mt-olive-mbc",
     slug: "mt-olive-missionary-baptist-church-champaign",
+    latitude: 40.127232646251,
+    longitude: -88.255032402451,
     name: "Mt. Olive Missionary Baptist Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1177,6 +1239,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-new-free-will-baptist",
     slug: "new-free-will-baptist-church-champaign",
+    latitude: 40.123051630169,
+    longitude: -88.230388240798,
     name: "New Free Will Baptist Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1199,6 +1263,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-mount-calvary-mbc",
     slug: "mount-calvary-missionary-baptist-church-champaign",
+    latitude: 40.137906694885,
+    longitude: -88.271991634901,
     name: "Mount Calvary Missionary Baptist Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1221,6 +1287,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-new-foundation-mbc",
     slug: "new-foundation-missionary-baptist-church-champaign",
+    latitude: 40.125438233618,
+    longitude: -88.258972594571,
     name: "New Foundation Missionary Baptist Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1243,6 +1311,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-meadowbrook",
     slug: "meadowbrook-community-church-champaign",
+    latitude: 40.093202099614,
+    longitude: -88.295139120757,
     name: "Meadowbrook Community Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1275,6 +1345,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-university-baptist",
     slug: "university-baptist-church-champaign",
+    latitude: 40.107994976223,
+    longitude: -88.235045574617,
     name: "University Baptist Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1298,6 +1370,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-macedonia-baptist",
     slug: "macedonia-baptist-church-champaign",
+    latitude: 40.123230702219,
+    longitude: -88.233708564228,
     name: "Macedonia Baptist Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1320,6 +1394,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-unity-baptist",
     slug: "unity-baptist-church-champaign",
+    latitude: 40.112099182031,
+    longitude: -88.295390038086,
     name: "Unity Baptist Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1342,6 +1418,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-bible-baptist-champaign",
     slug: "bible-baptist-church-champaign",
+    latitude: 40.098581360322,
+    longitude: -88.30963211118,
     name: "Bible Baptist Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1364,6 +1442,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-living-god",
     slug: "church-of-the-living-god-champaign",
+    latitude: 40.126891186178,
+    longitude: -88.233887443606,
     name: "Church of the Living God",
     citySlug: "champaign",
     city: "Champaign",
@@ -1409,6 +1489,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-new-horizon",
     slug: "new-horizon-church-champaign",
+    latitude: 40.151310884589,
+    longitude: -88.296038061972,
     name: "New Horizon Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1431,6 +1513,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-midwest-believers",
     slug: "midwest-believers-church-champaign",
+    latitude: 40.095035802466,
+    longitude: -88.295148326271,
     name: "Midwest Believers Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1476,6 +1560,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-canaan-baptist-urbana",
     slug: "canaan-baptist-church-urbana",
+    latitude: 40.113171482096,
+    longitude: -88.211742270385,
     name: "Canaan Baptist Church",
     citySlug: "urbana",
     city: "Urbana",
@@ -1498,6 +1584,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-cu-bridge",
     slug: "cu-bridge-church-champaign",
+    latitude: 40.109319673754,
+    longitude: -88.284469092814,
     name: "CU Bridge Church",
     citySlug: "champaign",
     city: "Champaign",
@@ -1521,6 +1609,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-community-ucc",
     slug: "community-united-church-of-christ-champaign",
+    latitude: 40.108978641379,
+    longitude: -88.230441787284,
     name: "Community United Church of Christ",
     citySlug: "champaign",
     city: "Champaign",
@@ -1543,6 +1633,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-faith-church-urbana",
     slug: "faith-church-of-urbana",
+    latitude: 40.132951042349,
+    longitude: -88.200792188938,
     name: "Faith Church of Urbana",
     citySlug: "urbana",
     city: "Urbana",
@@ -1571,6 +1663,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-stone-creek-urbana",
     slug: "stone-creek-church-urbana",
+    latitude: 40.085896242947,
+    longitude: -88.209377262163,
     name: "Stone Creek Church",
     citySlug: "urbana",
     city: "Urbana",
@@ -1606,6 +1700,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-first-umc-urbana",
     slug: "first-united-methodist-church-of-urbana",
+    latitude: 40.110621321959,
+    longitude: -88.208819315681,
     name: "First United Methodist Church of Urbana",
     citySlug: "urbana",
     city: "Urbana",
@@ -1634,6 +1730,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-illini-life-champaign",
     slug: "illini-life-christian-fellowship",
+    latitude: 40.109125784289,
+    longitude: -88.231915179684,
     name: "Illini Life Christian Fellowship",
     citySlug: "champaign",
     city: "Champaign",
@@ -1662,6 +1760,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-first-baptist-urbana",
     slug: "first-baptist-church-urbana",
+    latitude: 40.076052302931,
+    longitude: -88.19045594824,
     name: "First Baptist Church-Urbana",
     citySlug: "urbana",
     city: "Urbana",
@@ -1684,6 +1784,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-quest-urbana",
     slug: "quest-church-urbana",
+    latitude: 40.09323178167,
+    longitude: -88.19058669429,
     name: "Quest Church: A Community of Grace",
     citySlug: "urbana",
     city: "Urbana",
@@ -1706,6 +1808,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-in-urbana",
     slug: "the-church-in-urbana",
+    latitude: 40.103659006182,
+    longitude: -88.216224135964,
     name: "The Church in Urbana",
     citySlug: "urbana",
     city: "Urbana",
@@ -1728,6 +1832,8 @@ export const churches: ChurchRecord[] = [
   {
     id: "church-twin-city-bible",
     slug: "twin-city-bible-church-urbana",
+    latitude: 40.101943784821,
+    longitude: -88.217758494471,
     name: "Twin City Bible Church",
     citySlug: "urbana",
     city: "Urbana",

@@ -66,6 +66,9 @@ async function main() {
         featuredImageUrl: church.featuredImageUrl,
         verified: church.verified,
         claimed: church.claimed,
+        latitude: church.latitude ?? null,
+        longitude: church.longitude ?? null,
+        geocodedAt: church.latitude != null ? new Date() : null,
         seniorPastorId: seniorPastor.id,
         lastScannedAt: new Date(church.lastScannedAt),
         lastUpdatedAt: new Date(church.lastUpdatedAt)
@@ -89,6 +92,9 @@ async function main() {
         featuredImageUrl: church.featuredImageUrl,
         verified: church.verified,
         claimed: church.claimed,
+        latitude: church.latitude ?? null,
+        longitude: church.longitude ?? null,
+        geocodedAt: church.latitude != null ? new Date() : null,
         seniorPastorId: seniorPastor.id,
         lastScannedAt: new Date(church.lastScannedAt),
         lastUpdatedAt: new Date(church.lastUpdatedAt)

@@ -59,9 +59,9 @@ model City {
 }
 
 model Church {
-  id               String            @id @default(cuid())
+  id               String             @id @default(cuid())
   name             String
-  slug             String            @unique
+  slug             String             @unique
   cityId           String
   denomination     String?
   description      String?
@@ -77,16 +77,19 @@ model Church {
   livestreamUrl    String?
   logoUrl          String?
   featuredImageUrl String?
-  seniorPastorId   String?           @unique
-  verified         Boolean           @default(false)
-  claimed          Boolean           @default(false)
+  seniorPastorId   String?            @unique
+  verified         Boolean            @default(false)
+  claimed          Boolean            @default(false)
+  latitude         Float?
+  longitude        Float?
+  geocodedAt       DateTime?
   lastScannedAt    DateTime?
   lastUpdatedAt    DateTime?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  cityRecord       City              @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  seniorPastor     Pastor?           @relation("SeniorPastor", fields: [seniorPastorId], references: [id])
-  leaders          Pastor[]          @relation("ChurchLeaders")
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  cityRecord       City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  seniorPastor     Pastor?            @relation("SeniorPastor", fields: [seniorPastorId], references: [id])
+  leaders          Pastor[]           @relation("ChurchLeaders")
   ministries       Ministry[]
   serviceTimes     ServiceTime[]
   socialLinks      SocialLink[]
@@ -94,6 +97,11 @@ model Church {
   claimRequests    ClaimRequest[]
   memberships      ChurchMembership[]
   updateLogs       UpdateLog[]
+
+  @@index([cityId])
+  @@index([verified])
+  @@index([claimed])
+  @@index([lastUpdatedAt])
 }
 
 model Pastor {
@@ -109,6 +117,8 @@ model Pastor {
   updatedAt        DateTime @updatedAt
   churchLeadership Church?  @relation("ChurchLeaders", fields: [churchId], references: [id])
   seniorForChurch  Church?  @relation("SeniorPastor")
+
+  @@index([churchId])
 }
 
 model ServiceTime {
@@ -122,6 +132,8 @@ model ServiceTime {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   church      Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
 }
 
 model SocialLink {
@@ -132,6 +144,8 @@ model SocialLink {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   church    Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
 }
 
 model Ministry {
@@ -142,6 +156,8 @@ model Ministry {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   church      Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
 }
 
 model SuggestedChange {
@@ -158,6 +174,9 @@ model SuggestedChange {
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
   church          Church                @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
+  @@index([status])
 }
 
 model Submission {
@@ -171,17 +190,19 @@ model Submission {
   status            SubmissionStatus @default(PENDING)
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
+
+  @@index([status])
 }
 
 model User {
-  id             String            @id @default(cuid())
-  name           String?
-  email          String            @unique
-  role           UserRole          @default(EDITOR)
-  memberships    ChurchMembership[]
-  claimRequests  ClaimRequest[]
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  id            String             @id @default(cuid())
+  name          String?
+  email         String             @unique
+  role          UserRole           @default(EDITOR)
+  memberships   ChurchMembership[]
+  claimRequests ClaimRequest[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 }
 
 model ClaimRequest {
@@ -201,21 +222,28 @@ model ClaimRequest {
   updatedAt          DateTime           @updatedAt
   church             Church             @relation(fields: [churchId], references: [id], onDelete: Cascade)
   user               User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([churchId])
+  @@index([userId])
+  @@index([status])
 }
 
 model ChurchMembership {
-  id         String           @id @default(cuid())
-  churchId    String
-  userId      String
-  role       UserRole
-  status     MembershipStatus @default(PENDING)
-  grantedAt  DateTime?
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-  church     Church           @relation(fields: [churchId], references: [id], onDelete: Cascade)
-  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String           @id @default(cuid())
+  churchId  String
+  userId    String
+  role      UserRole
+  status    MembershipStatus @default(PENDING)
+  grantedAt DateTime?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  church    Church           @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([churchId, userId])
+  @@index([churchId])
+  @@index([userId])
+  @@index([role, status])
 }
 
 model SiteContent {
@@ -230,10 +258,13 @@ model SiteContent {
 
 model UpdateLog {
   id          String   @id @default(cuid())
-  churchId     String
+  churchId    String
   action      String
   details     String?
   performedBy String?
   createdAt   DateTime @default(now())
   church      Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
+  @@index([createdAt])
 }
