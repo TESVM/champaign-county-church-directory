@@ -71,6 +71,8 @@ function buildWhere(query: Partial<ChurchQuery>) {
     and.push({
       OR: [
         { name: { contains: query.q, mode: "insensitive" } },
+        // The slug carries abbreviations the formal name spells out.
+        { slug: { contains: query.q.replace(/\s+/g, "-"), mode: "insensitive" } },
         { city: { contains: query.q, mode: "insensitive" } },
         { denomination: { contains: query.q, mode: "insensitive" } },
         { description: { contains: query.q, mode: "insensitive" } },
@@ -213,8 +215,10 @@ function filterStatic(query: Partial<ChurchQuery>) {
       if (needle) {
         const haystack = [
           church.name,
+          church.slug.replace(/-/g, " "),
           church.city,
           church.denomination,
+          church.shortDescription,
           church.description,
           church.pastor?.fullName
         ]
