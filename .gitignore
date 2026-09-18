@@ -14,4 +14,7 @@ mobile/.expo
 mobile/ios
 mobile/android
 mobile/dist
-.pglite-data
+.pglite-*
+
+# Locally generated images (MEDIA_DRIVER=local)
+public/uploads

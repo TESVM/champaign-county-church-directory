@@ -41,6 +41,13 @@ enum VerificationMethod {
   MANUAL_REVIEW
 }
 
+enum AiImageStatus {
+  NONE
+  PENDING
+  GENERATED
+  FAILED
+}
+
 enum MembershipStatus {
   PENDING
   ACTIVE
@@ -59,44 +66,52 @@ model City {
 }
 
 model Church {
-  id               String             @id @default(cuid())
-  name             String
-  slug             String             @unique
-  cityId           String
-  denomination     String?
-  description      String?
-  address1         String?
-  address2         String?
-  city             String
-  state            String
-  zip              String?
-  phone            String?
-  email            String?
-  websiteUrl       String?
-  appUrl           String?
-  livestreamUrl    String?
-  logoUrl          String?
-  featuredImageUrl String?
-  seniorPastorId   String?            @unique
-  verified         Boolean            @default(false)
-  claimed          Boolean            @default(false)
-  latitude         Float?
-  longitude        Float?
-  geocodedAt       DateTime?
-  lastScannedAt    DateTime?
-  lastUpdatedAt    DateTime?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  cityRecord       City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  seniorPastor     Pastor?            @relation("SeniorPastor", fields: [seniorPastorId], references: [id])
-  leaders          Pastor[]           @relation("ChurchLeaders")
-  ministries       Ministry[]
-  serviceTimes     ServiceTime[]
-  socialLinks      SocialLink[]
-  suggestedChanges SuggestedChange[]
-  claimRequests    ClaimRequest[]
-  memberships      ChurchMembership[]
-  updateLogs       UpdateLog[]
+  id                 String             @id @default(cuid())
+  name               String
+  slug               String             @unique
+  cityId             String
+  denomination       String?
+  description        String?
+  address1           String?
+  address2           String?
+  city               String
+  state              String
+  zip                String?
+  phone              String?
+  email              String?
+  websiteUrl         String?
+  appUrl             String?
+  livestreamUrl      String?
+  logoUrl            String?
+  featuredImageUrl   String?
+  /// True when featuredImageUrl was produced by the AI generator rather than
+  /// uploaded. Drives the "AI-generated image" label and protects uploaded
+  /// photos from ever being overwritten by a generation.
+  featuredImageIsAi  Boolean            @default(false)
+  featuredImageModel String?
+  aiImageStatus      AiImageStatus      @default(NONE)
+  aiImageError       String?
+  aiImageRequestedAt DateTime?
+  seniorPastorId     String?            @unique
+  verified           Boolean            @default(false)
+  claimed            Boolean            @default(false)
+  latitude           Float?
+  longitude          Float?
+  geocodedAt         DateTime?
+  lastScannedAt      DateTime?
+  lastUpdatedAt      DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  cityRecord         City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  seniorPastor       Pastor?            @relation("SeniorPastor", fields: [seniorPastorId], references: [id])
+  leaders            Pastor[]           @relation("ChurchLeaders")
+  ministries         Ministry[]
+  serviceTimes       ServiceTime[]
+  socialLinks        SocialLink[]
+  suggestedChanges   SuggestedChange[]
+  claimRequests      ClaimRequest[]
+  memberships        ChurchMembership[]
+  updateLogs         UpdateLog[]
 
   @@index([cityId])
   @@index([verified])

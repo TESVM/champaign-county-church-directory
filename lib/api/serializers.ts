@@ -117,7 +117,9 @@ export function toChurchSummary(church: ChurchRecord): ChurchSummary {
     },
     media: {
       logoUrl: emptyToNull(church.logoUrl),
-      featuredImageUrl: emptyToNull(church.featuredImageUrl)
+      featuredImageUrl: emptyToNull(church.featuredImageUrl),
+      // The bundled records carry only real photos or none.
+      featuredImageIsAi: false
     },
     seniorPastor: church.pastor
       ? {

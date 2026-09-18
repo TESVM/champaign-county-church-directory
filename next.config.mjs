@@ -13,7 +13,9 @@ const imageHosts = [
   // Church sites hosted on Wix.
   "static.wixstatic.com",
   // Church sites hosted on the Blackbaud/BEcdn network.
-  "cloud-1de12d.becdn.net"
+  "cloud-1de12d.becdn.net",
+  // AI-generated church images stored in Vercel Blob.
+  "*.public.blob.vercel-storage.com"
 ];
 
 /** @type {import('next').NextConfig} */

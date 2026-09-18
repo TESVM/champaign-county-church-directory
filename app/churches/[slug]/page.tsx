@@ -90,6 +90,9 @@ export default async function ChurchProfilePage({
   const heroImage =
     church.media.featuredImageUrl ?? church.media.logoUrl ?? FALLBACK_HERO;
   const unoptimizedHero = isInlineImageUrl(heroImage);
+  // Only label when the AI image is the one actually on screen.
+  const heroIsAi =
+    church.media.featuredImageIsAi && heroImage === church.media.featuredImageUrl;
 
   const addressLine = [
     church.address.line1,
@@ -136,7 +139,11 @@ export default async function ChurchProfilePage({
         <div className="relative h-64 sm:h-80">
           <Image
             src={heroImage}
-            alt={`${church.name} building or logo`}
+            alt={
+              heroIsAi
+                ? `AI-generated image of a church building, not a photo of ${church.name}`
+                : `${church.name} building or logo`
+            }
             fill
             sizes="(max-width: 1280px) 100vw, 1280px"
             className="object-cover"
@@ -144,6 +151,11 @@ export default async function ChurchProfilePage({
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-900/70 via-brand-700/20 to-transparent" />
+          {heroIsAi ? (
+            <p className="absolute bottom-4 right-4 rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white">
+              AI-generated image
+            </p>
+          ) : null}
         </div>
         <div className="grid gap-10 p-6 sm:p-8 lg:grid-cols-[1.2fr_0.8fr]">
           <div>

@@ -246,3 +246,34 @@ export async function saveChurchStatusAction(formData: FormData) {
 
   redirect(`${returnPath}?saved=${field}`);
 }
+
+/**
+ * Generates an AI image for a church that has no uploaded photo.
+ *
+ * Reachable by admins and by the church's own owners/editors, the same people
+ * who can edit its images by hand. A photo someone uploaded is never replaced;
+ * generateChurchImage enforces that at the database level.
+ */
+export async function generateChurchImageAction(formData: FormData) {
+  const churchSlug = formData.get("churchSlug")?.toString();
+
+  if (!churchSlug) {
+    return;
+  }
+
+  await requireChurchManageAccess(churchSlug);
+  const returnPath = normalizedReturnPath(formData.get("returnPath"), `/admin/churches/${churchSlug}`);
+
+  const { generateChurchImage } = await import("@/lib/ai-church-image");
+  const result = await generateChurchImage(churchSlug);
+
+  if (result.status === "generated") {
+    revalidatePath(`/admin/churches/${churchSlug}`);
+    revalidatePath(`/dashboard/churches/${churchSlug}`);
+    revalidatePath(`/churches/${churchSlug}`);
+    revalidatePath("/directory");
+    redirect(`${returnPath}?saved=ai-image`);
+  }
+
+  redirect(`${returnPath}?ai=${result.status}`);
+}

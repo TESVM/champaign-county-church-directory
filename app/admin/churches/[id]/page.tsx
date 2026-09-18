@@ -1,7 +1,13 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { saveChurchListingAction, saveChurchMediaAction, saveChurchStatusAction } from "@/app/actions";
+import {
+  generateChurchImageAction,
+  saveChurchListingAction,
+  saveChurchMediaAction,
+  saveChurchStatusAction
+} from "@/app/actions";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { AiImageGenerator } from "@/components/forms/ai-image-generator";
 import { ChurchMediaForm } from "@/components/forms/church-media-form";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,7 +16,12 @@ import { Button } from "@/components/ui/button";
 import { requireAdminAccess } from "@/lib/auth-guards";
 import { getChurchBySlug } from "@/lib/data/queries";
 import { getPersistedChurchMediaBySlug, hasDatabaseUrl } from "@/lib/data/admin-store";
+import { aiImageUnavailableReason } from "@/lib/env";
 import { isInlineImageUrl } from "@/lib/utils";
+
+// Generating an HD image can take up to ~2.5 minutes, and server actions
+// invoked from this page inherit its function time limit.
+export const maxDuration = 180;
 
 export default async function AdminChurchEditPage({
   params,
@@ -33,6 +44,9 @@ export default async function AdminChurchEditPage({
 
   const persistedMedia = await getPersistedChurchMediaBySlug(id);
   const featuredImageUrl = persistedMedia?.featuredImageUrl ?? church.featuredImageUrl ?? "";
+  const featuredImageIsAi = Boolean(persistedMedia?.featuredImageIsAi);
+  const hasUploadedPhoto = Boolean(featuredImageUrl) && !featuredImageIsAi;
+  const aiResult = Array.isArray(resolvedSearchParams.ai) ? resolvedSearchParams.ai[0] : resolvedSearchParams.ai;
   const logoUrl = persistedMedia?.logoUrl ?? church.logoUrl ?? "";
   const previewImage =
     featuredImageUrl ||
@@ -54,6 +68,7 @@ export default async function AdminChurchEditPage({
             </div>
             {savedState ? (
               <div className="mt-5 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-900 ring-1 ring-brand-100">
+                {savedState === "ai-image" && "AI image created. It is labelled as AI-generated on the public listing."}
                 {savedState === "media" && "Church image saved."}
                 {savedState === "record" && "Church details saved."}
                 {savedState === "verified" && "Church marked verified."}
@@ -87,6 +102,16 @@ export default async function AdminChurchEditPage({
                   logoUrl={logoUrl}
                   submitLabel="Save images"
                 />
+                  <AiImageGenerator
+                    action={generateChurchImageAction}
+                    churchSlug={church.slug}
+                    returnPath={`/admin/churches/${church.slug}`}
+                    unavailableReason={aiImageUnavailableReason()}
+                    hasUploadedPhoto={hasUploadedPhoto}
+                    currentIsAi={featuredImageIsAi}
+                    lastResult={aiResult}
+                    lastError={persistedMedia?.aiImageError}
+                  />
 
                 <form action={saveChurchListingAction} className="grid gap-4 md:grid-cols-2">
                   <input type="hidden" name="churchSlug" value={church.slug} />

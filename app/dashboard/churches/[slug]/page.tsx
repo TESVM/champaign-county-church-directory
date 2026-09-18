@@ -1,8 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import { saveChurchListingAction, saveChurchMediaAction } from "@/app/actions";
+import {
+  generateChurchImageAction,
+  saveChurchListingAction,
+  saveChurchMediaAction
+} from "@/app/actions";
 import { notFound } from "next/navigation";
 import { ChurchDashboardSidebar } from "@/components/dashboard/church-dashboard-sidebar";
+import { AiImageGenerator } from "@/components/forms/ai-image-generator";
 import { ChurchMediaForm } from "@/components/forms/church-media-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,7 +22,12 @@ import {
   getPersistedMembershipsByEmail,
   hasDatabaseUrl
 } from "@/lib/data/admin-store";
+import { aiImageUnavailableReason } from "@/lib/env";
 import { formatDate, isInlineImageUrl } from "@/lib/utils";
+
+// Generating an HD image can take up to ~2.5 minutes, and server actions
+// invoked from this page inherit its function time limit.
+export const maxDuration = 180;
 
 export default async function ChurchWorkspacePage({
   params,
@@ -39,6 +49,9 @@ export default async function ChurchWorkspacePage({
 
   const persistedMedia = await getPersistedChurchMediaBySlug(slug);
   const featuredImageUrl = persistedMedia?.featuredImageUrl ?? church.featuredImageUrl ?? "";
+  const featuredImageIsAi = Boolean(persistedMedia?.featuredImageIsAi);
+  const hasUploadedPhoto = Boolean(featuredImageUrl) && !featuredImageIsAi;
+  const aiResult = Array.isArray(resolvedSearchParams.ai) ? resolvedSearchParams.ai[0] : resolvedSearchParams.ai;
   const logoUrl = persistedMedia?.logoUrl ?? church.logoUrl ?? "";
   const previewImage =
     featuredImageUrl ||
@@ -72,6 +85,7 @@ export default async function ChurchWorkspacePage({
             </div>
             {savedState ? (
               <div className="mt-5 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-900 ring-1 ring-brand-100">
+                {savedState === "ai-image" && "AI image created. It is labelled as AI-generated on the public listing."}
                 {savedState === "media" && "Church image saved."}
                 {savedState === "record" && "Listing changes saved."}
                 {savedState === "needs-db" && "This site needs DATABASE_URL in Vercel before church photos and profile edits can persist."}
@@ -101,6 +115,16 @@ export default async function ChurchWorkspacePage({
                     returnPath={`/dashboard/churches/${church.slug}`}
                     featuredImageUrl={featuredImageUrl}
                     logoUrl={logoUrl}
+                  />
+                  <AiImageGenerator
+                    action={generateChurchImageAction}
+                    churchSlug={church.slug}
+                    returnPath={`/dashboard/churches/${church.slug}`}
+                    unavailableReason={aiImageUnavailableReason()}
+                    hasUploadedPhoto={hasUploadedPhoto}
+                    currentIsAi={featuredImageIsAi}
+                    lastResult={aiResult}
+                    lastError={persistedMedia?.aiImageError}
                   />
                 </div>
                 <form action={saveChurchListingAction} className="grid gap-4 md:grid-cols-2">

@@ -38,6 +38,7 @@ export type ChurchRow = {
   livestreamUrl: string | null;
   logoUrl: string | null;
   featuredImageUrl: string | null;
+  featuredImageIsAi: boolean;
   latitude: number | null;
   longitude: number | null;
   verified: boolean;
@@ -148,7 +149,8 @@ export function mapChurchRowToSummary(row: ChurchRow): ChurchSummary {
     },
     media: {
       logoUrl: emptyToNull(row.logoUrl),
-      featuredImageUrl: emptyToNull(row.featuredImageUrl)
+      featuredImageUrl: emptyToNull(row.featuredImageUrl),
+      featuredImageIsAi: Boolean(row.featuredImageIsAi && emptyToNull(row.featuredImageUrl))
     },
     seniorPastor: row.seniorPastor
       ? {

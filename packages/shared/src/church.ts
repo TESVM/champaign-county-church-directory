@@ -70,7 +70,13 @@ export const churchContactSchema = z.object({
 
 export const churchMediaSchema = z.object({
   logoUrl: z.string().nullable(),
-  featuredImageUrl: z.string().nullable()
+  featuredImageUrl: z.string().nullable(),
+  /**
+   * True when featuredImageUrl is AI-generated rather than a real photo.
+   * Clients must label such images; they depict an invented building, not
+   * this congregation's. Defaults to false so older responses still parse.
+   */
+  featuredImageIsAi: z.boolean().default(false)
 });
 
 export const pastorSchema = z.object({

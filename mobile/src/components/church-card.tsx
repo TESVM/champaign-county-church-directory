@@ -3,6 +3,8 @@ import { Link } from "expo-router";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { ChurchSummary } from "@cccd/shared";
+import { resolveImageUri } from "@/api";
+import { AiBadge } from "@/components/ai-badge";
 import { radii, spacing, typography, useTheme } from "@/theme";
 
 /** Badge shown for verified / claimed / capability flags. */
@@ -40,7 +42,8 @@ export function ChurchCard({
 
   // One label describing the whole card, so a screen reader announces the church
   // once instead of reading six disconnected fragments.
-  const imageUri = church.media.featuredImageUrl ?? church.media.logoUrl ?? null;
+  const imageUri = resolveImageUri(church.media.featuredImageUrl ?? church.media.logoUrl);
+  const imageIsAi = church.media.featuredImageIsAi && Boolean(church.media.featuredImageUrl);
 
   const accessibilityLabel = [
     church.name,
@@ -48,6 +51,7 @@ export function ChurchCard({
     `in ${church.city.name}`,
     distanceLabel ? `${distanceLabel} away` : null,
     church.verified ? "Verified listing" : null,
+    imageIsAi ? "shown with an AI-generated image" : null,
     church.serviceSummary
   ]
     .filter(Boolean)
@@ -68,15 +72,18 @@ export function ChurchCard({
           ]}
         >
         {imageUri && !imageFailed ? (
-          <Image
-            source={{ uri: imageUri }}
-            style={styles.image}
-            contentFit="cover"
-            transition={180}
-            onError={() => setImageFailed(true)}
-            // Decorative: the card's accessibilityLabel already names the church.
-            accessible={false}
-          />
+          <View>
+            <Image
+              source={{ uri: imageUri }}
+              style={styles.image}
+              contentFit="cover"
+              transition={180}
+              onError={() => setImageFailed(true)}
+              // Decorative: the card's accessibilityLabel already names the church.
+              accessible={false}
+            />
+            {imageIsAi ? <AiBadge /> : null}
+          </View>
         ) : (
           <View style={[styles.imageFallback, { backgroundColor: theme.brandSoft }]}>
             <Text style={[typography.display, { color: theme.brand }]}>

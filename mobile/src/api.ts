@@ -56,3 +56,14 @@ export const api = createApiClient({
   baseUrl: API_BASE_URL,
   timeoutMs: 15000
 });
+
+/**
+ * Makes an image URL loadable on a device. Images stored by the development
+ * media driver come back as site-relative paths ("/uploads/..."), which a phone
+ * cannot resolve on its own.
+ */
+export function resolveImageUri(uri: string | null | undefined): string | null {
+  if (!uri) return null;
+  if (uri.startsWith("/")) return `${API_BASE_URL.replace(/\/+$/, "")}${uri}`;
+  return uri;
+}

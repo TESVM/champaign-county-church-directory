@@ -91,7 +91,7 @@ export function createApiClient(options: ApiClientOptions) {
 
   async function request<T>(
     path: string,
-    schema: z.ZodType<T>,
+    schema: z.ZodType<T, z.ZodTypeDef, unknown>,
     init?: RequestInit
   ): Promise<T> {
     const controller = new AbortController();

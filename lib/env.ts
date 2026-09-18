@@ -51,6 +51,16 @@ const baseSchema = z.object({
   NEXT_PUBLIC_CHURCH_DIRECTORY_URL: optionalString,
   NEXT_PUBLIC_MUSICIAN_DIRECTORY_URL: optionalString,
 
+  // AI church images. Optional: the generator is simply unavailable without a
+  // key, and nothing else depends on it.
+  OPENAI_API_KEY: optionalString,
+  OPENAI_IMAGE_MODEL: optionalString,
+
+  // Where generated images are written. "local" writes into public/uploads and
+  // only works in development; serverless hosting has a read-only filesystem.
+  MEDIA_DRIVER: z.enum(["local", "blob"]).default("local"),
+  BLOB_READ_WRITE_TOKEN: optionalString,
+
   VERCEL_URL: optionalString,
   VERCEL_PROJECT_PRODUCTION_URL: optionalString
 });
@@ -156,7 +166,30 @@ export const env = {
   vercelProductionUrl: parsedEnv.VERCEL_PROJECT_PRODUCTION_URL,
 
   churchDirectoryUrl: parsedEnv.NEXT_PUBLIC_CHURCH_DIRECTORY_URL,
-  musicianDirectoryUrl: parsedEnv.NEXT_PUBLIC_MUSICIAN_DIRECTORY_URL
+  musicianDirectoryUrl: parsedEnv.NEXT_PUBLIC_MUSICIAN_DIRECTORY_URL,
+
+  openAiApiKey: parsedEnv.OPENAI_API_KEY,
+  // Same default as the Rooted CU directory, so both sites generate with the
+  // model already in use there. Override with OPENAI_IMAGE_MODEL.
+  openAiImageModel: parsedEnv.OPENAI_IMAGE_MODEL ?? "gpt-image-2.5-flare",
+  mediaDriver: parsedEnv.MEDIA_DRIVER,
+  blobToken: parsedEnv.BLOB_READ_WRITE_TOKEN
 } as const;
+
+/**
+ * Why AI image generation is unavailable, or null when it can run.
+ * Checked before any paid request is made.
+ */
+export function aiImageUnavailableReason(): string | null {
+  if (!env.hasDatabase) return "DATABASE_URL is not configured, so a generated image cannot be saved.";
+  if (!env.openAiApiKey) return "OPENAI_API_KEY is not configured.";
+  if (env.mediaDriver === "blob" && !env.blobToken) {
+    return 'MEDIA_DRIVER="blob" requires BLOB_READ_WRITE_TOKEN.';
+  }
+  if (env.mediaDriver === "local" && env.isProduction) {
+    return 'MEDIA_DRIVER="local" cannot store files on serverless hosting. Set MEDIA_DRIVER="blob" and BLOB_READ_WRITE_TOKEN.';
+  }
+  return null;
+}
 
 export type Env = typeof env;

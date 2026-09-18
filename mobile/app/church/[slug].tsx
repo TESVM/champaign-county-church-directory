@@ -13,6 +13,8 @@ import {
   View
 } from "react-native";
 import type { ChurchDetail, DayOfWeek } from "@cccd/shared";
+import { resolveImageUri } from "@/api";
+import { AiBadge } from "@/components/ai-badge";
 import { ErrorState, LoadingState } from "@/components/states";
 import { useChurch } from "@/queries";
 import { isChurchSaved, toggleSavedChurch } from "@/saved";
@@ -124,7 +126,8 @@ export default function ChurchDetailScreen() {
   }
 
   const church: ChurchDetail = query.data;
-  const heroUri = church.media.featuredImageUrl ?? church.media.logoUrl;
+  const heroUri = resolveImageUri(church.media.featuredImageUrl ?? church.media.logoUrl);
+  const heroIsAi = church.media.featuredImageIsAi && Boolean(church.media.featuredImageUrl);
 
   const addressLine = [
     church.address.line1,
@@ -157,13 +160,20 @@ export default function ChurchDetailScreen() {
         contentContainerStyle={styles.content}
       >
         {heroUri ? (
-          <Image
-            source={{ uri: heroUri }}
-            style={styles.hero}
-            contentFit="cover"
-            transition={200}
-            accessibilityLabel={`Photo of ${church.name}`}
-          />
+          <View>
+            <Image
+              source={{ uri: heroUri }}
+              style={styles.hero}
+              contentFit="cover"
+              transition={200}
+              accessibilityLabel={
+                heroIsAi
+                  ? `AI-generated image of a church building, not a photo of ${church.name}`
+                  : `Photo of ${church.name}`
+              }
+            />
+            {heroIsAi ? <AiBadge size="large" /> : null}
+          </View>
         ) : null}
 
         <View style={styles.headerBlock}>

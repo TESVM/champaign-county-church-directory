@@ -195,6 +195,9 @@ export async function getPersistedChurchMediaBySlug(churchSlug: string) {
         },
         select: {
           featuredImageUrl: true,
+          featuredImageIsAi: true,
+          aiImageStatus: true,
+          aiImageError: true,
           logoUrl: true,
           lastUpdatedAt: true,
           updatedAt: true
@@ -207,6 +210,9 @@ export async function getPersistedChurchMediaBySlug(churchSlug: string) {
 
       return {
         featuredImageUrl: record.featuredImageUrl ?? undefined,
+        featuredImageIsAi: record.featuredImageIsAi && Boolean(record.featuredImageUrl),
+        aiImageStatus: record.aiImageStatus,
+        aiImageError: record.aiImageError ?? undefined,
         logoUrl: record.logoUrl ?? undefined,
         lastUpdatedAt: (record.lastUpdatedAt ?? record.updatedAt).toISOString()
       };
@@ -358,12 +364,29 @@ export async function saveChurchMediaRecord(input: {
     return null;
   }
 
+  const existing = await prisma.church.findUnique({
+    where: { slug: input.churchSlug },
+    select: { featuredImageUrl: true, featuredImageIsAi: true }
+  });
+
+  const nextFeatured = input.featuredImageUrl || null;
+
+  // The media form is pre-filled with the current image URL, so saving it
+  // unchanged must not relabel an AI image as an uploaded photo. That would
+  // both drop the "AI-generated" label and lock the image against regeneration.
+  // Any different URL is a person's own choice and counts as a real photo.
+  const stillAi = Boolean(
+    existing?.featuredImageIsAi && nextFeatured && nextFeatured === existing.featuredImageUrl
+  );
+
   const result = await prisma.church.update({
     where: {
       slug: input.churchSlug
     },
     data: {
-      featuredImageUrl: input.featuredImageUrl || null,
+      featuredImageUrl: nextFeatured,
+      featuredImageIsAi: stillAi,
+      ...(stillAi ? {} : { featuredImageModel: null, aiImageStatus: "NONE" as const, aiImageError: null }),
       logoUrl: input.logoUrl || null,
       lastUpdatedAt: new Date()
     },

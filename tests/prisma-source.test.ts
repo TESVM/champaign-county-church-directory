@@ -31,6 +31,7 @@ function makeRow(overrides: Partial<ChurchRow> = {}): ChurchRow {
     livestreamUrl: "https://youtube.com/live",
     logoUrl: null,
     featuredImageUrl: null,
+    featuredImageIsAi: false,
     latitude: 40.1164,
     longitude: -88.2434,
     verified: true,
