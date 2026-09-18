@@ -267,13 +267,23 @@ export async function generateChurchImageAction(formData: FormData) {
   const { generateChurchImage } = await import("@/lib/ai-church-image");
   const result = await generateChurchImage(churchSlug);
 
+  // The return path may already carry a query (the AI Images page keeps its
+  // filter and page), so merge parameters rather than appending "?".
+  const target = new URL(returnPath, "https://internal.invalid");
+  target.searchParams.set("church", churchSlug);
+
   if (result.status === "generated") {
     revalidatePath(`/admin/churches/${churchSlug}`);
     revalidatePath(`/dashboard/churches/${churchSlug}`);
     revalidatePath(`/churches/${churchSlug}`);
+    revalidatePath("/admin/images");
     revalidatePath("/directory");
-    redirect(`${returnPath}?saved=ai-image`);
+    target.searchParams.set("saved", "ai-image");
+    target.searchParams.delete("ai");
+  } else {
+    target.searchParams.set("ai", result.status);
+    target.searchParams.delete("saved");
   }
 
-  redirect(`${returnPath}?ai=${result.status}`);
+  redirect(`${target.pathname}${target.search}`);
 }

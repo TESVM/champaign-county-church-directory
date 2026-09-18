@@ -125,3 +125,52 @@ export function AiImageGenerator({
     </form>
   );
 }
+
+function CompactSubmit({ label, disabled, churchName }: { label: string; disabled: boolean; churchName: string }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <>
+      <Button
+        type="submit"
+        size="sm"
+        disabled={disabled || pending}
+        aria-disabled={disabled || pending}
+        // The visible label repeats down the list, so name the church for
+        // screen-reader users navigating by button.
+        aria-label={`${pending ? "Generating image for" : label + " for"} ${churchName}`}
+      >
+        <Sparkles className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+        {pending ? "Generating…" : label}
+      </Button>
+      <span role="status" aria-live="polite" className="sr-only">
+        {pending ? `Generating an image for ${churchName}. This takes 30 to 90 seconds.` : ""}
+      </span>
+    </>
+  );
+}
+
+/** One-button form for the admin AI Images list. */
+export function GenerateImageButton({
+  action,
+  churchSlug,
+  churchName,
+  returnPath,
+  label,
+  disabled
+}: {
+  action: (formData: FormData) => void | Promise<void>;
+  churchSlug: string;
+  churchName: string;
+  returnPath: string;
+  label: string;
+  disabled: boolean;
+}) {
+  return (
+    <form action={action}>
+      <input type="hidden" name="churchSlug" value={churchSlug} />
+      <input type="hidden" name="returnPath" value={returnPath} />
+      <CompactSubmit label={label} disabled={disabled} churchName={churchName} />
+    </form>
+  );
+}

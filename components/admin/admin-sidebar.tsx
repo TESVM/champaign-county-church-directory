@@ -6,6 +6,7 @@ const items = [
   { href: "/admin/claims", label: "Claim Requests" },
   { href: "/admin/review", label: "Review Queue" },
   { href: "/admin/churches", label: "Churches" },
+  { href: "/admin/images", label: "AI Images" },
   { href: "/admin/submissions", label: "Submissions" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/content", label: "Content" }
