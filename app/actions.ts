@@ -205,6 +205,14 @@ export async function saveChurchListingAction(formData: FormData) {
     websiteUrl: externalUrl(formData.get("websiteUrl")?.toString()) ?? undefined,
     appUrl: externalUrl(formData.get("appUrl")?.toString()) ?? undefined,
     livestreamUrl: externalUrl(formData.get("livestreamUrl")?.toString()) ?? undefined,
+    facebookUrl: externalUrl(formData.get("facebookUrl")?.toString()) ?? undefined,
+    instagramUrl: externalUrl(formData.get("instagramUrl")?.toString()) ?? undefined,
+    xUrl: externalUrl(formData.get("xUrl")?.toString()) ?? undefined,
+    youtubeUrl: externalUrl(formData.get("youtubeUrl")?.toString()) ?? undefined,
+    tiktokUrl: externalUrl(formData.get("tiktokUrl")?.toString()) ?? undefined,
+    updateSocialLinks: ["facebookUrl", "instagramUrl", "xUrl", "youtubeUrl", "tiktokUrl"].some((field) =>
+      formData.has(field)
+    ),
     phone: formData.get("phone")?.toString(),
     email: formData.get("email")?.toString(),
     description: formData.get("description")?.toString()

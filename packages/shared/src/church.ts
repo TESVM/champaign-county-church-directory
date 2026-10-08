@@ -65,6 +65,8 @@ export const churchContactSchema = z.object({
   email: z.string().nullable(),
   websiteUrl: z.string().nullable(),
   appUrl: z.string().nullable(),
+  appStoreUrl: z.string().nullable(),
+  googlePlayUrl: z.string().nullable(),
   livestreamUrl: z.string().nullable()
 });
 
@@ -122,6 +124,7 @@ export const churchSummarySchema = z.object({
   seniorPastor: pastorSchema.nullable(),
   verified: z.boolean(),
   claimed: z.boolean(),
+  premiumProfile: z.boolean().default(false),
   hasWebsite: z.boolean(),
   hasApp: z.boolean(),
   hasLivestream: z.boolean(),

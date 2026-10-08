@@ -20,8 +20,7 @@ export function ChurchCard({ church }: { church: ChurchRecord }) {
   const gradient = cityGradients[church.citySlug] ?? "from-brand-700 via-sage to-sky";
   const imageSrc =
     church.featuredImageUrl ??
-    church.logoUrl ??
-    "https://images.unsplash.com/photo-1518733057094-95b53143d2a7?auto=format&fit=crop&w=1200&q=80";
+    church.logoUrl;
   const serviceSummary =
     church.serviceTimes.length
       ? church.serviceTimes.map((service) => `${service.dayOfWeek} ${service.startTime}`).join(" • ")
@@ -34,7 +33,13 @@ export function ChurchCard({ church }: { church: ChurchRecord }) {
   return (
     <Card className="overflow-hidden border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(238,248,248,0.88))] shadow-soft">
       <div className="relative h-52">
-        <Image src={imageSrc} alt={church.name} fill className="object-cover" unoptimized={unoptimizedImage} />
+        {imageSrc ? (
+          <Image src={imageSrc} alt={`${church.name} building or worship space`} fill className="object-cover" unoptimized={unoptimizedImage} />
+        ) : (
+          <div className={`flex h-full items-center justify-center bg-gradient-to-br ${gradient} px-8 text-center`}>
+            <p className="font-display text-2xl text-white">Photo coming soon</p>
+          </div>
+        )}
         <div className={`absolute inset-0 bg-gradient-to-t ${gradient} opacity-45`} />
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
           <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-brand-900">

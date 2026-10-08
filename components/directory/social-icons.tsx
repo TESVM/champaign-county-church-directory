@@ -11,6 +11,14 @@ const iconMap = {
   tiktok: Music2
 } as const;
 
+const platformLabel = {
+  facebook: "Facebook",
+  instagram: "Instagram",
+  youtube: "YouTube",
+  x: "X (formerly Twitter)",
+  tiktok: "TikTok"
+} as const;
+
 export function SocialIcons({
   links,
   churchName
@@ -31,7 +39,8 @@ export function SocialIcons({
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-stone-600 hover:border-brand-700 hover:text-brand-900"
-            aria-label={churchName ? `${churchName} on ${link.platform}` : link.platform}
+            aria-label={churchName ? `${churchName} on ${platformLabel[link.platform]}` : platformLabel[link.platform]}
+            title={platformLabel[link.platform]}
           >
             <Icon className="h-4 w-4" />
           </a>

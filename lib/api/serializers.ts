@@ -131,6 +131,7 @@ export function toChurchSummary(church: ChurchRecord): ChurchSummary {
       : null,
     verified: church.verified,
     claimed: church.claimed,
+    premiumProfile: Boolean(church.premiumProfile),
     hasWebsite: Boolean(emptyToNull(church.websiteUrl)),
     hasApp: Boolean(emptyToNull(church.appUrl)),
     hasLivestream: Boolean(emptyToNull(church.livestreamUrl)),
@@ -148,6 +149,8 @@ export function toChurchDetail(church: ChurchRecord): ChurchDetail {
       email: emptyToNull(church.email),
       websiteUrl: emptyToNull(church.websiteUrl),
       appUrl: emptyToNull(church.appUrl),
+      appStoreUrl: emptyToNull(church.appStoreUrl),
+      googlePlayUrl: emptyToNull(church.googlePlayUrl),
       livestreamUrl: emptyToNull(church.livestreamUrl)
     },
     leaders: (church.leadership ?? []).map((leader) => ({

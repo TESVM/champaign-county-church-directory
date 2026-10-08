@@ -1,5 +1,8 @@
 # Champaign County Church Directory
 
+See [BILLING_AND_PREMIUM_PROFILE_NOTES.md](./BILLING_AND_PREMIUM_PROFILE_NOTES.md)
+for the $29/month enhanced church-profile paywall and Stripe configuration.
+
 Public-facing church directory for Champaign County, Illinois. This app helps residents, visitors, families, and students browse churches by city, leadership, ministries, service information, and helpful public links.
 
 GitHub:

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Globe, Mail, Phone, PlayCircle, Smartphone } from "lucide-react";
 import { MapSection } from "@/components/directory/map-section";
+import { PremiumProfileGate } from "@/components/directory/premium-profile-gate";
 import { ChurchProfileHeader } from "@/components/directory/church-profile-header";
 import { ServiceTimesList } from "@/components/directory/service-times-list";
 import { SocialIcons } from "@/components/directory/social-icons";
@@ -85,7 +86,10 @@ export default async function ChurchProfilePage({
 
   const websiteUrl = externalUrl(church.contact.websiteUrl);
   const appUrl = externalUrl(church.contact.appUrl);
+  const appStoreUrl = externalUrl(church.contact.appStoreUrl);
+  const googlePlayUrl = externalUrl(church.contact.googlePlayUrl);
   const livestreamUrl = externalUrl(church.contact.livestreamUrl);
+  const isPremium = church.premiumProfile;
 
   const heroImage =
     church.media.featuredImageUrl ?? church.media.logoUrl ?? FALLBACK_HERO;
@@ -166,7 +170,7 @@ export default async function ChurchProfilePage({
               </p>
             ) : null}
             <div className="mt-8 flex flex-wrap gap-3">
-              {websiteUrl ? (
+              {isPremium && websiteUrl ? (
                 <Button asChild>
                   <a href={websiteUrl} target="_blank" rel="noopener noreferrer">
                     <Globe className="mr-2 h-4 w-4" aria-hidden="true" />
@@ -175,7 +179,7 @@ export default async function ChurchProfilePage({
                   </a>
                 </Button>
               ) : null}
-              {appUrl ? (
+              {isPremium && appUrl ? (
                 <Button asChild variant="secondary">
                   <a href={appUrl} target="_blank" rel="noopener noreferrer">
                     <Smartphone className="mr-2 h-4 w-4" aria-hidden="true" />
@@ -184,7 +188,23 @@ export default async function ChurchProfilePage({
                   </a>
                 </Button>
               ) : null}
-              {livestreamUrl ? (
+              {isPremium && appStoreUrl ? (
+                <Button asChild variant="secondary">
+                  <a href={appStoreUrl} target="_blank" rel="noopener noreferrer">
+                    <Smartphone className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Apple App Store
+                  </a>
+                </Button>
+              ) : null}
+              {isPremium && googlePlayUrl ? (
+                <Button asChild variant="secondary">
+                  <a href={googlePlayUrl} target="_blank" rel="noopener noreferrer">
+                    <Smartphone className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Google Play
+                  </a>
+                </Button>
+              ) : null}
+              {isPremium && livestreamUrl ? (
                 <Button asChild variant="secondary">
                   <a href={livestreamUrl} target="_blank" rel="noopener noreferrer">
                     <PlayCircle className="mr-2 h-4 w-4" aria-hidden="true" />
@@ -236,7 +256,7 @@ export default async function ChurchProfilePage({
                 </p>
               ) : null}
             </div>
-            {church.socialLinks.length > 0 ? (
+            {isPremium && church.socialLinks.length > 0 ? (
               <div className="mt-6">
                 <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">
                   Follow on social
@@ -258,7 +278,7 @@ export default async function ChurchProfilePage({
           <div className="mt-6">
             <ServiceTimesList items={church.serviceTimes} />
           </div>
-          {church.ministries.length > 0 ? (
+          {isPremium && church.ministries.length > 0 ? (
             <div className="mt-8">
               <h3 className="font-display text-2xl">Ministries offered</h3>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -273,7 +293,7 @@ export default async function ChurchProfilePage({
               </div>
             </div>
           ) : null}
-          {church.leaders.length > 0 ? (
+          {isPremium && church.leaders.length > 0 ? (
             <div className="mt-8">
               <h3 className="font-display text-2xl">Leadership</h3>
               <div className="mt-4 space-y-3">
@@ -288,8 +308,13 @@ export default async function ChurchProfilePage({
           ) : null}
         </Card>
 
-        {addressLine ? <MapSection query={addressLine} churchName={church.name} /> : null}
+        {isPremium && addressLine ? <MapSection query={addressLine} churchName={church.name} /> : null}
       </div>
+      {!isPremium ? (
+        <div className="mt-8">
+          <PremiumProfileGate churchSlug={church.slug} />
+        </div>
+      ) : null}
     </div>
   );
 }

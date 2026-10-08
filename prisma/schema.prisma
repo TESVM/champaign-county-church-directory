@@ -95,6 +95,7 @@ model Church {
   seniorPastorId     String?            @unique
   verified           Boolean            @default(false)
   claimed            Boolean            @default(false)
+  premiumProfile     Boolean            @default(false)
   latitude           Float?
   longitude          Float?
   geocodedAt         DateTime?

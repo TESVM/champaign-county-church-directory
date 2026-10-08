@@ -62,6 +62,7 @@ export default async function ChurchWorkspacePage({
   const team = await getPersistedMembershipsByChurchSlug(slug);
   const claim = await getPersistedClaimRequestByChurchSlug(slug);
   const canAccessAdmin = session.user.role === "ADMIN" || session.user.role === "REVIEWER" || session.user.role === "SUPPORT";
+  const socialUrl = (platform: string) => church.socialLinks.find((link) => link.platform === platform)?.url ?? "";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
@@ -133,9 +134,15 @@ export default async function ChurchWorkspacePage({
                   <Input name="name" defaultValue={church.name} aria-label="Church name" />
                   <Input name="pastorFullName" defaultValue={church.pastor.fullName} aria-label="Lead pastor" />
                   <Input name="websiteUrl" defaultValue={church.websiteUrl} aria-label="Website URL" />
+                  <Input name="appUrl" defaultValue={church.appUrl} aria-label="Church app URL" />
                   <Input name="phone" defaultValue={church.phone} aria-label="Public phone" />
                   <Input name="email" defaultValue={church.email} aria-label="Public email" />
                   <Input name="livestreamUrl" defaultValue={church.livestreamUrl} aria-label="Livestream URL" />
+                  <Input name="facebookUrl" defaultValue={socialUrl("facebook")} aria-label="Facebook URL" placeholder="Facebook URL" />
+                  <Input name="instagramUrl" defaultValue={socialUrl("instagram")} aria-label="Instagram URL" placeholder="Instagram URL" />
+                  <Input name="xUrl" defaultValue={socialUrl("x")} aria-label="X or Twitter URL" placeholder="X / Twitter URL" />
+                  <Input name="youtubeUrl" defaultValue={socialUrl("youtube")} aria-label="YouTube URL" placeholder="YouTube URL" />
+                  <Input name="tiktokUrl" defaultValue={socialUrl("tiktok")} aria-label="TikTok URL" placeholder="TikTok URL" />
                   <div className="md:col-span-2">
                     <Textarea name="description" defaultValue={church.description} aria-label="Description" />
                   </div>

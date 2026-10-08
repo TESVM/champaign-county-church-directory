@@ -406,6 +406,12 @@ export async function saveChurchListingRecord(input: {
   websiteUrl?: string;
   appUrl?: string;
   livestreamUrl?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  xUrl?: string;
+  youtubeUrl?: string;
+  tiktokUrl?: string;
+  updateSocialLinks?: boolean;
   phone?: string;
   email?: string;
   description?: string;
@@ -475,6 +481,25 @@ export async function saveChurchListingRecord(input: {
       slug: true
     }
   });
+
+  if (input.updateSocialLinks) {
+    const socialLinks = [
+      ["facebook", input.facebookUrl],
+      ["instagram", input.instagramUrl],
+      ["x", input.xUrl],
+      ["youtube", input.youtubeUrl],
+      ["tiktok", input.tiktokUrl]
+    ]
+      .map(([platform, url]) => ({ platform: platform!, url: normalizeOptionalText(url) }))
+      .filter((link): link is { platform: string; url: string } => Boolean(link.url));
+
+    await prisma.$transaction([
+      prisma.socialLink.deleteMany({ where: { churchId: existingChurch.id } }),
+      ...(socialLinks.length
+        ? [prisma.socialLink.createMany({ data: socialLinks.map((link) => ({ ...link, churchId: existingChurch.id })) })]
+        : [])
+    ]);
+  }
 
   return result;
 }

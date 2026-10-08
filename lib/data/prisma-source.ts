@@ -43,6 +43,7 @@ export type ChurchRow = {
   longitude: number | null;
   verified: boolean;
   claimed: boolean;
+  premiumProfile?: boolean;
   lastUpdatedAt: Date | null;
   updatedAt: Date;
   cityRecord: { slug: string; name: string } | null;
@@ -162,6 +163,7 @@ export function mapChurchRowToSummary(row: ChurchRow): ChurchSummary {
       : null,
     verified: row.verified,
     claimed: row.claimed,
+    premiumProfile: Boolean(row.premiumProfile),
     hasWebsite: Boolean(emptyToNull(row.websiteUrl)),
     hasApp: Boolean(emptyToNull(row.appUrl)),
     hasLivestream: Boolean(emptyToNull(row.livestreamUrl)),
@@ -179,6 +181,8 @@ export function mapChurchRowToDetail(row: ChurchRow): ChurchDetail {
       email: emptyToNull(row.email),
       websiteUrl: emptyToNull(row.websiteUrl),
       appUrl: emptyToNull(row.appUrl),
+      appStoreUrl: null,
+      googlePlayUrl: null,
       livestreamUrl: emptyToNull(row.livestreamUrl)
     },
     leaders: row.leaders.map((leader) => ({

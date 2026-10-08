@@ -48,11 +48,15 @@ export type ChurchRecord = {
   email?: string;
   websiteUrl?: string;
   appUrl?: string;
+  appStoreUrl?: string;
+  googlePlayUrl?: string;
   livestreamUrl?: string;
   logoUrl?: string;
   featuredImageUrl?: string;
   verified: boolean;
   claimed: boolean;
+  /** Paid visitor-facing profile enhancements. Free listings keep core discovery details. */
+  premiumProfile?: boolean;
   /**
    * Invented record kept for local development and tests.
    *
