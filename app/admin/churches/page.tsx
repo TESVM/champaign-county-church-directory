@@ -1,39 +1,45 @@
 import Link from "next/link";
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
-import { Card } from "@/components/ui/card";
-import { requireAdminAccess } from "@/lib/auth-guards";
-import { churches } from "@/lib/data/queries";
+import { StatusFilter } from "@/components/admin/status-filter";
+import { Pagination } from "@/components/ui/pagination";
+import { requireStaff } from "@/lib/auth-guards";
+import { listChurchesForAdmin } from "@/lib/services/churches";
+import { formatDate } from "@/lib/utils";
 
-export default async function AdminChurchesPage() {
-  await requireAdminAccess();
-
+export default async function AdminChurchesPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {
+  await requireStaff("/admin/churches");
+  const params = await searchParams;
+  const status = params.status ?? "ACTIVE";
+  const result = await listChurchesForAdmin({ q: params.q, status: status === "ALL" ? undefined : status, page: Number(params.page ?? "1") || 1 });
   return (
-    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-        <AdminSidebar />
-        <div className="admin-shell rounded-[36px] border border-white/70 p-5 sm:p-8">
-          <div className="section-strong rounded-[30px] border border-white/70 px-6 py-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-700">Church Management</p>
-            <h1 className="mt-4 font-display text-5xl">Manage church records</h1>
-            <p className="mt-4 max-w-2xl text-lg text-stone-600">Edit listing details, confirm leadership information, and keep digital links current across the public directory.</p>
-          </div>
-          <div className="mt-8 space-y-4">
-            {churches.map((church) => (
-              <Card key={church.id} className="border-white/70 bg-gradient-to-br from-white via-brand-50 to-sky/30 p-6">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <h2 className="font-display text-2xl">{church.name}</h2>
-                    <p className="mt-1 text-sm text-stone-600">{church.city} • {church.pastor.fullName}</p>
-                  </div>
-                  <Link href={`/admin/churches/${church.slug}`} className="text-sm font-semibold text-brand-900">
-                    Edit record
-                  </Link>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="font-display text-4xl">Churches ({result.total})</h1>
+        <a href="/admin/export" className="inline-flex min-h-[44px] items-center rounded-full bg-brand-900 px-5 text-sm font-semibold text-white focus-ring">Export CSV</a>
       </div>
+      <form action="/admin/churches" className="flex flex-wrap gap-2">
+        <input type="hidden" name="status" value={status} />
+        <label className="sr-only" htmlFor="admin-q">Search churches</label>
+        <input id="admin-q" name="q" defaultValue={params.q} placeholder="Name, city, or slug" className="h-11 min-w-[240px] flex-1 rounded-full border border-line px-4" />
+        <button className="min-h-[44px] rounded-full bg-brand-900 px-5 text-sm font-semibold text-white">Search</button>
+      </form>
+      <StatusFilter base="/admin/churches" current={status} options={[["ACTIVE", "Active"], ["CLOSED", "Closed"], ["HIDDEN", "Hidden"], ["MERGED", "Merged"], ["ALL", "All"]]} />
+      <div className="overflow-x-auto rounded-[20px] border border-line bg-white">
+        <table className="w-full min-w-[720px] text-left text-sm">
+          <thead className="bg-brand-50"><tr><th className="p-3">Church</th><th className="p-3">City</th><th className="p-3">Verification</th><th className="p-3">Photo</th><th className="p-3">Updated</th></tr></thead>
+          <tbody>
+            {result.rows.map((c) => (
+              <tr key={c.id} className="border-t border-line">
+                <td className="p-3"><Link className="font-semibold underline-offset-4 hover:underline" href={`/admin/churches/${c.slug}`}>{c.name}</Link>{c.status !== "ACTIVE" ? <span className="ml-2 text-xs uppercase text-amber-900">{c.status}</span> : null}{c.claimed ? <span className="ml-2 text-xs text-brand-700">managed</span> : null}</td>
+                <td className="p-3">{c.city}</td>
+                <td className="p-3">{c.leadershipConfirmedAt ? `Church confirmed ${formatDate(c.leadershipConfirmedAt.toISOString())}` : c.publicSourceCheckedAt ? `Source checked ${formatDate(c.publicSourceCheckedAt.toISOString())}` : "Not verified"}</td>
+                <td className="p-3">{c.featuredImageUrl && !c.featuredImageIsAi ? "Yes" : "—"}</td>
+                <td className="p-3 whitespace-nowrap">{c.lastUpdatedAt ? formatDate(c.lastUpdatedAt.toISOString()) : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Pagination page={result.page} pageCount={result.pageCount} basePath="/admin/churches" params={{ q: params.q, status }} />
     </div>
   );
 }

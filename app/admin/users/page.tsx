@@ -1,47 +1,57 @@
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { revokeSessionsAction, setStaffRoleAction, setUserDisabledAction } from "@/app/actions";
+import { ActionForm, SubmitButton } from "@/components/forms/action-form";
 import { Card } from "@/components/ui/card";
-import { requireAdminAccess } from "@/lib/auth-guards";
-import { getPersistedAdminUsers } from "@/lib/data/admin-store";
+import { SelectField, TextField } from "@/components/ui/field";
+import { requireStaff } from "@/lib/auth-guards";
+import { listUsers } from "@/lib/services/claims";
+import { redirect } from "next/navigation";
+import { formatDate } from "@/lib/utils";
 
-export default async function AdminUsersPage() {
-  await requireAdminAccess();
-
-  const users = await getPersistedAdminUsers();
-
+export default async function UsersPage() {
+  const actor = await requireStaff("/admin/users");
+  if (actor.staffRole !== "ADMIN") redirect("/admin?denied=1");
+  const users = await listUsers(actor);
   return (
-    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-        <AdminSidebar />
-        <div className="space-y-6 admin-shell rounded-[36px] border border-white/70 p-5 sm:p-8">
-          <div className="section-strong rounded-[30px] border border-white/70 px-6 py-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-700">Users</p>
-            <h1 className="mt-4 font-display text-5xl">Directory admins and church managers</h1>
-            <p className="mt-4 text-lg text-stone-600">
-              Keep site-level roles separate from church-level memberships so church staff can edit listings without receiving full back-office access.
-            </p>
-          </div>
-          <div className="grid gap-4">
-            {users.map((user) => (
-              <Card key={user.id} className="border-white/70 bg-gradient-to-br from-white via-brand-50 to-sky/30 p-6">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <h2 className="font-display text-2xl">{user.name}</h2>
-                    <p className="mt-1 text-sm text-stone-600">{user.email}</p>
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
-                      {user.role.replaceAll("_", " ")} • {user.status}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-white/80 p-4 ring-1 ring-brand-100">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">Managed churches</p>
-                    <p className="mt-2 text-sm text-stone-600">
-                      {user.churchSlugs.length ? user.churchSlugs.join(", ") : "Site-level access only"}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+    <div className="space-y-6">
+      <h1 className="font-display text-4xl">Users and staff</h1>
+      <Card className="p-5">
+        <h2 className="font-display text-2xl">Add or change a staff role</h2>
+        <p className="mt-1 text-sm text-stone-600">Admins manage everything. Reviewers approve claims, submissions, and listing changes. Support staff answer messages.</p>
+        <div className="mt-3">
+          <ActionForm action={setStaffRoleAction} resetOnSuccess>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <TextField name="email" label="Email" type="email" required />
+              <SelectField name="role" label="Role" defaultValue="REVIEWER" options={[{ value: "ADMIN", label: "Admin" }, { value: "REVIEWER", label: "Reviewer" }, { value: "SUPPORT", label: "Support" }, { value: "NONE", label: "No staff role" }]} />
+            </div>
+            <SubmitButton>Save role</SubmitButton>
+          </ActionForm>
         </div>
+      </Card>
+      <div className="space-y-3">
+        {users.map((u) => (
+          <Card key={u.id} className="p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold">{u.name ?? u.email} <span className="text-sm font-normal text-stone-600">{u.email}</span></p>
+                <p className="text-sm text-stone-600">
+                  {["ADMIN", "REVIEWER", "SUPPORT"].includes(u.role) ? u.role.toLowerCase() : "church user"}
+                  {u.disabledAt ? " · DISABLED" : ""} · {u._count.sessions} active session(s) · {u.lastLoginAt ? `last sign-in ${formatDate(u.lastLoginAt.toISOString())}` : "never signed in"}
+                </p>
+                {u.memberships.length ? <p className="text-sm text-stone-700">{u.memberships.map((m) => `${m.church.name} (${m.role === "CHURCH_OWNER" ? "owner" : "editor"}, ${m.status.toLowerCase()})`).join("; ")}</p> : null}
+              </div>
+              {u.id !== actor.id ? (
+                <div className="flex flex-wrap gap-2">
+                  <ActionForm action={revokeSessionsAction}><input type="hidden" name="userId" value={u.id} /><SubmitButton variant="secondary">Sign out everywhere</SubmitButton></ActionForm>
+                  <ActionForm action={setUserDisabledAction}>
+                    <input type="hidden" name="userId" value={u.id} />
+                    <input type="hidden" name="disabled" value={u.disabledAt ? "false" : "true"} />
+                    <SubmitButton variant={u.disabledAt ? "secondary" : "danger"}>{u.disabledAt ? "Re-enable" : "Disable account"}</SubmitButton>
+                  </ActionForm>
+                </div>
+              ) : null}
+            </div>
+          </Card>
+        ))}
       </div>
     </div>
   );

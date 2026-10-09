@@ -4,9 +4,14 @@ import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { absoluteUrl } from "@/lib/utils";
+import { siteUrl, SITE_NAME } from "@/lib/site";
+
+// Every page reads live directory data (and the header reads the session), so
+// render on request. This also means builds never need database access.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(absoluteUrl("/")),
+  metadataBase: new URL(siteUrl()),
   title: {
     default: "Champaign County Church Directory",
     template: "%s | Champaign County Church Directory"
@@ -62,6 +67,23 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
+        <script
+          type="application/ld+json"
+          // Static, server-generated JSON; no user input.
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: SITE_NAME,
+              url: siteUrl(),
+              potentialAction: {
+                "@type": "SearchAction",
+                target: `${siteUrl()}/directory?q={search_term_string}`,
+                "query-input": "required name=search_term_string"
+              }
+            })
+          }}
+        />
         <Header />
         <main id="main-content">{children}</main>
         <Footer />

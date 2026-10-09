@@ -54,67 +54,174 @@ enum MembershipStatus {
   REVOKED
 }
 
+/// Whether a listing is shown publicly.
+enum ChurchStatus {
+  ACTIVE
+  /// Congregation has closed. Profile stays reachable with a notice; excluded from search.
+  CLOSED
+  /// Duplicate of another listing; the profile redirects to `mergedIntoId`.
+  MERGED
+  /// Withheld from public pages pending review.
+  HIDDEN
+}
+
+enum SubmissionType {
+  NEW_LISTING
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum InboxStatus {
+  NEW
+  RESOLVED
+  DISMISSED
+}
+
+enum ChangeSource {
+  SCANNER
+  VISITOR
+  CHURCH
+  ADMIN
+}
+
+enum WebsiteCheckOutcome {
+  OK
+  HTTP_ERROR
+  NETWORK_ERROR
+  TIMEOUT
+  TOO_LARGE
+  NOT_HTML
+  BLOCKED_BY_ROBOTS
+  SKIPPED_PLATFORM
+  INVALID_URL
+}
+
+enum EventRecurrence {
+  NONE
+  WEEKLY
+}
+
+enum EventStatus {
+  PUBLISHED
+  CANCELLED
+}
+
+enum ResourceCategory {
+  FOOD_PANTRY
+  CLOTHING
+  SUPPORT_GROUP
+  COMMUNITY_MEAL
+  FINANCIAL_HELP
+  TUTORING
+  HEALTH
+  OTHER
+}
+
+enum EmailStatus {
+  SENT
+  FAILED
+  LOGGED
+}
+
 model City {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
-  county    String
-  state     String
-  churches  Church[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  county      String
+  state       String
+  description String?
+  churches    Church[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Church {
-  id                 String             @id @default(cuid())
-  name               String
-  slug               String             @unique
-  cityId             String
-  denomination       String?
-  description        String?
-  address1           String?
-  address2           String?
-  city               String
-  state              String
-  zip                String?
-  phone              String?
-  email              String?
-  websiteUrl         String?
-  appUrl             String?
-  livestreamUrl      String?
-  logoUrl            String?
-  featuredImageUrl   String?
+  id                         String              @id @default(cuid())
+  name                       String
+  slug                       String              @unique
+  cityId                     String
+  denomination               String?
+  description                String?
+  address1                   String?
+  address2                   String?
+  city                       String
+  state                      String
+  zip                        String?
+  phone                      String?
+  email                      String?
+  websiteUrl                 String?
+  appUrl                     String?
+  /// Apple App Store listing for the church's own app.
+  appStoreUrl                String?
+  /// Google Play listing for the church's own app.
+  googlePlayUrl              String?
+  livestreamUrl              String?
+  logoUrl                    String?
+  featuredImageUrl           String?
   /// True when featuredImageUrl was produced by the AI generator rather than
   /// uploaded. Drives the "AI-generated image" label and protects uploaded
   /// photos from ever being overwritten by a generation.
-  featuredImageIsAi  Boolean            @default(false)
-  featuredImageModel String?
-  aiImageStatus      AiImageStatus      @default(NONE)
-  aiImageError       String?
-  aiImageRequestedAt DateTime?
-  seniorPastorId     String?            @unique
-  verified           Boolean            @default(false)
-  claimed            Boolean            @default(false)
-  premiumProfile     Boolean            @default(false)
-  latitude           Float?
-  longitude          Float?
-  geocodedAt         DateTime?
-  lastScannedAt      DateTime?
-  lastUpdatedAt      DateTime?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  cityRecord         City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  seniorPastor       Pastor?            @relation("SeniorPastor", fields: [seniorPastorId], references: [id])
-  leaders            Pastor[]           @relation("ChurchLeaders")
-  ministries         Ministry[]
-  serviceTimes       ServiceTime[]
-  socialLinks        SocialLink[]
-  suggestedChanges   SuggestedChange[]
-  claimRequests      ClaimRequest[]
-  memberships        ChurchMembership[]
-  updateLogs         UpdateLog[]
+  featuredImageIsAi          Boolean             @default(false)
+  featuredImageModel         String?
+  aiImageStatus              AiImageStatus       @default(NONE)
+  aiImageError               String?
+  aiImageRequestedAt         DateTime?
+  /// Where the uploaded/linked featured photo came from and on what basis it is used.
+  featuredImageSourceUrl     String?
+  featuredImageCredit        String?
+  featuredImagePermission    String?
+  seniorPastorId             String?             @unique
+  /// Kept in sync with publicSourceCheckedAt/leadershipConfirmedAt for filtering.
+  verified                   Boolean             @default(false)
+  claimed                    Boolean             @default(false)
+  /// Deprecated. Entitlement comes from Subscription or complimentaryPremiumUntil.
+  /// Values present before billing launched were migrated to complimentary grants.
+  premiumProfile             Boolean             @default(false)
+  /// Complimentary enhanced profile granted by an administrator.
+  complimentaryPremiumUntil  DateTime?
+  complimentaryPremiumReason String?
+  status                     ChurchStatus        @default(ACTIVE)
+  statusNote                 String?
+  mergedIntoId               String?
+  /// Public source the listing details were last checked against, and when.
+  publicSourceUrl            String?
+  publicSourceCheckedAt      DateTime?
+  /// Set when church leadership (a verified owner/editor or confirmed call) confirmed the listing.
+  leadershipConfirmedAt      DateTime?
+  leadershipConfirmedBy      String?
+  /// Import bookkeeping: lastUpdatedAt of the source record when last imported.
+  importedSourceUpdatedAt    DateTime?
+  latitude                   Float?
+  longitude                  Float?
+  geocodedAt                 DateTime?
+  lastScannedAt              DateTime?
+  lastUpdatedAt              DateTime?
+  createdAt                  DateTime            @default(now())
+  updatedAt                  DateTime            @updatedAt
+  cityRecord                 City                @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  seniorPastor               Pastor?             @relation("SeniorPastor", fields: [seniorPastorId], references: [id])
+  leaders                    Pastor[]            @relation("ChurchLeaders")
+  ministries                 Ministry[]
+  serviceTimes               ServiceTime[]
+  socialLinks                SocialLink[]
+  suggestedChanges           SuggestedChange[]
+  claimRequests              ClaimRequest[]
+  memberships                ChurchMembership[]
+  updateLogs                 UpdateLog[]
+  visitorGuide               VisitorGuide?
+  events                     Event[]
+  resources                  CommunityResource[]
+  subscription               Subscription?
+  activity                   ActivityDaily[]
+  websiteChecks              WebsiteCheck[]
+  correctionReports          CorrectionReport[]
 
   @@index([cityId])
+  @@index([status])
   @@index([verified])
   @@index([claimed])
   @@index([lastUpdatedAt])
@@ -138,18 +245,23 @@ model Pastor {
 }
 
 model ServiceTime {
-  id          String   @id @default(cuid())
-  churchId    String
-  serviceName String
-  dayOfWeek   String
-  startTime   String
-  endTime     String?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  church      Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  churchId     String
+  serviceName  String
+  dayOfWeek    String
+  startTime    String
+  endTime      String?
+  notes        String?
+  /// Minutes after local midnight (America/Chicago), derived from startTime for filtering.
+  startMinutes Int?
+  /// Language the service is held in, when it is not English.
+  language     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  church       Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
 
   @@index([churchId])
+  @@index([dayOfWeek])
 }
 
 model SocialLink {
@@ -183,8 +295,13 @@ model SuggestedChange {
   oldValue        String?
   newValue        String?
   sourceUrl       String?
+  /// Text from the source that supports the proposal.
+  evidence        String?
+  source          ChangeSource          @default(ADMIN)
+  websiteCheckId  String?
   confidenceScore Float?
   status          SuggestedChangeStatus @default(PENDING)
+  reviewerNote    String?
   reviewedBy      String?
   reviewedAt      DateTime?
   createdAt       DateTime              @default(now())
@@ -203,7 +320,12 @@ model Submission {
   contactPhone      String?
   message           String?
   submittedDataJson Json
+  type              SubmissionType   @default(NEW_LISTING)
   status            SubmissionStatus @default(PENDING)
+  reviewerNote      String?
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  createdChurchId   String?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
@@ -215,8 +337,11 @@ model User {
   name          String?
   email         String             @unique
   role          UserRole           @default(EDITOR)
+  disabledAt    DateTime?
+  lastLoginAt   DateTime?
   memberships   ChurchMembership[]
   claimRequests ClaimRequest[]
+  sessions      Session[]
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 }
@@ -228,10 +353,14 @@ model ClaimRequest {
   applicantName      String
   applicantEmail     String
   applicantRole      String
+  applicantPhone     String?
+  /// True when the applicant's email domain matches the church website's domain.
+  emailDomainMatches Boolean            @default(false)
   verificationMethod VerificationMethod
   evidenceSummary    String
   status             ClaimRequestStatus @default(PENDING)
   reviewerNote       String?
+  reviewedBy         String?
   submittedAt        DateTime           @default(now())
   reviewedAt         DateTime?
   createdAt          DateTime           @default(now())
@@ -251,6 +380,9 @@ model ChurchMembership {
   role      UserRole
   status    MembershipStatus @default(PENDING)
   grantedAt DateTime?
+  grantedBy String?
+  revokedAt DateTime?
+  revokedBy String?
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
   church    Church           @relation(fields: [churchId], references: [id], onDelete: Cascade)
@@ -282,5 +414,238 @@ model UpdateLog {
   church      Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
 
   @@index([churchId])
+  @@index([createdAt])
+}
+
+/// Database-backed session. The cookie holds a random token; only its SHA-256 is stored.
+model Session {
+  id         String   @id
+  userId     String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Single-use email sign-in link. Only the SHA-256 of the token is stored.
+model LoginToken {
+  id        String    @id
+  email     String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorEmail String?
+  action     String
+  entityType String
+  entityId   String?
+  churchId   String?
+  summary    String
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([churchId])
+  @@index([createdAt])
+  @@index([entityType, entityId])
+}
+
+model ContactMessage {
+  id           String      @id @default(cuid())
+  name         String
+  email        String
+  organization String?
+  message      String
+  status       InboxStatus @default(NEW)
+  resolvedBy   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime    @default(now())
+
+  @@index([status])
+}
+
+/// Visitor report that a listing is out of date.
+model CorrectionReport {
+  id            String      @id @default(cuid())
+  churchId      String
+  fieldName     String?
+  details       String
+  reporterName  String?
+  reporterEmail String?
+  status        InboxStatus @default(NEW)
+  reviewerNote  String?
+  resolvedBy    String?
+  resolvedAt    DateTime?
+  createdAt     DateTime    @default(now())
+  church        Church      @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
+  @@index([status])
+}
+
+/// "Plan your first visit" details supplied by church leadership.
+model VisitorGuide {
+  id                   String   @id @default(cuid())
+  churchId             String   @unique
+  parking              String?
+  entrance             String?
+  accessibility        String?
+  wheelchairAccessible Boolean?
+  hearingAssistance    Boolean?
+  childrenCheckIn      String?
+  hasChildrenProgram   Boolean?
+  serviceLength        String?
+  dress                String?
+  languages            String[] @default([])
+  whatToExpect         String?
+  updatedBy            String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  church               Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+}
+
+/// Church event. Times are stored as America/Chicago wall-clock values so a
+/// weekly event stays at 7:00 PM across daylight-saving changes; `startsAt` is
+/// the first occurrence as an instant, for sorting.
+model Event {
+  id              String          @id @default(cuid())
+  churchId        String
+  title           String
+  description     String?
+  location        String?
+  startDate       String
+  startTime       String?
+  endTime         String?
+  startsAt        DateTime
+  recurrence      EventRecurrence @default(NONE)
+  recurrenceUntil String?
+  registrationUrl String?
+  status          EventStatus     @default(PUBLISHED)
+  createdBy       String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  church          Church          @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
+  @@index([startsAt])
+}
+
+model CommunityResource {
+  id           String           @id @default(cuid())
+  churchId     String
+  category     ResourceCategory
+  title        String
+  description  String
+  schedule     String?
+  eligibility  String?
+  contact      String?
+  url          String?
+  status       ReviewStatus     @default(PENDING)
+  reviewerNote String?
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  createdBy    String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  church       Church           @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
+  @@index([status, category])
+}
+
+/// Stripe subscription state for a church, written only from verified webhooks
+/// (or a server-side re-fetch from Stripe).
+model Subscription {
+  id                   String    @id @default(cuid())
+  churchId             String    @unique
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  status               String
+  priceId              String?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  canceledAt           DateTime?
+  /// `created` of the newest Stripe event applied, so older events cannot overwrite newer state.
+  lastEventCreated     Int       @default(0)
+  lastEventId          String?
+  startedBy            String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  church               Church    @relation(fields: [churchId], references: [id], onDelete: Cascade)
+}
+
+/// Every Stripe event received, for idempotency and debugging.
+model StripeEvent {
+  id          String    @id
+  type        String
+  created     Int
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+  outcome     String?
+  error       String?
+}
+
+/// Aggregated per-day activity counts. No IP address, cookie, or visitor
+/// identifier is stored.
+model ActivityDaily {
+  id       String @id @default(cuid())
+  churchId String
+  day      String
+  metric   String
+  count    Int    @default(0)
+  church   Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@unique([churchId, day, metric])
+  @@index([churchId, day])
+}
+
+/// Result of one automated fetch of a church's official website.
+model WebsiteCheck {
+  id          String              @id @default(cuid())
+  churchId    String
+  url         String
+  finalUrl    String?
+  outcome     WebsiteCheckOutcome
+  httpStatus  Int?
+  error       String?
+  contentHash String?
+  proposals   Int                 @default(0)
+  startedAt   DateTime            @default(now())
+  finishedAt  DateTime?
+  church      Church              @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId, startedAt])
+}
+
+/// Fixed-window rate limiting. Keys are hashed; no raw IP address is stored.
+model RateLimit {
+  key         String
+  windowStart Int
+  count       Int    @default(0)
+
+  @@id([key, windowStart])
+}
+
+/// Record of every email the app attempted. Bodies are stored only by the
+/// development "log" provider; production stores metadata only.
+model OutboundEmail {
+  id         String      @id @default(cuid())
+  to         String
+  subject    String
+  body       String?
+  provider   String
+  status     EmailStatus
+  providerId String?
+  error      String?
+  createdAt  DateTime    @default(now())
+
   @@index([createdAt])
 }

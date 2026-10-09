@@ -78,13 +78,28 @@ describe("church serialization over the real dataset", () => {
     }
   });
 
-  it("derives capability flags from the underlying URLs", () => {
+  it("derives capability flags from the underlying URLs and the enhanced-profile entitlement", () => {
     for (const church of churches) {
-      const summary = toChurchSummary(church);
-      expect(summary.hasWebsite).toBe(Boolean(church.websiteUrl?.trim()));
-      expect(summary.hasApp).toBe(Boolean(church.appUrl?.trim()));
-      expect(summary.hasLivestream).toBe(Boolean(church.livestreamUrl?.trim()));
+      for (const enhanced of [true, false]) {
+        const summary = toChurchSummary({ ...church, enhancedProfile: enhanced });
+        expect(summary.hasWebsite).toBe(Boolean(church.websiteUrl?.trim()));
+        const anyApp = Boolean(church.appUrl?.trim() || church.appStoreUrl?.trim() || church.googlePlayUrl?.trim());
+        expect(summary.hasApp).toBe(enhanced && anyApp);
+        expect(summary.hasLivestream).toBe(enhanced && Boolean(church.livestreamUrl?.trim()));
+      }
     }
+  });
+
+  it("withholds paid-only fields from free listings in the detail payload", () => {
+    const church = churches.find((c) => c.livestreamUrl && c.socialLinks.length)!;
+    const free = toChurchDetail({ ...church, enhancedProfile: false });
+    expect(free.contact.livestreamUrl).toBeNull();
+    expect(free.socialLinks).toEqual([]);
+    expect(free.ministries).toEqual([]);
+    expect(free.contact.websiteUrl).toBe(church.websiteUrl);
+    const paid = toChurchDetail({ ...church, enhancedProfile: true });
+    expect(paid.contact.livestreamUrl).toBe(church.livestreamUrl);
+    expect(paid.socialLinks.length).toBeGreaterThan(0);
   });
 
   it("gives every nested list item a unique id for stable client keys", () => {

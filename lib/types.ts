@@ -90,6 +90,46 @@ export type ChurchRecord = {
     platform: SocialPlatform;
     url: string;
   }>;
+
+  // ---- Fields populated by the database read path (lib/services/churches.ts) ----
+  status?: "ACTIVE" | "CLOSED" | "MERGED" | "HIDDEN";
+  statusNote?: string;
+  address2?: string;
+  featuredImageIsAi?: boolean;
+  featuredImageCredit?: string;
+  featuredImageSourceUrl?: string;
+  publicSourceUrl?: string;
+  publicSourceCheckedAt?: string;
+  leadershipConfirmedAt?: string;
+  /** Server-computed: an active subscription or complimentary grant. */
+  enhancedProfile?: boolean;
+  /** Service time detail with derived fields, when read from the database. */
+  serviceDetails?: Array<{
+    id: string;
+    serviceName: string;
+    dayOfWeek: string;
+    startTime: string;
+    endTime?: string;
+    notes?: string;
+    language?: string;
+    startMinutes?: number;
+  }>;
+  visitorGuide?: VisitorGuideRecord | null;
+};
+
+export type VisitorGuideRecord = {
+  parking?: string;
+  entrance?: string;
+  accessibility?: string;
+  wheelchairAccessible?: boolean | null;
+  hearingAssistance?: boolean | null;
+  childrenCheckIn?: string;
+  hasChildrenProgram?: boolean | null;
+  serviceLength?: string;
+  dress?: string;
+  languages: string[];
+  whatToExpect?: string;
+  updatedAt: string;
 };
 
 export type CityRecord = {

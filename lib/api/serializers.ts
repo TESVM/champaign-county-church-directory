@@ -5,6 +5,7 @@ import type {
   DayOfWeek,
   SocialPlatform
 } from "@cccd/shared";
+import { featureVisible } from "@/lib/plans";
 import type { ChurchRecord, CityRecord } from "@/lib/types";
 
 /**
@@ -105,7 +106,7 @@ export function toChurchSummary(church: ChurchRecord): ChurchSummary {
     },
     address: {
       line1: emptyToNull(church.address1),
-      line2: null,
+      line2: emptyToNull(church.address2),
       city: church.city,
       state: church.state,
       zip: emptyToNull(church.zip),
@@ -131,16 +132,22 @@ export function toChurchSummary(church: ChurchRecord): ChurchSummary {
       : null,
     verified: church.verified,
     claimed: church.claimed,
-    premiumProfile: Boolean(church.premiumProfile),
+    premiumProfile: Boolean(church.enhancedProfile ?? church.premiumProfile),
     hasWebsite: Boolean(emptyToNull(church.websiteUrl)),
-    hasApp: Boolean(emptyToNull(church.appUrl)),
-    hasLivestream: Boolean(emptyToNull(church.livestreamUrl)),
+    hasApp:
+      featureVisible("appLinks", church.enhancedProfile ?? church.premiumProfile) &&
+      Boolean(emptyToNull(church.appUrl) || emptyToNull(church.appStoreUrl) || emptyToNull(church.googlePlayUrl)),
+    hasLivestream:
+      featureVisible("livestream", church.enhancedProfile ?? church.premiumProfile) && Boolean(emptyToNull(church.livestreamUrl)),
     serviceSummary: buildServiceSummary(church),
     lastUpdatedAt: emptyToNull(church.lastUpdatedAt)
   };
 }
 
 export function toChurchDetail(church: ChurchRecord): ChurchDetail {
+  // Paid-only fields are withheld from the API exactly as on the web page.
+  const enhanced = church.enhancedProfile ?? church.premiumProfile;
+  const show = (feature: Parameters<typeof featureVisible>[0]) => featureVisible(feature, enhanced);
   return {
     ...toChurchSummary(church),
     description: emptyToNull(church.description),
@@ -148,18 +155,19 @@ export function toChurchDetail(church: ChurchRecord): ChurchDetail {
       phone: emptyToNull(church.phone),
       email: emptyToNull(church.email),
       websiteUrl: emptyToNull(church.websiteUrl),
-      appUrl: emptyToNull(church.appUrl),
-      appStoreUrl: emptyToNull(church.appStoreUrl),
-      googlePlayUrl: emptyToNull(church.googlePlayUrl),
-      livestreamUrl: emptyToNull(church.livestreamUrl)
+      appUrl: show("appLinks") ? emptyToNull(church.appUrl) : null,
+      appStoreUrl: show("appLinks") ? emptyToNull(church.appStoreUrl) : null,
+      googlePlayUrl: show("appLinks") ? emptyToNull(church.googlePlayUrl) : null,
+      livestreamUrl: show("livestream") ? emptyToNull(church.livestreamUrl) : null
     },
-    leaders: (church.leadership ?? []).map((leader) => ({
+    leaders: (show("leadershipTeam") ? church.leadership ?? [] : []).map((leader) => ({
       fullName: leader.fullName,
       title: emptyToNull(leader.title),
       bio: null,
       photoUrl: null
     })),
     serviceTimes: church.serviceTimes.map((service, index) => {
+      const detail = church.serviceDetails?.[index];
       const displayTime = service.endTime
         ? `${service.startTime} - ${service.endTime}`
         : service.startTime;
@@ -167,7 +175,7 @@ export function toChurchDetail(church: ChurchRecord): ChurchDetail {
       return {
         // Mock records have no service-time ids; derive a stable one so client
         // list keys survive re-renders. Prisma rows supply a real id later.
-        id: `${church.slug}-service-${index}`,
+        id: detail?.id ?? `${church.slug}-service-${index}`,
         serviceName: service.serviceName,
         dayOfWeek: normalizeDayOfWeek(service.dayOfWeek),
         startTime: parseDisplayTime(service.startTime) ?? service.startTime,
@@ -176,12 +184,12 @@ export function toChurchDetail(church: ChurchRecord): ChurchDetail {
         notes: emptyToNull(service.notes)
       };
     }),
-    ministries: church.ministries.map((name, index) => ({
+    ministries: (show("ministries") ? church.ministries : []).map((name, index) => ({
       id: `${church.slug}-ministry-${index}`,
       name,
       description: null
     })),
-    socialLinks: church.socialLinks.flatMap((link) => {
+    socialLinks: (show("socialLinks") ? church.socialLinks : []).flatMap((link) => {
       const platform = toSocialPlatform(link.platform);
       return platform ? [{ platform, url: link.url }] : [];
     })

@@ -1,297 +1,498 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import type { Actor } from "@/lib/actor";
+import { clearSessionCookie, clientKey, getActor, readSessionToken, setSessionCookie } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { AppError, ValidationError, publicMessageFor } from "@/lib/errors";
+import type { FormState } from "@/lib/forms/state";
+import { log } from "@/lib/log";
 import { safeReturnPath } from "@/lib/safe-redirect";
-import { externalUrl } from "@/lib/utils";
-import { contactSchema, claimSchema, submitListingSchema } from "@/lib/validation/forms";
+import { decideSuggestedChange, runWebsiteReview } from "@/lib/scan/website-review";
+import { endAllSessionsForUser, endSession, passwordSignIn, requestSignInLink } from "@/lib/services/auth";
+import { openBillingPortal, setComplimentary, startCheckout } from "@/lib/services/billing";
+import { markPublicSourceChecked, setChurchStatus, updateChurchProfile } from "@/lib/services/churches";
+import { inviteTeamMember, reviewClaim, revokeTeamMember, setStaffRole, setUserDisabled, submitClaim } from "@/lib/services/claims";
+import { cancelEvent, moderateResource, removeResource, saveEvent, saveResource, saveVisitorGuide } from "@/lib/services/engagement";
 import {
-  createPersistedClaimRequest,
-  hasDatabaseUrl,
-  reviewPersistedClaimRequest,
-  saveChurchMediaRecord,
-  saveChurchListingRecord,
-  saveChurchStatusRecord,
-  saveSiteContentRecord
-} from "@/lib/data/admin-store";
+  resolveContactMessage,
+  resolveCorrection,
+  reviewSubmission,
+  submitContactMessage,
+  submitCorrection,
+  submitNewChurch
+} from "@/lib/services/inbox";
+import { removeChurchPhoto, saveChurchPhoto } from "@/lib/services/media";
 
-export async function submitContactAction(formData: FormData) {
-  contactSchema.parse({
-    name: formData.get("name"),
-    email: formData.get("email"),
-    message: formData.get("message")
-  });
+/**
+ * Server actions. Each resolves the signed-in actor from the session cookie
+ * and delegates to a service that enforces permissions itself.
+ *
+ * A success state is returned only after the service call completed, so the
+ * page never claims something was saved when it was not.
+ */
+
+const ok = (message: string): FormState => ({ status: "success", message, nonce: Date.now() });
+
+function isNextControlFlow(error: unknown) {
+  return Boolean(error && typeof error === "object" && "digest" in error && String((error as { digest: unknown }).digest).startsWith("NEXT_"));
 }
 
-export async function submitListingAction(formData: FormData) {
-  submitListingSchema.parse({
-    churchName: formData.get("churchName"),
-    city: formData.get("city"),
-    contactName: formData.get("contactName"),
-    contactEmail: formData.get("contactEmail"),
-    websiteUrl: formData.get("websiteUrl"),
-    appUrl: formData.get("appUrl"),
-    seniorPastor: formData.get("seniorPastor"),
-    serviceTimes: formData.get("serviceTimes"),
-    description: formData.get("description")
-  });
-}
-
-export async function claimListingAction(formData: FormData) {
-  const payload = claimSchema.parse({
-    churchName: formData.get("churchName"),
-    churchSlug: formData.get("churchSlug"),
-    contactName: formData.get("contactName"),
-    contactEmail: formData.get("contactEmail"),
-    role: formData.get("role"),
-    verificationMethod: formData.get("verificationMethod"),
-    phone: formData.get("phone"),
-    evidence: formData.get("evidence"),
-    message: formData.get("message")
-  });
-
-  await createPersistedClaimRequest({
-    churchSlug: payload.churchSlug || undefined,
-    churchName: payload.churchName,
-    contactName: payload.contactName,
-    contactEmail: payload.contactEmail,
-    role: payload.role,
-    verificationMethod: payload.verificationMethod,
-    evidence: `${payload.evidence}\n\nContext: ${payload.message}`
-  });
-
-  redirect(`/claim?submitted=1${payload.churchSlug ? `&church=${payload.churchSlug}` : ""}`);
-}
-
-export async function reviewClaimRequestAction(formData: FormData) {
-  const claimId = formData.get("claimId")?.toString();
-  const decision = formData.get("decision")?.toString() as "APPROVED" | "MORE_INFO" | "DENIED" | undefined;
-  const reviewerNote = formData.get("reviewerNote")?.toString();
-
-  if (!claimId || !decision) {
-    return;
+async function run(label: string, fn: () => Promise<string>): Promise<FormState> {
+  try {
+    return ok(await fn());
+  } catch (error) {
+    if (isNextControlFlow(error)) throw error;
+    if (!(error instanceof AppError) || error.status >= 500) log.error(`action.${label}.failed`, { error });
+    return {
+      status: "error",
+      message: publicMessageFor(error),
+      fieldErrors: error instanceof ValidationError ? error.fieldErrors : undefined,
+      nonce: Date.now()
+    };
   }
-
-  await reviewPersistedClaimRequest({
-    claimId,
-    decision,
-    reviewerNote
-  });
-
-  revalidatePath("/admin");
-  revalidatePath("/admin/claims");
-  revalidatePath("/dashboard");
 }
 
-export async function saveSiteContentAction(formData: FormData) {
-  const key = formData.get("key")?.toString();
-  const label = formData.get("label")?.toString();
-  const value = formData.get("value")?.toString();
-  const area = formData.get("area")?.toString() as "homepage" | "about" | "directory" | "global" | undefined;
-
-  if (!key || !label || !value || !area) {
-    return;
+function fields(formData: FormData) {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith("$ACTION")) continue;
+    out[key] = value;
   }
+  return out;
+}
 
-  await saveSiteContentRecord({
-    key,
-    label,
-    value,
-    area
-  });
+function str(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : undefined;
+}
 
-  revalidatePath("/admin/content");
+/** Bots fill hidden fields; people cannot see this one. Treated as a failure, never as success. */
+function assertHuman(formData: FormData) {
+  if (str(formData, "company_website")) {
+    throw new ValidationError("Your submission could not be sent. Please try again.");
+  }
+}
+
+async function signedIn(): Promise<Actor> {
+  const actor = await getActor();
+  if (actor.kind !== "user") redirect("/login");
+  return actor;
+}
+
+function churchIdFromForm(formData: FormData) {
+  const churchId = str(formData, "churchId");
+  if (!churchId) throw new ValidationError("Missing church.");
+  return churchId;
+}
+
+async function revalidateChurch(churchId: string) {
+  const prisma = await db();
+  const church = await prisma.church.findUnique({ where: { id: churchId }, select: { slug: true, cityRecord: { select: { slug: true } } } });
+  if (!church) return;
+  revalidatePath(`/churches/${church.slug}`);
+  revalidatePath(`/dashboard/churches/${church.slug}`, "layout");
+  revalidatePath(`/admin/churches/${church.slug}`);
+  if (church.cityRecord) revalidatePath(`/cities/${church.cityRecord.slug}`);
+  revalidatePath("/directory");
   revalidatePath("/");
-  revalidatePath("/directory");
 }
 
-async function fileToDataUrl(file: File | null) {
-  if (!file || file.size === 0) {
-    return undefined;
-  }
+// ---------------------------------------------------------------------------
+// Public forms
+// ---------------------------------------------------------------------------
 
-  if (!file.type.startsWith("image/")) {
-    return undefined;
-  }
-
-  if (file.size > 4 * 1024 * 1024) {
-    return undefined;
-  }
-
-  const arrayBuffer = await file.arrayBuffer();
-  const base64 = Buffer.from(arrayBuffer).toString("base64");
-  return `data:${file.type};base64,${base64}`;
-}
-
-function normalizedReturnPath(value: FormDataEntryValue | null, fallback: string) {
-  return safeReturnPath(value?.toString(), fallback);
-}
-
-async function requireChurchManageAccess(churchSlug: string) {
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    redirect("/login");
-  }
-
-  const canManageChurch =
-    session.user.role === "ADMIN" ||
-    session.user.role === "REVIEWER" ||
-    session.user.role === "SUPPORT" ||
-    (session.user.churchSlugs ?? []).includes(churchSlug);
-
-  if (!canManageChurch) {
-    redirect("/dashboard");
-  }
-
-  return session;
-}
-
-export async function saveChurchMediaAction(formData: FormData) {
-  const churchSlug = formData.get("churchSlug")?.toString();
-
-  if (!churchSlug) {
-    return;
-  }
-
-  await requireChurchManageAccess(churchSlug);
-  const returnPath = normalizedReturnPath(formData.get("returnPath"), `/admin/churches/${churchSlug}`);
-
-  if (!hasDatabaseUrl()) {
-    redirect(`${returnPath}?saved=needs-db`);
-  }
-
-  const featuredImageFile = formData.get("featuredImageFile");
-  const uploadedFeaturedImage =
-    featuredImageFile instanceof File ? await fileToDataUrl(featuredImageFile) : undefined;
-
-  await saveChurchMediaRecord({
-    churchSlug,
-    featuredImageUrl:
-      uploadedFeaturedImage ??
-      externalUrl(formData.get("featuredImageUrl")?.toString()) ??
-      undefined,
-    logoUrl: externalUrl(formData.get("logoUrl")?.toString()) ?? undefined
+export async function submitContactAction(_: FormState, formData: FormData) {
+  return run("contact", async () => {
+    assertHuman(formData);
+    await submitContactMessage(fields(formData), await clientKey());
+    return "Thank you. Your message was received and saved for the directory team. We reply by email, usually within a few business days.";
   });
-
-  revalidatePath(`/admin/churches/${churchSlug}`);
-  revalidatePath(`/dashboard/churches/${churchSlug}`);
-  revalidatePath(`/churches/${churchSlug}`);
-
-  redirect(`${returnPath}?saved=media`);
 }
 
-export async function saveChurchListingAction(formData: FormData) {
-  const churchSlug = formData.get("churchSlug")?.toString();
-
-  if (!churchSlug) {
-    return;
-  }
-
-  await requireChurchManageAccess(churchSlug);
-  const returnPath = normalizedReturnPath(formData.get("returnPath"), `/admin/churches/${churchSlug}`);
-
-  if (!hasDatabaseUrl()) {
-    redirect(`${returnPath}?saved=needs-db`);
-  }
-
-  await saveChurchListingRecord({
-    churchSlug,
-    name: formData.get("name")?.toString(),
-    city: formData.get("city")?.toString(),
-    pastorFullName: formData.get("pastorFullName")?.toString(),
-    denomination: formData.get("denomination")?.toString(),
-    websiteUrl: externalUrl(formData.get("websiteUrl")?.toString()) ?? undefined,
-    appUrl: externalUrl(formData.get("appUrl")?.toString()) ?? undefined,
-    livestreamUrl: externalUrl(formData.get("livestreamUrl")?.toString()) ?? undefined,
-    facebookUrl: externalUrl(formData.get("facebookUrl")?.toString()) ?? undefined,
-    instagramUrl: externalUrl(formData.get("instagramUrl")?.toString()) ?? undefined,
-    xUrl: externalUrl(formData.get("xUrl")?.toString()) ?? undefined,
-    youtubeUrl: externalUrl(formData.get("youtubeUrl")?.toString()) ?? undefined,
-    tiktokUrl: externalUrl(formData.get("tiktokUrl")?.toString()) ?? undefined,
-    updateSocialLinks: ["facebookUrl", "instagramUrl", "xUrl", "youtubeUrl", "tiktokUrl"].some((field) =>
-      formData.has(field)
-    ),
-    phone: formData.get("phone")?.toString(),
-    email: formData.get("email")?.toString(),
-    description: formData.get("description")?.toString()
+export async function submitListingAction(_: FormState, formData: FormData) {
+  return run("submit-listing", async () => {
+    assertHuman(formData);
+    await submitNewChurch(fields(formData), await clientKey());
+    return "Thank you. The church was submitted for review. We will email you when it is published or if we have questions.";
   });
-
-  revalidatePath(`/admin/churches/${churchSlug}`);
-  revalidatePath(`/dashboard/churches/${churchSlug}`);
-  revalidatePath(`/churches/${churchSlug}`);
-  revalidatePath("/directory");
-
-  redirect(`${returnPath}?saved=record`);
 }
 
-export async function saveChurchStatusAction(formData: FormData) {
-  const churchSlug = formData.get("churchSlug")?.toString();
-  const field = formData.get("field")?.toString();
-
-  if (!churchSlug || (field !== "verified" && field !== "claimed")) {
-    return;
-  }
-
-  await requireChurchManageAccess(churchSlug);
-  const returnPath = normalizedReturnPath(formData.get("returnPath"), `/admin/churches/${churchSlug}`);
-
-  if (!hasDatabaseUrl()) {
-    redirect(`${returnPath}?saved=needs-db`);
-  }
-
-  await saveChurchStatusRecord({
-    churchSlug,
-    ...(field === "verified" ? { verified: true } : {}),
-    ...(field === "claimed" ? { claimed: true } : {})
+export async function submitClaimAction(_: FormState, formData: FormData) {
+  return run("claim", async () => {
+    assertHuman(formData);
+    const result = await submitClaim(fields(formData), await clientKey());
+    return result.updatedExisting
+      ? `Your open request to manage ${result.churchName} was updated and is back in the review queue.`
+      : `Your request to manage ${result.churchName} was received. A reviewer will verify it and email you the result.`;
   });
+}
 
-  revalidatePath(`/admin/churches/${churchSlug}`);
-  revalidatePath(`/dashboard/churches/${churchSlug}`);
-  revalidatePath(`/churches/${churchSlug}`);
-  revalidatePath("/directory");
+export async function submitCorrectionAction(_: FormState, formData: FormData) {
+  return run("correction", async () => {
+    assertHuman(formData);
+    await submitCorrection(fields(formData), await clientKey());
+    return "Thank you. Your report was saved and sent to the directory team for review.";
+  });
+}
 
-  redirect(`${returnPath}?saved=${field}`);
+// ---------------------------------------------------------------------------
+// Sign-in
+// ---------------------------------------------------------------------------
+
+export async function requestSignInAction(_: FormState, formData: FormData) {
+  return run("signin", async () => {
+    const next = safeReturnPath(str(formData, "next"), "/dashboard");
+    const { email } = await requestSignInLink(str(formData, "email"), await clientKey(), next);
+    return `If ${email} belongs to a church manager or directory staff account, a sign-in link is on its way. It expires in 15 minutes. No account yet? Request to manage your church’s listing first.`;
+  });
+}
+
+export async function passwordSignInAction(_: FormState, formData: FormData) {
+  const result = await run("password-signin", async () => {
+    const session = await passwordSignIn(str(formData, "email"), str(formData, "password"), await clientKey());
+    if (!session) throw new ValidationError("That email and password did not match.");
+    await setSessionCookie(session.token);
+    return "Signed in.";
+  });
+  if (result.status === "success") redirect(safeReturnPath(str(formData, "next"), "/admin"));
+  return result;
+}
+
+export async function verifySignInAction(formData: FormData) {
+  const token = str(formData, "token") ?? "";
+  const next = safeReturnPath(str(formData, "next"), "/dashboard");
+  const session = await import("@/lib/services/auth").then((m) => m.consumeSignInToken(token)).catch((error) => {
+    log.error("action.verify.failed", { error });
+    return null;
+  });
+  if (!session) redirect("/login?error=link");
+  await setSessionCookie(session.token);
+  redirect(next);
+}
+
+export async function signOutAction() {
+  const token = await readSessionToken();
+  await endSession(token).catch(() => undefined);
+  await clearSessionCookie();
+  redirect("/");
+}
+
+// ---------------------------------------------------------------------------
+// Church dashboard
+// ---------------------------------------------------------------------------
+
+export async function saveProfileAction(_: FormState, formData: FormData) {
+  return run("profile", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    const input = fields(formData);
+    input.ministries = formData.getAll("ministries").map(String);
+    const result = await updateChurchProfile(actor, churchId, input);
+    await revalidateChurch(churchId);
+    return result.changedFields.length
+      ? "Saved. Your changes are live on the public listing."
+      : "Saved. Nothing had changed; the listing is recorded as reviewed today.";
+  });
+}
+
+export async function saveVisitorGuideAction(_: FormState, formData: FormData) {
+  return run("visitor-guide", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    const input = fields(formData);
+    input.languages = formData.getAll("languages").map(String);
+    await saveVisitorGuide(actor, churchId, input);
+    await revalidateChurch(churchId);
+    return "Saved. “Plan your first visit” is updated on your public listing.";
+  });
+}
+
+export async function saveChurchPhotoAction(_: FormState, formData: FormData) {
+  return run("photo", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    const file = formData.get("file");
+    await saveChurchPhoto(actor, churchId, {
+      file: file instanceof File ? file : null,
+      imageUrl: str(formData, "imageUrl"),
+      sourceUrl: str(formData, "sourceUrl"),
+      credit: str(formData, "credit"),
+      permission: str(formData, "permission")
+    });
+    await revalidateChurch(churchId);
+    return "Photo saved and shown on the public listing.";
+  });
+}
+
+export async function removeChurchPhotoAction(_: FormState, formData: FormData) {
+  return run("photo-remove", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    await removeChurchPhoto(actor, churchId);
+    await revalidateChurch(churchId);
+    return "Photo removed. The listing now shows a neutral placeholder.";
+  });
+}
+
+export async function saveEventAction(_: FormState, formData: FormData) {
+  return run("event", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    await saveEvent(actor, churchId, fields(formData), str(formData, "eventId") || undefined);
+    await revalidateChurch(churchId);
+    revalidatePath("/events");
+    return "Event saved and listed on the county calendar.";
+  });
+}
+
+export async function cancelEventAction(_: FormState, formData: FormData) {
+  return run("event-cancel", async () => {
+    const actor = await signedIn();
+    await cancelEvent(actor, str(formData, "eventId") ?? "");
+    revalidatePath("/events");
+    revalidatePath("/dashboard", "layout");
+    return "Event cancelled and removed from the calendar.";
+  });
+}
+
+export async function saveResourceAction(_: FormState, formData: FormData) {
+  return run("resource", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    const { status } = await saveResource(actor, churchId, fields(formData), str(formData, "resourceId") || undefined);
+    revalidatePath("/resources");
+    await revalidateChurch(churchId);
+    return status === "APPROVED"
+      ? "Saved and published."
+      : "Saved. A directory reviewer will check it before it appears publicly, usually within a few business days.";
+  });
+}
+
+export async function removeResourceAction(_: FormState, formData: FormData) {
+  return run("resource-remove", async () => {
+    const actor = await signedIn();
+    await removeResource(actor, str(formData, "resourceId") ?? "");
+    revalidatePath("/resources");
+    revalidatePath("/dashboard", "layout");
+    return "Removed.";
+  });
+}
+
+export async function inviteMemberAction(_: FormState, formData: FormData) {
+  return run("invite", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    const result = await inviteTeamMember(actor, churchId, fields(formData));
+    revalidatePath("/dashboard", "layout");
+    return result.emailed
+      ? `${result.email} was added and emailed instructions to sign in.`
+      : `${result.email} was added, but the notification email could not be sent. Ask them to sign in on the directory’s sign-in page with that address.`;
+  });
+}
+
+export async function revokeMemberAction(_: FormState, formData: FormData) {
+  return run("revoke", async () => {
+    const actor = await signedIn();
+    await revokeTeamMember(actor, str(formData, "membershipId") ?? "");
+    revalidatePath("/dashboard", "layout");
+    revalidatePath("/admin", "layout");
+    return "Access removed. It takes effect immediately.";
+  });
+}
+
+async function originOf() {
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto") ?? "http";
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3004";
+  return `${proto}://${host}`;
+}
+
+export async function startCheckoutAction(_: FormState, formData: FormData) {
+  let url: string | null = null;
+  const result = await run("checkout", async () => {
+    const actor = await signedIn();
+    url = await startCheckout(actor, churchIdFromForm(formData), await originOf());
+    return "Opening secure checkout…";
+  });
+  if (url) redirect(url);
+  return result;
+}
+
+export async function openPortalAction(_: FormState, formData: FormData) {
+  let url: string | null = null;
+  const result = await run("portal", async () => {
+    const actor = await signedIn();
+    url = await openBillingPortal(actor, churchIdFromForm(formData), await originOf());
+    return "Opening billing…";
+  });
+  if (url) redirect(url);
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Administration
+// ---------------------------------------------------------------------------
+
+export async function reviewClaimAction(_: FormState, formData: FormData) {
+  return run("review-claim", async () => {
+    const actor = await signedIn();
+    await reviewClaim(actor, fields(formData));
+    revalidatePath("/admin", "layout");
+    const decision = str(formData, "decision");
+    return decision === "APPROVED"
+      ? "Approved. The applicant now owns the listing and was emailed sign-in instructions."
+      : decision === "MORE_INFO"
+        ? "Request for more information sent to the applicant."
+        : "Claim declined and the applicant notified.";
+  });
+}
+
+export async function reviewSubmissionAction(_: FormState, formData: FormData) {
+  return run("review-submission", async () => {
+    const actor = await signedIn();
+    const decision = str(formData, "decision") === "APPROVED" ? "APPROVED" : "REJECTED";
+    const result = await reviewSubmission(actor, {
+      submissionId: str(formData, "submissionId") ?? "",
+      decision,
+      note: str(formData, "note"),
+      allowDuplicate: str(formData, "allowDuplicate") === "true"
+    });
+    revalidatePath("/admin", "layout");
+    revalidatePath("/directory");
+    return result.churchSlug ? `Published at /churches/${result.churchSlug}.` : "Submission declined and the submitter notified.";
+  });
+}
+
+export async function resolveContactAction(_: FormState, formData: FormData) {
+  return run("contact-resolve", async () => {
+    const actor = await signedIn();
+    await resolveContactMessage(actor, str(formData, "id") ?? "", str(formData, "status") === "DISMISSED" ? "DISMISSED" : "RESOLVED");
+    revalidatePath("/admin/inbox");
+    return "Updated.";
+  });
+}
+
+export async function resolveCorrectionAction(_: FormState, formData: FormData) {
+  return run("correction-resolve", async () => {
+    const actor = await signedIn();
+    await resolveCorrection(actor, str(formData, "id") ?? "", str(formData, "status") === "DISMISSED" ? "DISMISSED" : "RESOLVED", str(formData, "note"));
+    revalidatePath("/admin/inbox");
+    return "Updated.";
+  });
+}
+
+export async function decideChangeAction(_: FormState, formData: FormData) {
+  return run("decide-change", async () => {
+    const actor = await signedIn();
+    const decision = str(formData, "decision") === "APPROVED" ? "APPROVED" : "REJECTED";
+    await decideSuggestedChange(actor, str(formData, "id") ?? "", decision, str(formData, "note"));
+    revalidatePath("/admin/review");
+    revalidatePath("/directory");
+    return decision === "APPROVED" ? "Change applied to the listing." : "Proposal rejected; it will not be suggested again.";
+  });
+}
+
+export async function moderateResourceAction(_: FormState, formData: FormData) {
+  return run("moderate-resource", async () => {
+    const actor = await signedIn();
+    const decision = str(formData, "decision") === "APPROVED" ? "APPROVED" : "REJECTED";
+    await moderateResource(actor, str(formData, "id") ?? "", decision, str(formData, "note"));
+    revalidatePath("/resources");
+    revalidatePath("/admin/resources");
+    return decision === "APPROVED" ? "Published." : "Rejected with your note.";
+  });
+}
+
+export async function setChurchStatusAction(_: FormState, formData: FormData) {
+  return run("church-status", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    await setChurchStatus(actor, churchId, { status: str(formData, "status"), note: str(formData, "note"), mergeIntoSlug: str(formData, "mergeIntoSlug") });
+    await revalidateChurch(churchId);
+    return "Listing status updated.";
+  });
+}
+
+export async function markSourceCheckedAction(_: FormState, formData: FormData) {
+  return run("source-checked", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    await markPublicSourceChecked(actor, churchId, str(formData, "sourceUrl"));
+    await revalidateChurch(churchId);
+    return "Recorded today’s check against the public source.";
+  });
+}
+
+export async function setComplimentaryAction(_: FormState, formData: FormData) {
+  return run("complimentary", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    const remove = str(formData, "remove") === "true";
+    await setComplimentary(actor, churchId, { until: remove ? null : str(formData, "until"), reason: str(formData, "reason") });
+    await revalidateChurch(churchId);
+    return remove ? "Complimentary enhanced profile removed." : "Complimentary enhanced profile granted.";
+  });
+}
+
+export async function setStaffRoleAction(_: FormState, formData: FormData) {
+  return run("staff-role", async () => {
+    const actor = await signedIn();
+    await setStaffRole(actor, fields(formData));
+    revalidatePath("/admin/users");
+    return "Role updated. It applies on the user’s next page load.";
+  });
+}
+
+export async function setUserDisabledAction(_: FormState, formData: FormData) {
+  return run("user-disable", async () => {
+    const actor = await signedIn();
+    const disable = str(formData, "disabled") === "true";
+    await setUserDisabled(actor, str(formData, "userId") ?? "", disable);
+    revalidatePath("/admin/users");
+    return disable ? "Account disabled and signed out everywhere." : "Account re-enabled.";
+  });
+}
+
+export async function revokeSessionsAction(_: FormState, formData: FormData) {
+  return run("revoke-sessions", async () => {
+    const actor = await signedIn();
+    if (actor.kind !== "user" || actor.staffRole !== "ADMIN") throw new ValidationError("Administrator access is required.");
+    const count = await endAllSessionsForUser(actor, str(formData, "userId") ?? "");
+    revalidatePath("/admin/users");
+    return `Signed out ${count} session(s).`;
+  });
+}
+
+export async function runWebsiteReviewAction(_: FormState) {
+  return run("scan-now", async () => {
+    const actor = await signedIn();
+    if (actor.kind !== "user" || (actor.staffRole !== "ADMIN" && actor.staffRole !== "REVIEWER")) {
+      throw new ValidationError("Reviewer access is required.");
+    }
+    const result = await runWebsiteReview({ batchSize: 5 });
+    revalidatePath("/admin/review");
+    const outcomes = Object.entries(result.outcomes)
+      .map(([k, v]) => `${v} ${k.toLowerCase().replace(/_/g, " ")}`)
+      .join(", ");
+    return `Checked ${result.checked} website(s)${outcomes ? `: ${outcomes}` : ""}. ${result.proposals} new proposal(s) queued for review.`;
+  });
 }
 
 /**
- * Generates an AI image for a church that has no uploaded photo.
- *
- * Reachable by admins and by the church's own owners/editors, the same people
- * who can edit its images by hand. A photo someone uploaded is never replaced;
- * generateChurchImage enforces that at the database level.
+ * Kept from the AI image feature, now disabled unless AI_IMAGES_ENABLED=true.
+ * Even then, generated images are never shown publicly as the church's photo.
  */
 export async function generateChurchImageAction(formData: FormData) {
-  const churchSlug = formData.get("churchSlug")?.toString();
-
-  if (!churchSlug) {
-    return;
-  }
-
-  await requireChurchManageAccess(churchSlug);
-  const returnPath = normalizedReturnPath(formData.get("returnPath"), `/admin/churches/${churchSlug}`);
-
+  const actor = await signedIn();
+  const churchSlug = str(formData, "churchSlug") ?? "";
+  const returnPath = safeReturnPath(str(formData, "returnPath"), "/admin/images");
+  if (actor.kind !== "user" || actor.staffRole !== "ADMIN") redirect(returnPath);
   const { generateChurchImage } = await import("@/lib/ai-church-image");
   const result = await generateChurchImage(churchSlug);
-
-  // The return path may already carry a query (the AI Images page keeps its
-  // filter and page), so merge parameters rather than appending "?".
   const target = new URL(returnPath, "https://internal.invalid");
-  target.searchParams.set("church", churchSlug);
-
-  if (result.status === "generated") {
-    revalidatePath(`/admin/churches/${churchSlug}`);
-    revalidatePath(`/dashboard/churches/${churchSlug}`);
-    revalidatePath(`/churches/${churchSlug}`);
-    revalidatePath("/admin/images");
-    revalidatePath("/directory");
-    target.searchParams.set("saved", "ai-image");
-    target.searchParams.delete("ai");
-  } else {
-    target.searchParams.set("ai", result.status);
-    target.searchParams.delete("saved");
-  }
-
+  target.searchParams.set("ai", result.status);
   redirect(`${target.pathname}${target.search}`);
 }

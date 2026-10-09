@@ -1,32 +1,21 @@
 import type { MetadataRoute } from "next";
-import { getPublishedChurches, getPublishedCities } from "@/lib/data/published";
-import { absoluteUrl } from "@/lib/utils";
+import { listAllChurchSlugs, listCities } from "@/lib/services/churches";
+import { siteUrl } from "@/lib/site";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = [
-    "",
-    "/about",
-    "/contact",
-    "/directory",
-    "/cities",
-    "/submit",
-    "/claim",
-    "/search",
-    "/privacy"
-  ].map((path) => ({
-    url: absoluteUrl(path),
-    lastModified: new Date()
-  }));
-
-  const cityRoutes = getPublishedCities().map((city) => ({
-    url: absoluteUrl(`/cities/${city.slug}`),
-    lastModified: new Date()
-  }));
-
-  const churchRoutes = getPublishedChurches().map((church) => ({
-    url: absoluteUrl(`/churches/${church.slug}`),
-    lastModified: new Date(church.lastUpdatedAt)
-  }));
-
-  return [...routes, ...cityRoutes, ...churchRoutes];
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const base = siteUrl();
+  const staticPaths = ["/", "/directory", "/find-a-service", "/events", "/resources", "/cities", "/for-churches", "/about", "/submit", "/claim", "/contact", "/privacy", "/terms"];
+  try {
+    const [churches, cities] = await Promise.all([listAllChurchSlugs(), listCities()]);
+    return [
+      ...staticPaths.map((path) => ({ url: `${base}${path}`, changeFrequency: "weekly" as const })),
+      ...cities.map((city) => ({ url: `${base}/cities/${city.slug}`, changeFrequency: "weekly" as const })),
+      ...churches
+        .filter((c) => c.status === "ACTIVE")
+        .map((c) => ({ url: `${base}/churches/${c.slug}`, lastModified: c.lastUpdatedAt ?? c.updatedAt, changeFrequency: "monthly" as const }))
+    ];
+  } catch {
+    // A sitemap without church URLs is better than a 500 for crawlers.
+    return staticPaths.map((path) => ({ url: `${base}${path}` }));
+  }
 }

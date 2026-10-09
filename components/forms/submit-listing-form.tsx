@@ -1,58 +1,41 @@
 import { submitListingAction } from "@/app/actions";
-import { Button } from "@/components/ui/button";
-import { TextAreaField, TextField } from "@/components/ui/field";
+import { ActionForm, SubmitButton } from "@/components/forms/action-form";
+import { SelectField, TextAreaField, TextField } from "@/components/ui/field";
 
-export function SubmitListingForm() {
+export function SubmitListingForm({ cities }: { cities: Array<{ slug: string; name: string }> }) {
   return (
-    <form action={submitListingAction} className="space-y-6">
-      <p className="text-sm leading-6 text-stone-600">
-        Fields marked with an asterisk are required. We review every submission
-        before it appears in the directory.
-      </p>
-
-      <div className="grid gap-5 md:grid-cols-2">
-        <TextField name="churchName" label="Church name" required autoComplete="organization" />
-        <TextField name="city" label="City" required autoComplete="address-level2" />
-        <TextField name="contactName" label="Your name" required autoComplete="name" />
-        <TextField
-          name="contactEmail"
-          label="Your email"
-          type="email"
-          required
-          autoComplete="email"
-          hint="We use this only to follow up about this listing."
-        />
-        <TextField
-          name="websiteUrl"
-          label="Website address"
-          type="url"
-          inputMode="url"
-          placeholder="https://example.org"
-        />
-        <TextField
-          name="appUrl"
-          label="Church app address"
-          type="url"
-          inputMode="url"
-          placeholder="https://example.org/app"
-        />
-        <TextField name="seniorPastor" label="Senior pastor" required />
-        <TextField
-          name="serviceTimes"
-          label="Service times"
-          required
-          hint="For example: Sunday 9:00 AM and 11:00 AM, Wednesday 6:30 PM"
-        />
-      </div>
-
-      <TextAreaField
-        name="description"
-        label="About the church"
-        required
-        hint="Ministries, worship style, and anything a visitor should know. At least 20 characters."
-      />
-
-      <Button type="submit">Submit for review</Button>
-    </form>
+    <ActionForm
+      action={submitListingAction}
+      honeypot
+      resetOnSuccess
+      fieldLabels={{ churchName: "Church name", citySlug: "City", address1: "Street address", serviceTimes: "Service times", contactName: "Your name", contactEmail: "Your email", websiteUrl: "Website", churchEmail: "Church email" }}
+    >
+      <p className="text-sm leading-6 text-stone-600">Fields marked with an asterisk are required. Please only submit details you know to be accurate.</p>
+      <fieldset className="space-y-5">
+        <legend className="font-display text-2xl">The church</legend>
+        <div className="grid gap-5 md:grid-cols-2">
+          <TextField name="churchName" label="Church name" required />
+          <SelectField name="citySlug" label="City" required defaultValue="" options={[{ value: "", label: "Choose a city…" }, ...cities.map((c) => ({ value: c.slug, label: c.name }))]} />
+          <TextField name="address1" label="Street address" required autoComplete="street-address" />
+          <TextField name="zip" label="ZIP code" inputMode="numeric" autoComplete="postal-code" />
+          <TextField name="phone" label="Church phone" type="tel" />
+          <TextField name="churchEmail" label="Church email" type="email" />
+          <TextField name="websiteUrl" label="Website" type="url" placeholder="https://" />
+          <TextField name="denomination" label="Denomination" />
+          <TextField name="seniorPastor" label="Lead pastor" />
+        </div>
+        <TextAreaField name="serviceTimes" label="Service times" required hint="One per line, e.g. “Sunday 10:30 AM” or “Wednesday 7:00 PM Bible study”." />
+        <TextAreaField name="description" label="Short description" hint="A sentence or two visitors would find helpful." />
+      </fieldset>
+      <fieldset className="space-y-5">
+        <legend className="font-display text-2xl">About you</legend>
+        <div className="grid gap-5 md:grid-cols-2">
+          <TextField name="contactName" label="Your name" required autoComplete="name" />
+          <TextField name="contactEmail" label="Your email" type="email" required autoComplete="email" hint="We email you when it is published. Not shown publicly." />
+        </div>
+        <TextField name="relationship" label="Your connection to the church" placeholder="Member, pastor, neighbour…" />
+      </fieldset>
+      <SubmitButton pendingLabel="Submitting…">Submit for review</SubmitButton>
+    </ActionForm>
   );
 }

@@ -1,76 +1,60 @@
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
-import { reviewClaimRequestAction } from "@/app/actions";
+import Link from "next/link";
+import { reviewClaimAction } from "@/app/actions";
+import { StatusFilter } from "@/components/admin/status-filter";
+import { ActionForm, SubmitButton } from "@/components/forms/action-form";
 import { Card } from "@/components/ui/card";
-import { requireAdminAccess } from "@/lib/auth-guards";
-import { getPersistedClaimRequests } from "@/lib/data/admin-store";
+import { TextAreaField } from "@/components/ui/field";
+import { requireReviewer } from "@/lib/auth-guards";
+import { listClaims } from "@/lib/services/claims";
 import { formatDate } from "@/lib/utils";
 
-export default async function AdminClaimsPage() {
-  await requireAdminAccess();
+const METHOD = { DOMAIN_EMAIL: "Church email domain", PUBLIC_PHONE: "Call church’s public phone", MANUAL_REVIEW: "Other evidence" } as const;
 
-  const claims = await getPersistedClaimRequests();
-
+export default async function ClaimsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  const actor = await requireReviewer("/admin/claims");
+  const status = (await searchParams).status ?? "PENDING";
+  const claims = await listClaims(actor, status === "ALL" ? undefined : status);
   return (
-    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-        <AdminSidebar />
-        <div className="space-y-6 admin-shell rounded-[36px] border border-white/70 p-5 sm:p-8">
-          <div className="section-strong rounded-[30px] border border-white/70 px-6 py-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-700">Claim Requests</p>
-            <h1 className="mt-4 font-display text-5xl">Verify pastors and delegated church admins</h1>
-            <p className="mt-4 text-lg text-stone-600">
-              Approve only after a proof step that reasonably demonstrates authorization through domain email, public phone, or manual evidence.
-            </p>
+    <div className="space-y-5">
+      <h1 className="font-display text-4xl">Claim requests</h1>
+      <p className="text-sm text-stone-700">Approve only after verifying authority: the email domain matches the church’s website, or you reached the church at its <em>publicly listed</em> number and they confirmed the person.</p>
+      <StatusFilter base="/admin/claims" current={status} options={[["PENDING", "Pending"], ["MORE_INFO", "Waiting on applicant"], ["APPROVED", "Approved"], ["DENIED", "Declined"], ["ALL", "All"]]} />
+      {claims.length === 0 ? <p className="text-sm text-stone-600">Nothing here.</p> : null}
+      {claims.map((claim) => (
+        <Card key={claim.id} className="p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">{claim.status.replace("_", " ")} · {formatDate(claim.submittedAt.toISOString())}</p>
+              <h2 className="font-display text-2xl">
+                <Link href={`/admin/churches/${claim.church.slug}`} className="hover:underline">{claim.church.name}</Link>
+              </h2>
+              <p className="text-sm text-stone-700">{claim.applicantName} · {claim.applicantRole} · {claim.applicantEmail}{claim.applicantPhone ? ` · ${claim.applicantPhone}` : ""}</p>
+            </div>
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${claim.emailDomainMatches ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"}`}>
+              {claim.emailDomainMatches ? "Email domain matches church website" : "Email domain does not match website"}
+            </span>
           </div>
-          {claims.map((claim) => (
-            <Card key={claim.id} className="border-white/70 bg-gradient-to-br from-white via-brand-50 to-sky/30 p-6">
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl">
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-700">{claim.status.replaceAll("_", " ")}</p>
-                  <h2 className="mt-3 font-display text-3xl">{claim.churchName}</h2>
-                  <p className="mt-2 text-sm text-stone-600">
-                    {claim.applicantName} • {claim.applicantRole} • {claim.applicantEmail}
-                  </p>
-                  <p className="mt-4 text-sm leading-7 text-stone-700">{claim.evidenceSummary}</p>
-                  {claim.reviewerNote ? (
-                    <div className="mt-4 rounded-2xl bg-white/80 p-4 ring-1 ring-brand-100">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">Reviewer note</p>
-                      <p className="mt-2 text-sm text-stone-600">{claim.reviewerNote}</p>
-                    </div>
-                  ) : null}
+          <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+            <div><dt className="font-semibold">Requested verification</dt><dd>{METHOD[claim.verificationMethod]}</dd></div>
+            <div><dt className="font-semibold">Church’s public contact</dt><dd>{[claim.church.phone, claim.church.email, claim.church.websiteUrl].filter(Boolean).join(" · ") || "None on file"}</dd></div>
+          </dl>
+          <p className="mt-3 whitespace-pre-line rounded-xl bg-brand-50 p-3 text-sm">{claim.evidenceSummary}</p>
+          {claim.reviewerNote ? <p className="mt-2 text-sm text-stone-600">Reviewer note: {claim.reviewerNote}{claim.reviewedBy ? ` (${claim.reviewedBy})` : ""}</p> : null}
+          {claim.status === "PENDING" || claim.status === "MORE_INFO" ? (
+            <div className="mt-4">
+              <ActionForm action={reviewClaimAction}>
+                <input type="hidden" name="claimId" value={claim.id} />
+                <TextAreaField name="reviewerNote" label="Note to the applicant (required to decline or ask for more)" rows={2} />
+                <div className="flex flex-wrap gap-2">
+                  <SubmitButton name="decision" value="APPROVED" pendingLabel="Working…">Approve as owner</SubmitButton>
+                  <SubmitButton name="decision" value="MORE_INFO" variant="secondary" pendingLabel="Working…">Ask for more information</SubmitButton>
+                  <SubmitButton name="decision" value="DENIED" variant="danger" pendingLabel="Working…">Decline</SubmitButton>
                 </div>
-                <div className="min-w-[220px] rounded-[24px] bg-white/80 p-4 ring-1 ring-brand-100">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">Verification method</p>
-                  <p className="mt-2 font-semibold text-ink">{claim.verificationMethod.replaceAll("_", " ")}</p>
-                  <p className="mt-4 text-sm text-stone-600">Submitted {formatDate(claim.submittedAt)}</p>
-                  <div className="mt-5 space-y-3">
-                    <form action={reviewClaimRequestAction}>
-                      <input type="hidden" name="claimId" value={claim.id} />
-                      <input type="hidden" name="decision" value="APPROVED" />
-                      <button className="w-full rounded-full bg-brand-900 px-4 py-2 text-sm font-semibold text-white">Approve</button>
-                    </form>
-                    <form action={reviewClaimRequestAction} className="space-y-2">
-                      <input type="hidden" name="claimId" value={claim.id} />
-                      <input type="hidden" name="decision" value="MORE_INFO" />
-                      <textarea
-                        name="reviewerNote"
-                        placeholder="Ask for one more proof point"
-                        className="min-h-24 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-stone-400"
-                      />
-                      <button className="w-full rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink ring-1 ring-line">Request more info</button>
-                    </form>
-                    <form action={reviewClaimRequestAction}>
-                      <input type="hidden" name="claimId" value={claim.id} />
-                      <input type="hidden" name="decision" value="DENIED" />
-                      <button className="w-full rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink ring-1 ring-line">Deny</button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
+              </ActionForm>
+            </div>
+          ) : null}
+        </Card>
+      ))}
     </div>
   );
 }

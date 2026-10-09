@@ -61,6 +61,35 @@ const baseSchema = z.object({
   MEDIA_DRIVER: z.enum(["local", "blob"]).default("local"),
   BLOB_READ_WRITE_TOKEN: optionalString,
 
+  // AI images are off unless explicitly enabled. A generated building must
+  // never be presented as a congregation's photograph, so even when enabled
+  // the public site does not display them (see lib/data/church-images.ts).
+  AI_IMAGES_ENABLED: z.enum(["true", "false"]).default("false"),
+
+  // Canonical public origin, e.g. https://champaigncountychurches.org
+  SITE_URL: z.string().url().optional(),
+
+  // Email delivery. "log" stores messages in the OutboundEmail table and
+  // prints them to the server console (development only). "resend" sends
+  // through the Resend HTTP API.
+  EMAIL_PROVIDER: z.enum(["log", "resend"]).default("log"),
+  // Lets a local production build (`next start`) run with the log provider for
+  // testing. Never set this on a public deployment.
+  ALLOW_LOG_EMAIL: z.enum(["true", "false"]).default("false"),
+  RESEND_API_KEY: optionalString,
+  EMAIL_FROM: optionalString,
+  ADMIN_NOTIFY_EMAIL: z.string().email().optional(),
+  SUPPORT_EMAIL: z.string().email().optional(),
+
+  // Stripe billing for the enhanced church profile.
+  STRIPE_SECRET_KEY: optionalString,
+  STRIPE_PRICE_ID: optionalString,
+  STRIPE_WEBHOOK_SECRET: optionalString,
+
+  // Automated website review.
+  SCAN_USER_AGENT: optionalString,
+  SCAN_BATCH_SIZE: z.coerce.number().int().min(1).max(200).default(25),
+
   VERCEL_URL: optionalString,
   VERCEL_PROJECT_PRODUCTION_URL: optionalString
 });
@@ -83,12 +112,8 @@ function assertProductionRequirements(env: BaseEnv): string[] {
   }
 
   if (!env.ADMIN_EMAIL) {
-    missing.push("ADMIN_EMAIL is required in production.");
-  }
-
-  if (!env.ADMIN_PASSWORD) {
     missing.push(
-      `ADMIN_PASSWORD is required in production and must be at least ${MIN_ADMIN_PASSWORD_LENGTH} characters.`
+      "ADMIN_EMAIL is required in production. That address is granted the administrator role the first time it signs in with an emailed link."
     );
   }
 
@@ -96,6 +121,18 @@ function assertProductionRequirements(env: BaseEnv): string[] {
     missing.push(
       "CRON_SECRET is required in production. Without it the weekly scan endpoint cannot authenticate its caller."
     );
+  }
+
+  if (env.EMAIL_PROVIDER === "log" && env.ALLOW_LOG_EMAIL !== "true") {
+    missing.push(
+      'EMAIL_PROVIDER="log" only records email locally. Set EMAIL_PROVIDER="resend", RESEND_API_KEY and EMAIL_FROM so sign-in links and notifications are delivered.'
+    );
+  } else if (!env.RESEND_API_KEY || !env.EMAIL_FROM) {
+    missing.push('EMAIL_PROVIDER="resend" requires RESEND_API_KEY and EMAIL_FROM.');
+  }
+
+  if (!env.SITE_URL && !env.AUTH_URL && !env.NEXTAUTH_URL) {
+    missing.push("SITE_URL is required in production so sign-in links, canonical URLs, and the sitemap use the real domain.");
   }
 
   if (!env.DATABASE_URL) {
@@ -161,7 +198,26 @@ export const env = {
 
   cronSecret: parsedEnv.CRON_SECRET,
 
-  authUrl: parsedEnv.AUTH_URL ?? parsedEnv.NEXTAUTH_URL,
+  authUrl: parsedEnv.SITE_URL ?? parsedEnv.AUTH_URL ?? parsedEnv.NEXTAUTH_URL,
+  siteUrl: parsedEnv.SITE_URL ?? parsedEnv.AUTH_URL ?? parsedEnv.NEXTAUTH_URL,
+
+  aiImagesEnabled: parsedEnv.AI_IMAGES_ENABLED === "true",
+
+  emailProvider: parsedEnv.EMAIL_PROVIDER,
+  allowLogEmail: parsedEnv.ALLOW_LOG_EMAIL === "true",
+  resendApiKey: parsedEnv.RESEND_API_KEY,
+  emailFrom: parsedEnv.EMAIL_FROM,
+  adminNotifyEmail: parsedEnv.ADMIN_NOTIFY_EMAIL ?? parsedEnv.ADMIN_EMAIL,
+  supportEmail: parsedEnv.SUPPORT_EMAIL,
+
+  stripeSecretKey: parsedEnv.STRIPE_SECRET_KEY,
+  stripePriceId: parsedEnv.STRIPE_PRICE_ID,
+  stripeWebhookSecret: parsedEnv.STRIPE_WEBHOOK_SECRET,
+
+  scanUserAgent:
+    parsedEnv.SCAN_USER_AGENT ??
+    "ChampaignCountyChurchDirectoryBot/1.0 (+directory website review; respects robots.txt)",
+  scanBatchSize: parsedEnv.SCAN_BATCH_SIZE,
   vercelUrl: parsedEnv.VERCEL_URL,
   vercelProductionUrl: parsedEnv.VERCEL_PROJECT_PRODUCTION_URL,
 
@@ -181,6 +237,9 @@ export const env = {
  * Checked before any paid request is made.
  */
 export function aiImageUnavailableReason(): string | null {
+  if (!env.aiImagesEnabled) {
+    return "AI image generation is turned off (AI_IMAGES_ENABLED is not \"true\"). Listings without a real photograph show a neutral placeholder.";
+  }
   if (!env.hasDatabase) return "DATABASE_URL is not configured, so a generated image cannot be saved.";
   if (!env.openAiApiKey) return "OPENAI_API_KEY is not configured.";
   if (env.mediaDriver === "blob" && !env.blobToken) {

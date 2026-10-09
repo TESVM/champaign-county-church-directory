@@ -1,50 +1,38 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-import { prisma } from "@/lib/prisma/client";
+import { NextResponse } from "next/server";
+import { env } from "@/lib/env";
+import { log } from "@/lib/log";
+import { processStripeEvent, verifyStripeSignature } from "@/lib/services/billing";
 
 export const runtime = "nodejs";
 
-function validStripeSignature(payload: string, header: string, secret: string) {
-  const parts = header.split(",").map((part) => part.split("="));
-  const timestamp = parts.find(([key]) => key === "t")?.[1];
-  const signatures = parts.filter(([key]) => key === "v1").map(([, value]) => value);
-  if (!timestamp || signatures.length === 0) return false;
-  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false;
-  const expected = createHmac("sha256", secret).update(`${timestamp}.${payload}`).digest("hex");
-  return signatures.some((signature) => {
-    const a = Buffer.from(signature);
-    const b = Buffer.from(expected);
-    return a.length === b.length && timingSafeEqual(a, b);
-  });
-}
-
-type StripeEvent = {
-  type: string;
-  data: { object: { status?: string; metadata?: { churchSlug?: string } } };
-};
-
+/**
+ * Stripe webhook. The signature is checked against the raw body before
+ * anything is parsed. A 500 makes Stripe retry; processing is idempotent.
+ */
 export async function POST(request: Request) {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  const signature = request.headers.get("stripe-signature");
+  const secret = env.stripeWebhookSecret;
   const payload = await request.text();
-  if (!secret || !signature || !validStripeSignature(payload, signature, secret)) {
-    return Response.json({ error: "invalid_signature" }, { status: 400 });
+  if (!secret) {
+    log.error("stripe.webhook_unconfigured");
+    return NextResponse.json({ error: "not_configured" }, { status: 503 });
+  }
+  if (!verifyStripeSignature(payload, request.headers.get("stripe-signature"), secret)) {
+    return NextResponse.json({ error: "invalid_signature" }, { status: 400 });
   }
 
-  const event = JSON.parse(payload) as StripeEvent;
-  const churchSlug = event.data.object.metadata?.churchSlug;
-  if (!churchSlug) return Response.json({ received: true });
-
-  const active =
-    event.type === "checkout.session.completed" ||
-    ((event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") &&
-      ["active", "trialing"].includes(event.data.object.status ?? ""));
-  const inactive =
-    event.type === "customer.subscription.deleted" ||
-    (event.type === "customer.subscription.updated" &&
-      ["canceled", "unpaid", "incomplete_expired"].includes(event.data.object.status ?? ""));
-
-  if (active || inactive) {
-    await prisma.church.updateMany({ where: { slug: churchSlug }, data: { premiumProfile: active } });
+  let event: Parameters<typeof processStripeEvent>[0];
+  try {
+    event = JSON.parse(payload);
+  } catch {
+    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
-  return Response.json({ received: true });
+
+  try {
+    const outcome = await processStripeEvent(event);
+    log.info("stripe.webhook", { id: event.id, type: event.type, outcome });
+    return NextResponse.json({ received: true, outcome });
+  } catch (error) {
+    log.error("stripe.webhook_failed", { id: event.id, type: event.type, error });
+    return NextResponse.json({ error: "processing_failed" }, { status: 500 });
+  }
 }

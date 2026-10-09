@@ -16,7 +16,7 @@ export const MAX_GENERATED_IMAGE_BYTES = 20 * 1024 * 1024;
 
 export class StorageError extends Error {}
 
-async function store(key: string, body: Buffer, contentType: string): Promise<string> {
+export async function store(key: string, body: Buffer, contentType: string): Promise<string> {
   if (env.mediaDriver === "blob") {
     if (!env.blobToken) {
       throw new StorageError("Image storage is not configured.");
@@ -85,4 +85,34 @@ export async function storeGeneratedImage(
   const key = `churches/${safePrefix}/ai-${randomUUID()}.webp`;
   const url = await store(key, body, "image/webp");
   return { url, width: 1536, height: 1024 };
+}
+
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+/** Detects JPEG, PNG and WebP from their file signatures; the declared type is not trusted. */
+export function sniffImageType(body: Buffer): "image/jpeg" | "image/png" | "image/webp" | null {
+  if (body.length >= 3 && body[0] === 0xff && body[1] === 0xd8 && body[2] === 0xff) return "image/jpeg";
+  if (body.length >= 8 && body.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
+  if (isWebp(body)) return "image/webp";
+  return null;
+}
+
+export function uploadsUnavailableReason(): string | null {
+  if (env.mediaDriver === "blob" && !env.blobToken) return 'Photo uploads need BLOB_READ_WRITE_TOKEN when MEDIA_DRIVER="blob".';
+  if (env.mediaDriver === "local" && env.isProduction) return 'Photo uploads need MEDIA_DRIVER="blob" and BLOB_READ_WRITE_TOKEN on the live site. Paste an image link instead.';
+  return null;
+}
+
+/** Validates and stores an uploaded church photo. */
+export async function storeUploadedImage(file: File, prefix: string) {
+  if (file.size === 0) throw new StorageError("Choose an image file.");
+  if (file.size > MAX_UPLOAD_BYTES) throw new StorageError("Images must be 4 MB or smaller.");
+  const reason = uploadsUnavailableReason();
+  if (reason) throw new StorageError(reason);
+  const body = Buffer.from(await file.arrayBuffer());
+  const type = sniffImageType(body);
+  if (!type) throw new StorageError("Upload a JPEG, PNG, or WebP image.");
+  const ext = type === "image/jpeg" ? "jpg" : type === "image/png" ? "png" : "webp";
+  const safePrefix = prefix.replace(/[^a-z0-9-]/gi, "").slice(0, 80) || "church";
+  return store(`churches/${safePrefix}/photo-${randomUUID()}.${ext}`, body, type);
 }

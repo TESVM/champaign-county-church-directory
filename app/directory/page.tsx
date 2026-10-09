@@ -1,55 +1,73 @@
+import type { Metadata } from "next";
 import { ChurchCard } from "@/components/directory/church-card";
 import { FilterSidebar } from "@/components/directory/filter-sidebar";
 import { SearchBar } from "@/components/directory/search-bar";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
-import { getDirectoryResults } from "@/lib/data/queries";
+import { listChurches, listCities, listDenominations, listLanguages, parseChurchFilters } from "@/lib/services/churches";
 
-export default async function DirectoryPage({
-  searchParams
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const resolvedSearchParams = await searchParams;
-  const normalized = Object.fromEntries(
-    Object.entries(resolvedSearchParams).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value])
-  ) as Record<string, string | undefined>;
-  const results = getDirectoryResults(normalized);
+export const metadata: Metadata = {
+  title: "Church Directory",
+  description: "Search churches in Champaign County, Illinois by city, denomination, service day and time, language, accessibility, and ministries.",
+  alternates: { canonical: "/directory" }
+};
+
+function flatten(params: Record<string, string | string[] | undefined>) {
+  return Object.fromEntries(Object.entries(params).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])) as Record<string, string | undefined>;
+}
+
+export default async function DirectoryPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const raw = flatten(await searchParams);
+  const filters = parseChurchFilters(raw);
+  const page = Number(raw.page ?? "1") || 1;
+  const [results, cities, denominations, languages] = await Promise.all([
+    listChurches(filters, page),
+    listCities(),
+    listDenominations(),
+    listLanguages()
+  ]);
+  const active = Object.entries(raw).filter(([k, v]) => v && k !== "page").length;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="section-strong overflow-hidden rounded-[36px] border border-white/70 px-6 py-8 shadow-soft sm:px-8">
         <SectionHeading
           as="h1"
           eyebrow="Directory"
           title="Searchable church directory"
-          description="Filter by city, denomination, senior pastor, service day, ministries, website, app, livestream, and verification status."
+          description="Filter by city, denomination, service day and time, language, accessibility, children’s programs, and livestream."
         />
       </div>
-      <div className="mt-10 grid gap-8 lg:grid-cols-[320px_1fr]">
+      <div className="mt-8 grid gap-8 lg:grid-cols-[320px_1fr]">
         <div className="order-2 lg:order-1">
-          <FilterSidebar searchParams={normalized} />
+          <FilterSidebar searchParams={raw} options={{ cities, denominations, languages }} />
         </div>
         <div className="order-1 space-y-5 lg:order-2">
-          <SearchBar defaultValue={normalized.q} />
-          <div className="rounded-[24px] border border-white/70 bg-gradient-to-r from-brand-900 via-brand-700 to-brand-500 px-5 py-4 text-white shadow-card">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-white/80">Directory results</p>
-              <p className="rounded-full bg-white/14 px-3 py-1 text-sm font-medium text-white/90">{results.length} churches found</p>
-            </div>
-          </div>
-          {results.length ? (
+          <SearchBar defaultValue={raw.q} />
+          <p className="text-sm font-medium text-stone-700" role="status">
+            {results.total === 1 ? "1 church" : `${results.total} churches`} found
+            {active ? " with these filters" : ""}
+            {results.pageCount > 1 ? ` · page ${results.page} of ${results.pageCount}` : ""}
+          </p>
+          {results.items.length ? (
             <>
               <div className="grid gap-6 xl:grid-cols-2">
-                {results.map((church) => (
+                {results.items.map((church) => (
                   <ChurchCard key={church.id} church={church} />
                 ))}
               </div>
-              <Pagination />
+              <Pagination page={results.page} pageCount={results.pageCount} basePath="/directory" params={raw} />
             </>
           ) : (
-            <EmptyState title="No churches matched these filters" body="Try a broader city, pastor, denomination, or ministry filter to see more churches." />
+            <EmptyState
+              title="No churches matched these filters"
+              body={
+                filters.wheelchair || filters.children || filters.language
+                  ? "Accessibility, children’s program, and language details come from churches themselves, and many have not added them yet. Try removing those filters, or contact a church directly."
+                  : "Try a broader city, denomination, or time filter, or clear the filters to see every church."
+              }
+            />
           )}
         </div>
       </div>

@@ -1,51 +1,38 @@
 import type { Metadata } from "next";
-import { Card } from "@/components/ui/card";
 import { ContactForm } from "@/components/forms/contact-form";
 import { SectionHeading } from "@/components/layout/section-heading";
-import { absoluteUrl } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { env } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description:
-    "Corrections, listing questions, and partnership enquiries for the Champaign County Church Directory.",
-  alternates: { canonical: absoluteUrl("/contact") }
+  description: "Corrections, listing questions, and feedback for the Champaign County Church Directory.",
+  alternates: { canonical: "/contact" }
 };
-
-const details = [
-  ["Email", "admin@champaignchurchdirectory.com"],
-  ["Coverage", "Champaign County, Illinois"],
-  ["Response window", "Typically within one business day"]
-] as const;
 
 export default function ContactPage() {
   return (
-    <div className="mx-auto grid max-w-6xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+    <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
       <div>
-        {/* The page's own h1; SectionHeading renders an h2 by default. */}
-        <SectionHeading
-          as="h1"
-          eyebrow="Contact"
-          title="Corrections, listing questions, or partnership enquiries"
-          description="Use this form for church listing updates, claim questions, or directory feedback."
-        />
+        <SectionHeading as="h1" eyebrow="Contact" title="Questions, corrections, or feedback" description="Messages are saved for the directory team and answered by email." />
         <div className="mt-8 space-y-4">
-          {details.map(([label, value]) => (
-            <Card key={label} className="rounded-[24px] bg-white/85 p-5">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">
-                {label}
-              </p>
-              <p className="mt-2 text-stone-700">{value}</p>
+          {env.supportEmail ? (
+            <Card className="rounded-[24px] p-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">Email</p>
+              <a className="mt-2 block text-stone-700 underline" href={`mailto:${env.supportEmail}`}>{env.supportEmail}</a>
             </Card>
-          ))}
+          ) : null}
+          <Card className="rounded-[24px] p-5">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">Coverage</p>
+            <p className="mt-2 text-stone-700">Champaign County, Illinois</p>
+          </Card>
+          <Card className="rounded-[24px] p-5">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">Fixing a listing?</p>
+            <p className="mt-2 text-stone-700">Use “Report outdated information” on the church’s page so the report is attached to the right listing.</p>
+          </Card>
         </div>
       </div>
-
-      {/*
-        This page previously hand-rolled a form with no action attribute, so the
-        submit button reloaded the page and discarded the message. It now uses
-        the shared ContactForm, which posts to the server action.
-      */}
-      <Card className="rounded-[32px] bg-white/90 p-6 sm:p-8">
+      <Card className="rounded-[32px] p-6 sm:p-8">
         <ContactForm />
       </Card>
     </div>

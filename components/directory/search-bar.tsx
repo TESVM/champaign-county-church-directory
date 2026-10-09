@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export function SearchBar({ defaultValue }: { defaultValue?: string }) {
   return (
-    <form action="/search" className="flex gap-3" role="search">
+    <form action="/directory" className="flex gap-3" role="search">
       <div className="flex-1">
         {/* Visually hidden rather than absent: a placeholder alone announces as
             "edit text, blank" and vanishes once typing starts. */}

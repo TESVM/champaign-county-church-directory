@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export function HeroSearch() {
   return (
-    <form action="/search" className="mt-8 rounded-[28px] border border-white/40 bg-white/90 p-4 shadow-soft" aria-describedby="church-search-help">
+    <form action="/directory" className="mt-8 rounded-[28px] border border-white/40 bg-white/90 p-4 shadow-soft" aria-describedby="church-search-help">
       <p id="church-search-help" className="mb-3 text-sm leading-7 text-stone-700">
         Search by church name, pastor, denomination, or city. One word is enough to get started.
       </p>

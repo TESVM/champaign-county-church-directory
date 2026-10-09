@@ -174,17 +174,25 @@ describe("storeGeneratedImage validation", () => {
 });
 
 describe("aiImageUnavailableReason", () => {
+  it("is off unless AI_IMAGES_ENABLED is true", async () => {
+    expect(
+      (await loadModules({ DATABASE_URL: "postgresql://u:p@localhost:5432/db", OPENAI_API_KEY: "sk-test", AI_IMAGES_ENABLED: undefined }))
+        .aiImageUnavailableReason()
+    ).toMatch(/AI_IMAGES_ENABLED/);
+  });
+
   it("explains each missing piece", async () => {
-    expect((await loadModules({ DATABASE_URL: undefined })).aiImageUnavailableReason()).toMatch(/DATABASE_URL/);
+    expect((await loadModules({ AI_IMAGES_ENABLED: "true", DATABASE_URL: undefined })).aiImageUnavailableReason()).toMatch(/DATABASE_URL/);
 
     expect(
-      (await loadModules({ DATABASE_URL: "postgresql://u:p@localhost:5432/db", OPENAI_API_KEY: undefined }))
+      (await loadModules({ AI_IMAGES_ENABLED: "true", DATABASE_URL: "postgresql://u:p@localhost:5432/db", OPENAI_API_KEY: undefined }))
         .aiImageUnavailableReason()
     ).toMatch(/OPENAI_API_KEY/);
 
     expect(
       (
         await loadModules({
+          AI_IMAGES_ENABLED: "true",
           DATABASE_URL: "postgresql://u:p@localhost:5432/db",
           OPENAI_API_KEY: "sk-test",
           MEDIA_DRIVER: "blob",
@@ -196,6 +204,7 @@ describe("aiImageUnavailableReason", () => {
     expect(
       (
         await loadModules({
+          AI_IMAGES_ENABLED: "true",
           DATABASE_URL: "postgresql://u:p@localhost:5432/db",
           OPENAI_API_KEY: "sk-test",
           MEDIA_DRIVER: "local"
