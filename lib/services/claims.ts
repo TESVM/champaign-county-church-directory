@@ -196,7 +196,7 @@ export async function reviewClaim(actor: Actor, input: Record<string, unknown>) 
       },
       tx
     );
-  });
+  }, { timeout: 20_000, maxWait: 10_000 });
 
   const church = claim.church.name;
   if (decision === "APPROVED") {

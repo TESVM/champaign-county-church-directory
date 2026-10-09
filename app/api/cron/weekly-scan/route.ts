@@ -6,7 +6,8 @@ import { constantTimeEquals } from "@/lib/security";
 import { pruneExpiredAuthRecords } from "@/lib/services/auth";
 import { pruneRateLimits } from "@/lib/services/rate-limit";
 
-export const maxDuration = 300;
+// Fits the Vercel Hobby limit; the review itself stops starting new checks after 45s.
+export const maxDuration = 60;
 
 /**
  * Weekly website review (see lib/scan/website-review.ts) plus housekeeping.

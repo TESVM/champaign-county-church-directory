@@ -769,7 +769,7 @@ export async function updateChurchProfile(actor: Actor, churchId: string, input:
       },
       tx
     );
-  });
+  }, { timeout: 20_000, maxWait: 10_000 });
 
   return { slug: existing.slug, changedFields: Object.keys(changed) };
 }

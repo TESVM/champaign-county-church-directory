@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { absoluteUrl } from "@/lib/utils";
+import { env } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
     "How the Champaign County Church Directory website and mobile apps handle information, and how to request removal of a listing.",
   alternates: {
-    canonical: absoluteUrl("/privacy")
+    canonical: "/privacy"
   }
 };
 
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
  * to change in the same commit.
  */
 
-const LAST_UPDATED = "July 27, 2026";
+const LAST_UPDATED = "October 8, 2026";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -32,6 +32,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         {children}
       </div>
     </section>
+  );
+}
+
+function ContactLink() {
+  return env.supportEmail ? (
+    <a className="font-semibold text-brand-700 underline underline-offset-2" href={`mailto:${env.supportEmail}`}>
+      {env.supportEmail}
+    </a>
+  ) : (
+    <Link className="font-semibold text-brand-700 underline underline-offset-2" href="/contact">
+      the contact form
+    </Link>
   );
 }
 
@@ -55,8 +67,12 @@ export default function PrivacyPage() {
               If you use “Near me”, your location is read on your device to sort
               the list. It is never sent to our servers and never stored.
             </li>
-            <li>Churches you save are stored only on your device.</li>
-            <li>There is no advertising, no tracking, and no third-party analytics.</li>
+            <li>Churches you save are stored only on your device or in your browser.</li>
+            <li>
+              There is no advertising and no third-party analytics. The website keeps anonymous daily
+              counts of actions on each church’s listing (for example, profile views and direction
+              clicks) that do not identify you.
+            </li>
             <li>
               Church listings contain publicly available organizational
               information. Any church can ask us to correct or remove its listing.
@@ -92,9 +108,42 @@ export default function PrivacyPage() {
             it for that purpose only and do not sell or share it.
           </p>
           <p>
-            <strong className="text-ink">Administrator sign-in.</strong> Directory
-            administrators sign in with credentials we issue. Sessions use a signed
-            cookie that expires after seven days.
+            <strong className="text-ink">Reports of outdated information.</strong> Your name and email
+            are optional. If you give an email, we use it only to ask a question or say the report was
+            handled. Reports are shared with the directory team and with the people who manage that
+            church’s listing.
+          </p>
+          <p>
+            <strong className="text-ink">Church leader and staff sign-in.</strong> People who manage a
+            listing sign in with a one-time link we email them. We store their email address, name,
+            the churches they manage, and when they last signed in. Sign-in uses a single cookie that
+            holds a random session code; the session is stored on our server and expires after seven
+            days, or immediately when you sign out or your access is removed.
+          </p>
+          <p>
+            <strong className="text-ink">Saved churches.</strong> The “Save” heart stores a list of
+            church addresses in your browser’s local storage. It is not sent to us with any
+            identifier; we only receive the list of churches when you open the Saved page, to show
+            their current details.
+          </p>
+          <p>
+            <strong className="text-ink">Activity counts.</strong> When a listing is viewed or someone
+            taps directions, phone, website, livestream, app, social, or share, we add one to a daily
+            total for that church. The totals contain no IP address, cookie, or visitor identifier.
+            To avoid counting the same person repeatedly, a keyed one-way hash of your network
+            address, the church, and the action is kept for up to two days and then deleted. The
+            same short-lived hashing is used to limit how often forms can be submitted. Church
+            leaders see only the totals.
+          </p>
+          <p>
+            <strong className="text-ink">Email.</strong> Messages to you (sign-in links, review
+            decisions, notifications) are sent through our email provider, Resend. We keep a record
+            of the recipient, subject, and delivery status.
+          </p>
+          <p>
+            <strong className="text-ink">Payments.</strong> Churches that subscribe to the Enhanced
+            Church Profile pay through Stripe. Card details go directly to Stripe; we store only
+            Stripe’s customer and subscription identifiers and the subscription status.
           </p>
           <p>
             <strong className="text-ink">Server logs.</strong> Our hosting provider
@@ -126,14 +175,7 @@ export default function PrivacyPage() {
             ongoing edit access.
           </p>
           <p>
-            Email{" "}
-            <a
-              className="font-semibold text-brand-700 underline underline-offset-2"
-              href="mailto:admin@champaignchurchdirectory.com"
-            >
-              admin@champaignchurchdirectory.com
-            </a>{" "}
-            or use the{" "}
+            Contact <ContactLink /> or use the{" "}
             <Link
               className="font-semibold text-brand-700 underline underline-offset-2"
               href="/contact"
@@ -156,8 +198,9 @@ export default function PrivacyPage() {
           <p>
             Opening a church’s website, app, livestream, or social profile hands you
             off to a service we do not control, with its own privacy practices.
-            Choosing “Directions” opens your device’s maps application. Church logos
-            and photos may be served from the church’s own hosting provider.
+            Choosing “Directions” opens Google Maps. Some church pages include an embedded Google
+            map, which loads from Google and is subject to Google’s privacy policy. Church photos may
+            be served from the church’s own hosting provider.
           </p>
           <p>
             We do not embed advertising or analytics software in the mobile apps.
@@ -173,13 +216,7 @@ export default function PrivacyPage() {
 
         <Section title="Contact">
           <p>
-            Questions about this policy:{" "}
-            <a
-              className="font-semibold text-brand-700 underline underline-offset-2"
-              href="mailto:admin@champaignchurchdirectory.com"
-            >
-              admin@champaignchurchdirectory.com
-            </a>
+            Questions about this policy: <ContactLink />
           </p>
         </Section>
       </Card>

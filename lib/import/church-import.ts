@@ -127,7 +127,7 @@ export async function runChurchImport(
       featuredImageUrl: record.featuredImageUrl ?? null,
       featuredImageIsAi: false,
       featuredImageSourceUrl: image?.sourceUrl ?? (record.featuredImageUrl?.startsWith("http") ? record.featuredImageUrl : null),
-      featuredImageCredit: image ? "Published by the congregation or an exact-match listing" : null,
+      featuredImageCredit: image ? (/^Published (by|on|as)/i.test(image.note) ? record.name : "Public listing for this congregation") : null,
       featuredImagePermission: image?.note ?? null,
       latitude: record.latitude ?? null,
       longitude: record.longitude ?? null,
@@ -211,7 +211,7 @@ export async function runChurchImport(
           summary: `${step.action === "create" ? "Imported" : "Refreshed"} from researched records (lib/data/mock.ts)`
         }
       });
-    });
+    }, { timeout: 60_000, maxWait: 20_000 });
   }
 
   return { plan, applied: true };

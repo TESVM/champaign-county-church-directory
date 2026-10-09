@@ -282,7 +282,7 @@ export async function reviewSubmission(
       tx
     );
     return created;
-  });
+  }, { timeout: 20_000, maxWait: 10_000 });
 
   await notifyPerson(
     submission.contactEmail,

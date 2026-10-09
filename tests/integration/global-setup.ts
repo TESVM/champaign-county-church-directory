@@ -19,10 +19,16 @@ export default async function setup() {
   process.env.DATABASE_URL = url;
 
   // Async: the database server runs in this process, so blocking would deadlock it.
+  const started = Date.now();
   await promisify(execFile)("npx", ["prisma", "migrate", "deploy"], { env: { ...process.env, DATABASE_URL: url } });
 
+  console.log(`[integration] database ready in ${Date.now() - started}ms`);
+
   return async () => {
-    await server.stop();
-    await db.close();
+    const t = Date.now();
+    // Never let a lingering client connection hold the run open.
+    const timeout = new Promise((resolve) => setTimeout(resolve, 5000));
+    await Promise.race([server.stop().then(() => db.close()), timeout]);
+    console.log(`[integration] teardown in ${Date.now() - t}ms`);
   };
 }

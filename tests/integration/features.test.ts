@@ -189,3 +189,31 @@ describe("QR codes and activity counts", () => {
     expect(await recordActivity("unknown-church", "profile_view")).toBe(false);
   });
 });
+
+describe("Church photos", () => {
+  beforeEach(resetDatabase);
+
+  it("accepts a real image with provenance, rejects disguised files and missing credit, and can be removed", async () => {
+    const { saveChurchPhoto, removeChurchPhoto } = await import("@/lib/services/media");
+    const church = await makeChurch();
+    const { owner } = await ownerOf(church.id);
+    const png = Buffer.from("89504e470d0a1a0a0000000d4948445200000001000000010806000000", "hex");
+    const fake = new File([Buffer.from("<script>alert(1)</script>")], "photo.png", { type: "image/png" });
+
+    await expect(saveChurchPhoto(owner, church.id, { file: fake, credit: "Our staff", permission: "Taken by our staff" })).rejects.toBeInstanceOf(ValidationError);
+    await expect(saveChurchPhoto(owner, church.id, { file: new File([png], "p.png", { type: "image/png" }) })).rejects.toBeInstanceOf(ValidationError);
+
+    await saveChurchPhoto(owner, church.id, { file: new File([png], "p.png", { type: "image/png" }), credit: "Our staff", permission: "Taken by our staff in 2026" });
+    const saved = (await getChurchBySlug(church.slug))!.church;
+    expect(saved.featuredImageUrl).toMatch(/^\/uploads\/churches\/.+\.png$/);
+    expect(saved.featuredImageCredit).toBe("Our staff");
+
+    await saveChurchPhoto(owner, church.id, { imageUrl: "https://church.test/photo.jpg", credit: "Church website", permission: "Published on our own website" });
+    expect((await getChurchBySlug(church.slug))!.church.featuredImageUrl).toBe("https://church.test/photo.jpg");
+
+    await removeChurchPhoto(owner, church.id);
+    expect((await getChurchBySlug(church.slug))!.church.featuredImageUrl).toBeUndefined();
+    const prisma = await db();
+    expect(await prisma.auditLog.count({ where: { action: { in: ["church.photo_replaced", "church.photo_removed"] } } })).toBe(3);
+  });
+});

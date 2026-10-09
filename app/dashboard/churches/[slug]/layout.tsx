@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { loadManagedChurch } from "@/lib/dashboard";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  return { title: `Manage ${slug.replace(/-/g, " ")}`, robots: { index: false } };
+}
 
 export default async function ChurchDashboardLayout({ children, params }: { children: ReactNode; params: Promise<{ slug: string }> }) {
   const { slug } = await params;

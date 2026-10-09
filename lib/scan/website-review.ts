@@ -332,7 +332,8 @@ async function propose(church: { id: string }, checkId: string, proposals: Propo
   return created;
 }
 
-export async function runWebsiteReview(options: { batchSize?: number; fetcher?: Fetcher; resolve?: Resolver } = {}) {
+export async function runWebsiteReview(options: { batchSize?: number; fetcher?: Fetcher; resolve?: Resolver; budgetMs?: number } = {}) {
+  const deadline = Date.now() + (options.budgetMs ?? 45_000);
   const prisma = await db();
   const churches = await prisma.church.findMany({
     where: { status: "ACTIVE", websiteUrl: { not: null } },
@@ -344,13 +345,17 @@ export async function runWebsiteReview(options: { batchSize?: number; fetcher?: 
   const tally: Record<string, number> = {};
   let proposals = 0;
   // Sequential on purpose: polite to small church hosts and bounded in time.
+  let checked = 0;
   for (const church of churches) {
+    // Stay inside the hosting function's time limit; the rest wait for next run.
+    if (Date.now() > deadline) break;
     const result = await reviewChurchWebsite(church, options);
+    checked += 1;
     tally[result.outcome] = (tally[result.outcome] ?? 0) + 1;
     proposals += result.proposals ?? 0;
   }
-  log.info("scan.completed", { checked: churches.length, tally, proposals });
-  return { checked: churches.length, outcomes: tally, proposals };
+  log.info("scan.completed", { checked, deferred: churches.length - checked, tally, proposals });
+  return { checked, deferred: churches.length - checked, outcomes: tally, proposals };
 }
 
 // ---------------------------------------------------------------------------
