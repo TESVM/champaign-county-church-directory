@@ -15,7 +15,7 @@ export default async function setup() {
   const server = new PGLiteSocketServer({ db, port, host: "127.0.0.1" });
   await server.start();
 
-  const url = `postgresql://postgres:postgres@127.0.0.1:${port}/postgres?connection_limit=1&sslmode=disable&pool_timeout=30`;
+  const url = `postgresql://postgres:postgres@127.0.0.1:${port}/postgres?connection_limit=1&sslmode=disable&pool_timeout=30&pgbouncer=true`;
   process.env.DATABASE_URL = url;
 
   // Async: the database server runs in this process, so blocking would deadlock it.

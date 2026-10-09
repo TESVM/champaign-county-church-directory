@@ -1,3 +1,4 @@
+import { FlashBanner } from "@/components/admin/flash-banner";
 import Link from "next/link";
 import { reviewSubmissionAction } from "@/app/actions";
 import { StatusFilter } from "@/components/admin/status-filter";
@@ -8,13 +9,15 @@ import { requireReviewer } from "@/lib/auth-guards";
 import { listSubmissions } from "@/lib/services/inbox";
 import { formatDate } from "@/lib/utils";
 
-export default async function SubmissionsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+export default async function SubmissionsPage({ searchParams }: { searchParams: Promise<{ status?: string; done?: string }> }) {
   const actor = await requireReviewer("/admin/submissions");
-  const status = (await searchParams).status ?? "PENDING";
+  const params = await searchParams;
+  const status = params.status ?? "PENDING";
   const rows = await listSubmissions(actor, status);
   return (
     <div className="space-y-5">
       <h1 className="font-display text-4xl">New church submissions</h1>
+      <FlashBanner code={params.done} />
       <p className="text-sm text-stone-700">Check the church exists (website, sign, or call) before approving. Approved churches publish immediately as “not yet verified”.</p>
       <StatusFilter base="/admin/submissions" current={status} options={[["PENDING", "Pending"], ["APPROVED", "Approved"], ["REJECTED", "Declined"], ["ALL", "All"]]} />
       {rows.length === 0 ? <p className="text-sm text-stone-600">Nothing here.</p> : null}

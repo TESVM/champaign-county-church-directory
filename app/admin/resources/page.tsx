@@ -1,3 +1,4 @@
+import { FlashBanner } from "@/components/admin/flash-banner";
 import Link from "next/link";
 import { moderateResourceAction } from "@/app/actions";
 import { StatusFilter } from "@/components/admin/status-filter";
@@ -7,14 +8,16 @@ import { TextField } from "@/components/ui/field";
 import { requireReviewer } from "@/lib/auth-guards";
 import { RESOURCE_CATEGORIES, listResources } from "@/lib/services/engagement";
 
-export default async function AdminResourcesPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+export default async function AdminResourcesPage({ searchParams }: { searchParams: Promise<{ status?: string; done?: string }> }) {
   await requireReviewer("/admin/resources");
-  const raw = (await searchParams).status ?? "PENDING";
+  const params = await searchParams;
+  const raw = params.status ?? "PENDING";
   const status = (["PENDING", "APPROVED", "REJECTED", "ALL"].includes(raw) ? raw : "PENDING") as "PENDING" | "APPROVED" | "REJECTED" | "ALL";
   const resources = await listResources({ status });
   return (
     <div className="space-y-5">
       <h1 className="font-display text-4xl">Community programs</h1>
+      <FlashBanner code={params.done} />
       <p className="text-sm text-stone-700">Check that the program is real, public, and described accurately (schedule, eligibility). Reject anything that is an advertisement or collects personal data.</p>
       <StatusFilter base="/admin/resources" current={status} options={[["PENDING", "Pending"], ["APPROVED", "Published"], ["REJECTED", "Rejected"], ["ALL", "All"]]} />
       {resources.length === 0 ? <p className="text-sm text-stone-600">Nothing here.</p> : null}

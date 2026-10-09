@@ -310,7 +310,7 @@ export const CORRECTION_FIELDS = [
 const correctionSchema = z.object({
   churchSlug: z.string().min(1),
   fieldName: z.enum(CORRECTION_FIELDS.map((f) => f.value) as [string, ...string[]]).optional(),
-  details: z.string().trim().min(5, "Tell us what is out of date.").max(2000),
+  details: z.string().trim().min(5, "Tell us what is out of date (at least 5 characters).").max(2000),
   reporterName: z.string().trim().max(120).optional(),
   reporterEmail: z.string().trim().email("Enter a valid email or leave it blank.").max(254).optional().or(z.literal(""))
 });

@@ -76,6 +76,12 @@ function assertHuman(formData: FormData) {
   }
 }
 
+/** Queue decisions remove the item from the list, so confirm on the next page load instead. */
+function doneRedirect(result: FormState, path: string, code: string): FormState {
+  if (result.status === "success") redirect(`${path}?done=${code}`);
+  return result;
+}
+
 async function signedIn(): Promise<Actor> {
   const actor = await getActor();
   if (actor.kind !== "user") redirect("/login");
@@ -337,6 +343,11 @@ export async function openPortalAction(_: FormState, formData: FormData) {
 // ---------------------------------------------------------------------------
 
 export async function reviewClaimAction(_: FormState, formData: FormData) {
+  const decision = (str(formData, "decision") ?? "").toLowerCase();
+  return doneRedirect(await reviewClaimRun(formData), "/admin/claims", `claim-${decision}`);
+}
+
+async function reviewClaimRun(formData: FormData) {
   return run("review-claim", async () => {
     const actor = await signedIn();
     await reviewClaim(actor, fields(formData));
@@ -351,6 +362,11 @@ export async function reviewClaimAction(_: FormState, formData: FormData) {
 }
 
 export async function reviewSubmissionAction(_: FormState, formData: FormData) {
+  const decision = str(formData, "decision") === "APPROVED" ? "approved" : "rejected";
+  return doneRedirect(await reviewSubmissionRun(formData), "/admin/submissions", `submission-${decision}`);
+}
+
+async function reviewSubmissionRun(formData: FormData) {
   return run("review-submission", async () => {
     const actor = await signedIn();
     const decision = str(formData, "decision") === "APPROVED" ? "APPROVED" : "REJECTED";
@@ -367,6 +383,11 @@ export async function reviewSubmissionAction(_: FormState, formData: FormData) {
 }
 
 export async function resolveContactAction(_: FormState, formData: FormData) {
+  const code = str(formData, "status") === "DISMISSED" ? "message-dismissed" : "message-resolved";
+  return doneRedirect(await resolveContactRun(formData), "/admin/inbox", code);
+}
+
+async function resolveContactRun(formData: FormData) {
   return run("contact-resolve", async () => {
     const actor = await signedIn();
     await resolveContactMessage(actor, str(formData, "id") ?? "", str(formData, "status") === "DISMISSED" ? "DISMISSED" : "RESOLVED");
@@ -376,6 +397,11 @@ export async function resolveContactAction(_: FormState, formData: FormData) {
 }
 
 export async function resolveCorrectionAction(_: FormState, formData: FormData) {
+  const code = str(formData, "status") === "DISMISSED" ? "correction-dismissed" : "correction-resolved";
+  return doneRedirect(await resolveCorrectionRun(formData), "/admin/inbox", code);
+}
+
+async function resolveCorrectionRun(formData: FormData) {
   return run("correction-resolve", async () => {
     const actor = await signedIn();
     await resolveCorrection(actor, str(formData, "id") ?? "", str(formData, "status") === "DISMISSED" ? "DISMISSED" : "RESOLVED", str(formData, "note"));
@@ -385,6 +411,11 @@ export async function resolveCorrectionAction(_: FormState, formData: FormData) 
 }
 
 export async function decideChangeAction(_: FormState, formData: FormData) {
+  const code = str(formData, "decision") === "APPROVED" ? "change-approved" : "change-rejected";
+  return doneRedirect(await decideChangeRun(formData), "/admin/review", code);
+}
+
+async function decideChangeRun(formData: FormData) {
   return run("decide-change", async () => {
     const actor = await signedIn();
     const decision = str(formData, "decision") === "APPROVED" ? "APPROVED" : "REJECTED";
@@ -396,6 +427,11 @@ export async function decideChangeAction(_: FormState, formData: FormData) {
 }
 
 export async function moderateResourceAction(_: FormState, formData: FormData) {
+  const code = str(formData, "decision") === "APPROVED" ? "resource-approved" : "resource-rejected";
+  return doneRedirect(await moderateResourceRun(formData), "/admin/resources", code);
+}
+
+async function moderateResourceRun(formData: FormData) {
   return run("moderate-resource", async () => {
     const actor = await signedIn();
     const decision = str(formData, "decision") === "APPROVED" ? "APPROVED" : "REJECTED";

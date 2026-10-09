@@ -17,7 +17,10 @@ const port = Number(process.argv[2] ?? 55432);
 const dataDir = process.argv[3] ?? "./.pglite-data";
 
 const db = await PGlite.create({ dataDir });
-const server = new PGLiteSocketServer({ db, port, host: "127.0.0.1" });
+// A Next.js dev server opens more than one connection. PGlite queues queries
+// from all of them onto one session, so concurrent transactions can interleave:
+// fine for local development, never for production (use real Postgres there).
+const server = new PGLiteSocketServer({ db, port, host: "127.0.0.1", maxConnections: 8 });
 
 await server.start();
 

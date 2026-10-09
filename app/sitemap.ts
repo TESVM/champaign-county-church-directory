@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { listAllChurchSlugs, listCities } from "@/lib/services/churches";
 import { siteUrl } from "@/lib/site";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
   const staticPaths = ["/", "/directory", "/find-a-service", "/events", "/resources", "/cities", "/for-churches", "/about", "/submit", "/claim", "/contact", "/privacy", "/terms"];

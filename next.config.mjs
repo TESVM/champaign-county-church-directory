@@ -20,6 +20,8 @@ const imageHosts = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Lets a second server (e.g. a verification build) run without sharing .next.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // @cccd/shared is published as TypeScript source and consumed by both this app
   // and the Expo client, so Next must compile it rather than expect a build step.
   transpilePackages: ["@cccd/shared"],

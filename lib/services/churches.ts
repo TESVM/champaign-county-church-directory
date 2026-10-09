@@ -666,6 +666,27 @@ export async function updateChurchProfile(actor: Actor, churchId: string, input:
     if (before !== value) changed[key] = [before, value];
   }
   if (existing.cityId !== city.id) changed.city = [existing.city, city.name];
+
+  // Lists are compared as normalised text so reordering-free edits register.
+  const listDiff = (key: string, before: string[], after: string[]) => {
+    if (JSON.stringify(before) !== JSON.stringify(after)) changed[key] = [before, after];
+  };
+  listDiff(
+    "services",
+    existing.serviceTimes.map((s) => `${s.dayOfWeek}|${s.startMinutes ?? s.startTime}|${s.serviceName}|${s.endTime ?? ""}|${s.language ?? ""}|${s.notes ?? ""}`).sort(),
+    data.services.map((s) => `${s.dayOfWeek}|${s.startMinutes ?? s.startTime}|${s.serviceName}|${s.endTime ? formatMinutes(parseTimeToMinutes(s.endTime)!) : ""}|${s.language ?? ""}|${s.notes ?? ""}`).sort()
+  );
+  listDiff("ministries", existing.ministries.map((m) => m.name).sort(), [...data.ministries].sort());
+  listDiff(
+    "leaders",
+    existing.leaders.filter((l) => l.fullName !== existing.seniorPastor?.fullName).map((l) => `${l.fullName}|${l.title ?? ""}`).sort(),
+    data.leaders.map((l) => `${l.fullName}|${l.title ?? ""}`).sort()
+  );
+  listDiff(
+    "socialLinks",
+    existing.socialLinks.map((l) => `${l.platform}|${l.url}`).sort(),
+    Object.entries(data.social).filter(([, url]) => url).map(([platform, url]) => `${platform}|${url}`).sort()
+  );
   const addressMoved = Boolean(changed.address1 || changed.city || changed.zip);
 
   await prisma.$transaction(async (tx) => {

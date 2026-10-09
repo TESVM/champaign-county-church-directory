@@ -127,7 +127,7 @@ function assertProductionRequirements(env: BaseEnv): string[] {
     missing.push(
       'EMAIL_PROVIDER="log" only records email locally. Set EMAIL_PROVIDER="resend", RESEND_API_KEY and EMAIL_FROM so sign-in links and notifications are delivered.'
     );
-  } else if (!env.RESEND_API_KEY || !env.EMAIL_FROM) {
+  } else if (env.EMAIL_PROVIDER === "resend" && (!env.RESEND_API_KEY || !env.EMAIL_FROM)) {
     missing.push('EMAIL_PROVIDER="resend" requires RESEND_API_KEY and EMAIL_FROM.');
   }
 

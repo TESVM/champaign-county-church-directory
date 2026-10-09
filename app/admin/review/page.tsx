@@ -1,3 +1,4 @@
+import { FlashBanner } from "@/components/admin/flash-banner";
 import Link from "next/link";
 import { decideChangeAction, runWebsiteReviewAction } from "@/app/actions";
 import { StatusFilter } from "@/components/admin/status-filter";
@@ -8,13 +9,15 @@ import { requireReviewer } from "@/lib/auth-guards";
 import { listRecentChecks, listSuggestedChanges } from "@/lib/scan/website-review";
 import { formatDate } from "@/lib/utils";
 
-export default async function ReviewPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+export default async function ReviewPage({ searchParams }: { searchParams: Promise<{ status?: string; done?: string }> }) {
   const actor = await requireReviewer("/admin/review");
-  const status = (await searchParams).status ?? "PENDING";
+  const params = await searchParams;
+  const status = params.status ?? "PENDING";
   const [changes, checks] = await Promise.all([listSuggestedChanges(actor, status), listRecentChecks(30)]);
   return (
     <div className="space-y-6">
       <h1 className="font-display text-4xl">Website review</h1>
+      <FlashBanner code={params.done} />
       <Card className="p-5 text-sm leading-6 text-stone-700">
         <p>
           Each week the directory fetches up to 25 churches’ own websites (never Facebook or other sign-in platforms), obeys robots.txt, and records exactly what happened.

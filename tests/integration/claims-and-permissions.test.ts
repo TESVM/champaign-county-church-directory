@@ -60,7 +60,10 @@ describe("claim → approval → leader editing", () => {
     const owner = await actorFor("pat@gracetest.org");
     expect(owner.memberships).toEqual([expect.objectContaining({ churchId: church.id, role: "CHURCH_OWNER" })]);
 
-    await updateChurchProfile(owner, church.id, validProfile({ name: church.name }));
+    const saved = await updateChurchProfile(owner, church.id, validProfile({ name: church.name }));
+    expect(saved.changedFields).toEqual(expect.arrayContaining(["phone", "services", "ministries", "leaders", "socialLinks"]));
+    const resaved = await updateChurchProfile(owner, church.id, validProfile({ name: church.name }));
+    expect(resaved.changedFields).toEqual([]);
     await expect(updateChurchProfile(owner, other.id, validProfile())).rejects.toBeInstanceOf(ForbiddenError);
 
     // Saved edits are visible through the public read path, and mark leadership confirmation.
@@ -78,7 +81,7 @@ describe("claim → approval → leader editing", () => {
     ]);
     expect(reread?.church.socialLinks).toEqual([{ platform: "facebook", url: "https://www.facebook.com/testfellowship" }]);
     expect(reread?.church.leadershipConfirmedAt).toBeTruthy();
-    expect(await prisma.auditLog.count({ where: { action: "church.profile_updated", churchId: church.id } })).toBe(1);
+    expect(await prisma.auditLog.count({ where: { action: "church.profile_updated", churchId: church.id } })).toBe(2);
   });
 
   it("requires a note to decline or ask for more information, and cannot decide twice", async () => {

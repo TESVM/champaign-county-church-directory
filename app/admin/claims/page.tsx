@@ -1,3 +1,4 @@
+import { FlashBanner } from "@/components/admin/flash-banner";
 import Link from "next/link";
 import { reviewClaimAction } from "@/app/actions";
 import { StatusFilter } from "@/components/admin/status-filter";
@@ -10,13 +11,15 @@ import { formatDate } from "@/lib/utils";
 
 const METHOD = { DOMAIN_EMAIL: "Church email domain", PUBLIC_PHONE: "Call church’s public phone", MANUAL_REVIEW: "Other evidence" } as const;
 
-export default async function ClaimsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+export default async function ClaimsPage({ searchParams }: { searchParams: Promise<{ status?: string; done?: string }> }) {
   const actor = await requireReviewer("/admin/claims");
-  const status = (await searchParams).status ?? "PENDING";
+  const params = await searchParams;
+  const status = params.status ?? "PENDING";
   const claims = await listClaims(actor, status === "ALL" ? undefined : status);
   return (
     <div className="space-y-5">
       <h1 className="font-display text-4xl">Claim requests</h1>
+      <FlashBanner code={params.done} />
       <p className="text-sm text-stone-700">Approve only after verifying authority: the email domain matches the church’s website, or you reached the church at its <em>publicly listed</em> number and they confirmed the person.</p>
       <StatusFilter base="/admin/claims" current={status} options={[["PENDING", "Pending"], ["MORE_INFO", "Waiting on applicant"], ["APPROVED", "Approved"], ["DENIED", "Declined"], ["ALL", "All"]]} />
       {claims.length === 0 ? <p className="text-sm text-stone-600">Nothing here.</p> : null}

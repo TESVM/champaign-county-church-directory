@@ -1,3 +1,4 @@
+import { FlashBanner } from "@/components/admin/flash-banner";
 import Link from "next/link";
 import { resolveContactAction, resolveCorrectionAction } from "@/app/actions";
 import { ActionForm, SubmitButton } from "@/components/forms/action-form";
@@ -7,14 +8,16 @@ import { requireStaff } from "@/lib/auth-guards";
 import { listContactMessages, listCorrections } from "@/lib/services/inbox";
 import { formatDate } from "@/lib/utils";
 
-export default async function InboxPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+export default async function InboxPage({ searchParams }: { searchParams: Promise<{ status?: string; done?: string }> }) {
   const actor = await requireStaff("/admin/inbox");
-  const status = (await searchParams).status === "ALL" ? "ALL" : "NEW";
+  const params = await searchParams;
+  const status = params.status === "ALL" ? "ALL" : "NEW";
   const [messages, corrections] = await Promise.all([listContactMessages(actor, status), listCorrections(actor, status)]);
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="font-display text-4xl">Messages and corrections</h1>
+        <div className="w-full"><FlashBanner code={params.done} /></div>
         <Link href={status === "ALL" ? "/admin/inbox" : "/admin/inbox?status=ALL"} className="text-sm font-semibold underline">{status === "ALL" ? "Show open only" : "Show all, including resolved"}</Link>
       </div>
       <section aria-labelledby="corr">
