@@ -145,7 +145,20 @@ function assertProductionRequirements(env: BaseEnv): string[] {
 }
 
 function loadEnv() {
-  const parsed = baseSchema.safeParse(process.env);
+  let parsed = baseSchema.safeParse(process.env);
+
+  if (!parsed.success && isBuildPhase) {
+    // A build must not depend on runtime secrets: the hosting provider may
+    // expose them to the build, and a malformed one would otherwise fail
+    // "collecting page data". Report it, drop the bad values for the build,
+    // and let the server's start-up check (instrumentation.ts) enforce them.
+    console.warn(
+      `Warning: invalid environment values ignored during build; the server will refuse to start until fixed:\n${formatIssues(parsed.error)}`
+    );
+    const invalid = new Set(parsed.error.issues.map((issue) => String(issue.path[0])));
+    const cleaned = Object.fromEntries(Object.entries(process.env).filter(([key]) => !invalid.has(key)));
+    parsed = baseSchema.safeParse(cleaned);
+  }
 
   if (!parsed.success) {
     throw new Error(

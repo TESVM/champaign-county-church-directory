@@ -1,5 +1,31 @@
 # Test report
 
+## Vercel preview build fix — 2026-10-09
+
+- The first Vercel preview build of this PR failed; the log needs a Vercel login, so the
+  exact cause is unconfirmed. Reproduced locally the most likely cause: a saved environment
+  value that fails validation (e.g. an `AUTH_SECRET` under 32 characters) aborted
+  `next build` while collecting page data.
+- Fixed: during the build, malformed runtime values are reported and ignored; the server's
+  start-up check still refuses to run with them. Verified both locally, plus a unit test.
+
+## Resume verification — 2026-10-09
+
+- Restarted the existing `.pglite-dev` database on localhost:55432 and the
+  development preview on http://127.0.0.1:3007.
+- Fresh typecheck and lint passed; 89 unit tests and 48 integration tests passed.
+  The initial integration attempt was blocked by local socket permissions;
+  rerunning after network permission was granted passed all 48 tests.
+- `/api/health` returned `status: ok`, database `ok`, and 70 active churches.
+  Email is log-only (not delivered), billing is not configured, and uploads use
+  development-local storage. These are still launch blockers/setup items.
+- `/directory` returned HTTP 200 and rendered “70 churches”.
+- Browser automation timed out attaching to the old tab and opening the new
+  directory tab. This run confirms the HTTP response, not a fresh visual or
+  interactive browser check. Previous browser results below are historical.
+- No production deployment or live payment was performed. Production build
+  results below belong to the prior verification run and were not repeated here.
+
 Run on 2026-10-08/09, macOS, Node 25.6 locally (CI is configured for Node 22).
 Branch `feat/production-launch`.
 
