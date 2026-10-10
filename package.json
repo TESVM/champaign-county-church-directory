@@ -6,7 +6,7 @@
     "node": ">=20.9.0 <23"
   },
   "scripts": {
-    "build": "next build",
+    "build": "node scripts/vercel-build.mjs",
     "dev": "WATCHPACK_POLLING=true next dev --hostname 127.0.0.1 --port 3004",
     "lint": "next lint",
     "postinstall": "prisma generate",
