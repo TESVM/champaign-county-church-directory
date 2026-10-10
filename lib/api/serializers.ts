@@ -127,7 +127,7 @@ export function toChurchSummary(church: ChurchRecord): ChurchSummary {
           fullName: church.pastor.fullName,
           title: emptyToNull(church.pastor.title),
           bio: emptyToNull(church.pastor.bio),
-          photoUrl: null
+          photoUrl: emptyToNull(church.pastor.photoUrl)
         }
       : null,
     verified: church.verified,

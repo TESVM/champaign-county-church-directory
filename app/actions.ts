@@ -24,7 +24,7 @@ import {
   submitCorrection,
   submitNewChurch
 } from "@/lib/services/inbox";
-import { removeChurchPhoto, saveChurchPhoto } from "@/lib/services/media";
+import { removeChurchPhoto, removePastorPhoto, saveChurchPhoto, savePastorPhoto } from "@/lib/services/media";
 
 /**
  * Server actions. Each resolves the signed-in actor from the session cookie
@@ -240,6 +240,32 @@ export async function removeChurchPhotoAction(_: FormState, formData: FormData) 
     await removeChurchPhoto(actor, churchId);
     await revalidateChurch(churchId);
     return "Photo removed. The listing now shows a neutral placeholder.";
+  });
+}
+
+export async function savePastorPhotoAction(_: FormState, formData: FormData) {
+  return run("pastor-photo", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    const file = formData.get("pastorFile");
+    await savePastorPhoto(actor, churchId, {
+      file: file instanceof File ? file : null,
+      imageUrl: str(formData, "pastorImageUrl"),
+      credit: str(formData, "pastorCredit"),
+      permission: str(formData, "pastorPermission")
+    });
+    await revalidateChurch(churchId);
+    return "Pastor photo saved and shown on the public listing.";
+  });
+}
+
+export async function removePastorPhotoAction(_: FormState, formData: FormData) {
+  return run("pastor-photo-remove", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    await removePastorPhoto(actor, churchId);
+    await revalidateChurch(churchId);
+    return "Pastor photo removed.";
   });
 }
 

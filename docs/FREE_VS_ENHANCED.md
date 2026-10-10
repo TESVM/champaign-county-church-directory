@@ -22,6 +22,8 @@ only from server-side state: an active/trialing/past-due Stripe subscription
 | Embedded map | | ✓ | Free listings still have a Directions link. |
 | Events on the profile and county calendar (with ICS) | | ✓ | Ongoing engagement tool with clear value. |
 | 90-day activity breakdown (directions, website, phone, livestream, share…) | | ✓ | Insight for church staff. |
+| Church and pastor photos by image link | ✓ | ✓ | Every listing can show a real photo of the church and its lead pastor. |
+| **Uploading** church and pastor photos | | ✓ | Owner decision (Oct 2026): uploads are a paid convenience; free listings paste an image link. Directory staff can always upload. Enforced on the server. |
 
 Data entered for paid features while a church is on the free plan is saved and
 appears immediately if the church upgrades. When a subscription ends, the data

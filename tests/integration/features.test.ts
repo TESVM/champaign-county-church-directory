@@ -196,7 +196,8 @@ describe("Church photos", () => {
   it("accepts a real image with provenance, rejects disguised files and missing credit, and can be removed", async () => {
     const { saveChurchPhoto, removeChurchPhoto } = await import("@/lib/services/media");
     const church = await makeChurch();
-    const { owner } = await ownerOf(church.id);
+    const { owner, admin } = await ownerOf(church.id);
+    await setComplimentary(admin, church.id, { until: addDays(chicagoDateOf(new Date()), 30), reason: "Test" });
     const png = Buffer.from("89504e470d0a1a0a0000000d4948445200000001000000010806000000", "hex");
     const fake = new File([Buffer.from("<script>alert(1)</script>")], "photo.png", { type: "image/png" });
 
@@ -215,5 +216,46 @@ describe("Church photos", () => {
     expect((await getChurchBySlug(church.slug))!.church.featuredImageUrl).toBeUndefined();
     const prisma = await db();
     expect(await prisma.auditLog.count({ where: { action: { in: ["church.photo_replaced", "church.photo_removed"] } } })).toBe(3);
+  });
+});
+
+describe("Photo uploads are an Enhanced Profile feature", () => {
+  beforeEach(resetDatabase);
+
+  it("free listings must link images; enhanced listings and staff may upload church and pastor photos", async () => {
+    const { savePastorPhoto, saveChurchPhoto, UPLOAD_REQUIRES_ENHANCED } = await import("@/lib/services/media");
+    const { ForbiddenError } = await import("@/lib/errors");
+    const prisma = await db();
+    const church = await makeChurch();
+    const pastor = await prisma.pastor.create({ data: { fullName: "Rev. Test Pastor", title: "Pastor" } });
+    await prisma.church.update({ where: { id: church.id }, data: { seniorPastorId: pastor.id } });
+    const { owner, admin } = await ownerOf(church.id);
+    const png = Buffer.from("89504e470d0a1a0a0000000d4948445200000001000000010806000000", "hex");
+    const file = () => new File([png], "p.png", { type: "image/png" });
+    const provenance = { credit: "Our staff", permission: "Provided by the pastor for the directory" };
+
+    // Free: uploads refused with the friendly message, links accepted.
+    const refused = await saveChurchPhoto(owner, church.id, { file: file(), ...provenance }).catch((e) => e);
+    expect(refused).toBeInstanceOf(ForbiddenError);
+    expect(refused.publicMessage).toBe(UPLOAD_REQUIRES_ENHANCED);
+    await expect(savePastorPhoto(owner, church.id, { file: file(), ...provenance })).rejects.toBeInstanceOf(ForbiddenError);
+    await savePastorPhoto(owner, church.id, { imageUrl: "https://church.test/pastor.jpg", ...provenance });
+    expect((await getChurchBySlug(church.slug))!.church.pastor.photoUrl).toBe("https://church.test/pastor.jpg");
+
+    // Staff can always upload.
+    await savePastorPhoto(admin, church.id, { file: file(), ...provenance });
+    expect((await getChurchBySlug(church.slug))!.church.pastor.photoUrl).toMatch(/^\/uploads\/churches\/.+-pastor\/photo-.+\.png$/);
+
+    // Enhanced: the owner may upload both.
+    await setComplimentary(admin, church.id, { until: addDays(chicagoDateOf(new Date()), 30), reason: "Test" });
+    await saveChurchPhoto(owner, church.id, { file: file(), ...provenance });
+    await savePastorPhoto(owner, church.id, { file: file(), ...provenance });
+    const after = (await getChurchBySlug(church.slug))!.church;
+    expect(after.featuredImageUrl).toMatch(/^\/uploads\//);
+    expect(after.pastor.photoUrl).toMatch(/^\/uploads\//);
+    expect(await prisma.auditLog.count({ where: { action: "church.pastor_photo_replaced" } })).toBe(3);
+
+    // Pastor photo provenance is required.
+    await expect(savePastorPhoto(owner, church.id, { imageUrl: "https://church.test/p.jpg" })).rejects.toThrow(/not saved/);
   });
 });

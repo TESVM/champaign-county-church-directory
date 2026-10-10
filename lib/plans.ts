@@ -25,7 +25,8 @@ export type EnhancedFeature =
   | "leadershipTeam"
   | "map"
   | "events"
-  | "detailedInsights";
+  | "detailedInsights"
+  | "photoUploads";
 
 export const ENHANCED_FEATURES: Array<{ key: EnhancedFeature; label: string; detail: string }> = [
   { key: "livestream", label: "Livestream button", detail: "A prominent “Watch online” button on your profile." },
@@ -35,7 +36,8 @@ export const ENHANCED_FEATURES: Array<{ key: EnhancedFeature; label: string; det
   { key: "leadershipTeam", label: "Full leadership team", detail: "Show staff and ministry leaders beyond the lead pastor." },
   { key: "map", label: "Interactive map", detail: "An embedded map on your profile in addition to the free directions link." },
   { key: "events", label: "Events on the county calendar", detail: "Publish events, including weekly ones, with calendar downloads." },
-  { key: "detailedInsights", label: "Detailed activity counts", detail: "90-day breakdown of profile views and clicks on directions, website, livestream and more." }
+  { key: "detailedInsights", label: "Detailed activity counts", detail: "90-day breakdown of profile views and clicks on directions, website, livestream and more." },
+  { key: "photoUploads", label: "Photo uploads", detail: "Upload your church and pastor photos directly. Free listings can add them by pasting an image link." }
 ];
 
 export const FREE_FEATURES: string[] = [
@@ -44,6 +46,7 @@ export const FREE_FEATURES: string[] = [
   "“Plan your first visit” details (parking, accessibility, children, what to expect)",
   "Community resources such as food pantries and meals (reviewed before publishing)",
   "Inclusion in search and the Find a Service filters",
+  "Church and pastor photos added by image link",
   "QR code and share link",
   "Total profile views for the last 30 days"
 ];

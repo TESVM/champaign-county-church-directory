@@ -73,6 +73,7 @@ export type ChurchRecord = {
     fullName: string;
     title: string;
     bio?: string;
+    photoUrl?: string;
   };
   leadership?: Array<{
     fullName: string;
