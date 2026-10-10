@@ -21,33 +21,25 @@ export async function store(key: string, body: Buffer, contentType: string): Pro
     if (!env.blobToken) {
       throw new StorageError("Image storage is not configured.");
     }
-
-    // Vercel Blob HTTP API, kept behind this function so changing provider is a
-    // single-file change.
-    const response = await fetch(`https://blob.vercel-storage.com/${key}`, {
-      method: "PUT",
-      headers: {
-        authorization: `Bearer ${env.blobToken}`,
-        "x-api-version": "7",
-        "x-content-type": contentType,
-        "x-add-random-suffix": "1",
-        "cache-control": "public, max-age=31536000, immutable"
-      },
-      body: new Uint8Array(body)
-    });
-
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      console.error("Blob upload failed.", response.status, detail.slice(0, 200));
+    try {
+      // Official Vercel Blob client; kept behind this function so changing
+      // provider is a single-file change.
+      const { put } = await import("@vercel/blob");
+      const result = await put(key, body, {
+        access: "public",
+        contentType,
+        token: env.blobToken,
+        addRandomSuffix: true,
+        cacheControlMaxAge: 60 * 60 * 24 * 365
+      });
+      return result.url;
+    } catch (error) {
+      console.error("Blob upload failed.", error instanceof Error ? error.message : error);
       throw new StorageError("The image could not be stored. Please try again.");
     }
-
-    const payload = (await response.json()) as { url?: string };
-    if (!payload.url) throw new StorageError("The image could not be stored. Please try again.");
-    return payload.url;
   }
 
-  // Development only; aiImageUnavailableReason() refuses this driver in production.
+  // Development only; uploadsUnavailableReason() refuses this driver in production.
   const target = path.join(process.cwd(), "public", "uploads", key);
   await mkdir(path.dirname(target), { recursive: true });
   await writeFile(target, body);

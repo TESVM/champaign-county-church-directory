@@ -36,20 +36,22 @@
     "@cccd/shared": "*",
     "@prisma/client": "^6.5.0",
     "@radix-ui/react-slot": "^1.1.2",
+    "@vercel/blob": "^2.8.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.511.0",
     "next": "^15.5.27",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.2",
-    "zod": "^3.24.2",
-    "qrcode": "^1.5.4"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.4",
     "@electric-sql/pglite-socket": "^0.2.7",
     "@types/node": "^22.13.10",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "autoprefixer": "^10.4.20",
@@ -60,8 +62,7 @@
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
-    "vitest": "^3.2.7",
-    "@types/qrcode": "^1.5.5"
+    "vitest": "^3.2.7"
   },
   "workspaces": [
     "packages/*"
