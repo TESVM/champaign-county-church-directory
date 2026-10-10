@@ -94,7 +94,8 @@ export function mapChurchRow(row: ChurchRow, now = new Date()): ChurchRecord {
     pastor: {
       fullName: row.seniorPastor?.fullName ?? "",
       title: row.seniorPastor?.title ?? "Pastor",
-      bio: opt(row.seniorPastor?.bio)
+      bio: opt(row.seniorPastor?.bio),
+      photoUrl: opt(row.seniorPastor?.photoUrl)
     },
     leadership: row.leaders
       .filter((leader) => leader.fullName !== row.seniorPastor?.fullName)

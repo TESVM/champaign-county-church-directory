@@ -200,7 +200,7 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
             <p className="mt-4 inline-flex rounded-full bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-900">{church.denomination}</p>
           ) : null}
           <div className="mt-5">
-            <PastorBadge name={church.pastor.fullName} title={church.pastor.title} />
+            <PastorBadge name={church.pastor.fullName} title={church.pastor.title} photoUrl={church.pastor.photoUrl} />
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
