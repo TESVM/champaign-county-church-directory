@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { geocodeChurchesAction } from "@/app/actions";
+import { geocodeChurchesAction, moveEmbeddedImagesAction } from "@/app/actions";
 import { ActionForm, SubmitButton } from "@/components/forms/action-form";
 import { Card } from "@/components/ui/card";
 import { requireStaff } from "@/lib/auth-guards";
@@ -98,6 +98,19 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
                   <SubmitButton pendingLabel="Looking up addresses…">Place churches on the map</SubmitButton>
                 </ActionForm>
               </div>
+              {overview.embedded ? (
+                <div className="mt-6">
+                  <h2 className="font-display text-2xl">Embedded images</h2>
+                  <p className="mt-1 text-sm text-stone-600">
+                    {overview.embedded} listing {overview.embedded === 1 ? "image is" : "images are"} stored inside the database instead of as files, which makes every page and the app download them each time. Move them to image storage; the pictures stay the same.
+                  </p>
+                  <div className="mt-3">
+                    <ActionForm action={moveEmbeddedImagesAction}>
+                      <SubmitButton pendingLabel="Moving images…">Move to image storage</SubmitButton>
+                    </ActionForm>
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </Card>

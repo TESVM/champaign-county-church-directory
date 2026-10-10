@@ -28,7 +28,7 @@ import {
 } from "@/lib/services/inbox";
 import { closeCollabPost, reportCollabPost, reviewCollabPost, submitCollabPost } from "@/lib/services/collab";
 import { endLive, markLive } from "@/lib/services/live";
-import { addGalleryPhoto, removeChurchPhoto, removeGalleryPhoto, removePastorPhoto, saveChurchPhoto, savePastorPhoto } from "@/lib/services/media";
+import { addGalleryPhoto, moveEmbeddedImagesToStorage, removeChurchPhoto, removeGalleryPhoto, removePastorPhoto, saveChurchPhoto, savePastorPhoto } from "@/lib/services/media";
 
 /**
  * Server actions. Each resolves the signed-in actor from the session cookie
@@ -738,5 +738,16 @@ export async function removeGalleryPhotoAction(_: FormState, formData: FormData)
     await removeGalleryPhoto(actor, str(formData, "photoId") ?? "");
     await revalidateChurch(churchId);
     return "Photo removed.";
+  });
+}
+
+export async function moveEmbeddedImagesAction(_: FormState) {
+  return run("embedded-images", async () => {
+    const actor = await signedIn();
+    const result = await moveEmbeddedImagesToStorage(actor);
+    revalidatePath("/", "layout");
+    return result.moved || result.skipped
+      ? `Moved ${result.moved} embedded image${result.moved === 1 ? "" : "s"} to image storage${result.skipped ? `; ${result.skipped} could not be read and were left as they were` : ""}.`
+      : "No embedded images found. Nothing to do.";
   });
 }

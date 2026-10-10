@@ -44,3 +44,42 @@ await (await square(256, 0.06)).toFile("public/brand/emblem.png");
 const ogLogo = await sharp(trimmed).resize({ width: 1000, height: 420, fit: "inside" }).toBuffer();
 await sharp({ create: { width: 1200, height: 630, channels: 4, background: WHITE } }).composite([{ input: ogLogo, gravity: "center" }]).png().toFile("public/og-image.png");
 console.log("done");
+
+// ---------------------------------------------------------------------------
+// Mobile app (mobile/assets)
+// ---------------------------------------------------------------------------
+
+/** Makes near-white pixels transparent with a soft edge. */
+async function whiteToAlpha(input) {
+  const { data, info } = await sharp(input).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  for (let i = 0; i < data.length; i += 4) {
+    const lightest = Math.min(data[i], data[i + 1], data[i + 2]);
+    if (lightest > 200) data[i + 3] = Math.round(255 * Math.max(0, (255 - lightest) / 55));
+  }
+  return sharp(data, { raw: info }).png().toBuffer();
+}
+
+const emblemAlpha = await whiteToAlpha(emblem);
+const place = async (mark, size, fraction, background) => {
+  const inner = Math.round(size * fraction);
+  const resized = await sharp(mark).resize({ width: inner, height: inner, fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
+  return sharp({ create: { width: size, height: size, channels: 4, background } }).composite([{ input: resized, gravity: "center" }]);
+};
+const CLEAR = { r: 0, g: 0, b: 0, alpha: 0 };
+
+// iOS / store icon: 1024px, opaque (Apple rejects alpha), emblem on white.
+await (await place(emblemAlpha, 1024, 0.78, WHITE)).flatten({ background: WHITE }).removeAlpha().png().toFile("mobile/assets/icon.png");
+// Android adaptive icon: white background layer; the emblem stays inside the
+// 66% safe zone so circle and squircle masks never clip the cross.
+await sharp({ create: { width: 1024, height: 1024, channels: 3, background: WHITE } }).png().toFile("mobile/assets/android-icon-background.png");
+await (await place(emblemAlpha, 1024, 0.6, CLEAR)).png().toFile("mobile/assets/android-icon-foreground.png");
+// Monochrome (Android 13 themed icons): the emblem's shape in a single colour.
+const mono = await sharp(emblemAlpha).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+for (let i = 0; i < mono.data.length; i += 4) mono.data[i] = mono.data[i + 1] = mono.data[i + 2] = 0;
+await (await place(await sharp(mono.data, { raw: mono.info }).png().toBuffer(), 1024, 0.6, CLEAR)).png().toFile("mobile/assets/android-icon-monochrome.png");
+// Splash: the full logo on white.
+const fullAlpha = await whiteToAlpha(trimmed);
+const splashLogo = await sharp(fullAlpha).resize({ width: 1000 }).png().toBuffer();
+await sharp({ create: { width: 1024, height: 1024, channels: 4, background: CLEAR } }).composite([{ input: splashLogo, gravity: "center" }]).png().toFile("mobile/assets/splash-icon.png");
+await (await place(emblemAlpha, 64, 0.94, WHITE)).png().toFile("mobile/assets/favicon.png");
+console.log("mobile assets done");

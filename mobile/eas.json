@@ -17,13 +17,13 @@
       "ios": { "simulator": false },
       "android": { "buildType": "apk" },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://champaign-county-church-directory.vercel.app"
+        "EXPO_PUBLIC_API_BASE_URL": "https://www.champaigncountychurches.com"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://champaign-county-church-directory.vercel.app"
+        "EXPO_PUBLIC_API_BASE_URL": "https://www.champaigncountychurches.com"
       }
     }
   },
