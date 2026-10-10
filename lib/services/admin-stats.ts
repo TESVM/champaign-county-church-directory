@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 
 export async function adminQueueCounts() {
   const prisma = await db();
-  const [claims, submissions, contacts, corrections, changes, resources, campusOrgs, campusEvents] = await Promise.all([
+  const [claims, submissions, contacts, corrections, changes, resources, campusOrgs, campusEvents, collab] = await Promise.all([
     prisma.claimRequest.count({ where: { status: "PENDING" } }),
     prisma.submission.count({ where: { status: "PENDING" } }),
     prisma.contactMessage.count({ where: { status: "NEW" } }),
@@ -10,9 +10,10 @@ export async function adminQueueCounts() {
     prisma.suggestedChange.count({ where: { status: "PENDING" } }),
     prisma.communityResource.count({ where: { status: "PENDING" } }),
     prisma.campusOrganization.count({ where: { status: "PENDING" } }),
-    prisma.campusEvent.count({ where: { status: "PENDING" } })
+    prisma.campusEvent.count({ where: { status: "PENDING" } }),
+    prisma.collabPost.count({ where: { OR: [{ status: "PENDING", closedAt: null, expiresAt: { gt: new Date() } }, { reports: { some: { resolvedAt: null } } }] } })
   ]);
-  return { claims, submissions, inbox: contacts + corrections, changes, resources, campus: campusOrgs + campusEvents };
+  return { claims, submissions, inbox: contacts + corrections, changes, resources, campus: campusOrgs + campusEvents, collab };
 }
 
 export async function adminOverview() {

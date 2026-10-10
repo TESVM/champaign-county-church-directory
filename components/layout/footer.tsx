@@ -17,7 +17,10 @@ export function Footer() {
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-300">Explore</p>
           <div className="mt-4 flex flex-col gap-2 text-sm">
             <Link href="/directory">Directory</Link>
+            <Link href="/map">Explore the map</Link>
             <Link href="/find-a-service">Find a service</Link>
+            <Link href="/live">Worship Live &amp; Next</Link>
+            <Link href="/campus">Campus Faith</Link>
             <Link href="/events">Events calendar</Link>
             <Link href="/resources">Community help</Link>
             <Link href="/cities">Browse cities</Link>
@@ -28,6 +31,7 @@ export function Footer() {
           <div className="mt-4 flex flex-col gap-2 text-sm">
             <Link href="/for-churches">Free and enhanced listings</Link>
             <Link href="/claim">Manage your listing</Link>
+            <Link href="/collaborate">Collaboration Board</Link>
             <Link href="/submit">Submit a church</Link>
             <Link href="/login">Church sign in</Link>
           </div>

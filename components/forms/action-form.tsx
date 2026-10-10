@@ -76,7 +76,7 @@ export function ActionForm({
           </p>
         ) : null}
         {state.status === "error" ? (
-          <div role="alert" className="rounded-2xl border border-rose/40 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+          <div role="alert" className="rounded-2xl border border-rose/40 bg-red-50 px-4 py-3 text-sm text-red-900">
             <p className="font-semibold">{state.message ?? "Something went wrong. Nothing was saved."}</p>
             {fieldErrors.length ? (
               <ul className="mt-2 list-disc space-y-1 pl-5">
@@ -122,7 +122,7 @@ export function SubmitButton({
   const styles = {
     primary: "bg-brand-900 text-white hover:bg-brand-700",
     secondary: "border border-line bg-white text-ink hover:border-brand-700",
-    danger: "bg-rose-700 text-white hover:bg-rose-800",
+    danger: "bg-red-700 text-white hover:bg-red-800",
     ghost: "text-brand-900 underline-offset-4 hover:underline"
   }[variant];
   return (

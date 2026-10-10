@@ -29,7 +29,7 @@ export function SavedChurches() {
   }, []);
 
   if (state.status === "loading") return <p role="status" className="text-sm text-stone-600">Loading saved churches…</p>;
-  if (state.status === "error") return <p role="alert" className="rounded-2xl bg-rose-50 p-4 text-sm text-rose-900">{state.message}</p>;
+  if (state.status === "error") return <p role="alert" className="rounded-2xl bg-red-50 p-4 text-sm text-red-900">{state.message}</p>;
   if (!state.items.length) {
     return (
       <div className="rounded-[24px] border border-dashed border-line p-8 text-center">

@@ -152,7 +152,7 @@ export function ProfileForm({ values, cities, enhanced }: { values: ProfileFormV
                 <input className="mt-1 h-11 w-full rounded-xl border border-line bg-white px-3" value={service.notes ?? ""} onChange={(e) => updateService(index, { notes: e.target.value })} placeholder="Nursery available, livestreamed…" />
               </label>
               <div className="flex items-end">
-                <button type="button" onClick={() => setServices((list) => list.filter((_, i) => i !== index))} className="inline-flex min-h-[44px] items-center gap-1 rounded-full px-3 text-sm font-semibold text-rose-800 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                <button type="button" onClick={() => setServices((list) => list.filter((_, i) => i !== index))} className="inline-flex min-h-[44px] items-center gap-1 rounded-full px-3 text-sm font-semibold text-red-800 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
                   <Trash2 className="h-4 w-4" aria-hidden="true" /> Remove<span className="sr-only"> service {index + 1}</span>
                 </button>
               </div>
@@ -181,7 +181,7 @@ export function ProfileForm({ values, cities, enhanced }: { values: ProfileFormV
               <input className="mt-1 h-11 w-full rounded-xl border border-line bg-white px-3" value={leader.title ?? ""} onChange={(e) => updateLeader(index, { title: e.target.value })} />
             </label>
             <div className="flex items-end">
-              <button type="button" onClick={() => setLeaders((list) => list.filter((_, i) => i !== index))} className="inline-flex min-h-[44px] items-center gap-1 rounded-full px-3 text-sm font-semibold text-rose-800 hover:bg-rose-50">
+              <button type="button" onClick={() => setLeaders((list) => list.filter((_, i) => i !== index))} className="inline-flex min-h-[44px] items-center gap-1 rounded-full px-3 text-sm font-semibold text-red-800 hover:bg-red-50">
                 <Trash2 className="h-4 w-4" aria-hidden="true" /> Remove<span className="sr-only"> {leader.fullName}</span>
               </button>
             </div>

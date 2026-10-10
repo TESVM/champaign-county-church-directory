@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, Circle } from "lucide-react";
 import { ChurchTabs } from "@/components/dashboard/church-tabs";
+import { LiveCard } from "@/components/dashboard/live-card";
 import { Card } from "@/components/ui/card";
 import { loadManagedChurch } from "@/lib/dashboard";
 import { featureVisible } from "@/lib/plans";
@@ -9,7 +10,7 @@ import { ACTIVITY_METRICS, getActivitySummary } from "@/lib/services/engagement"
 
 export default async function ChurchOverviewPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const { church, canManage } = await loadManagedChurch(slug);
+  const { church, row, canManage } = await loadManagedChurch(slug);
   const detailed = featureVisible("detailedInsights", church.enhancedProfile);
   const activity = await getActivitySummary(church.id, detailed ? 90 : 30);
   const items = profileChecklist(church);
@@ -20,6 +21,7 @@ export default async function ChurchOverviewPage({ params }: { params: Promise<{
     <>
       <ChurchTabs slug={slug} current="" canManage={canManage} />
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1fr]">
+        <LiveCard churchId={church.id} slug={slug} livestreamUrl={church.livestreamUrl} allowed={featureVisible("livestream", church.enhancedProfile)} liveUntil={row.liveUntil} canManage={canManage} />
         <Card className="p-6">
           <h2 className="font-display text-2xl">Profile checklist</h2>
           <p className="mt-1 text-sm text-stone-600">{done} of {items.length} complete. Complete listings are easier for visitors to trust.</p>

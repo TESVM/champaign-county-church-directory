@@ -29,7 +29,7 @@ export type EnhancedFeature =
   | "photoUploads";
 
 export const ENHANCED_FEATURES: Array<{ key: EnhancedFeature; label: string; detail: string }> = [
-  { key: "livestream", label: "Livestream button", detail: "A prominent “Watch online” button on your profile." },
+  { key: "livestream", label: "Livestream button", detail: "A prominent “Watch online” button, a “Live now” switch, and your latest YouTube service on your profile and Worship Live & Next." },
   { key: "appLinks", label: "Church app buttons", detail: "Apple App Store and Google Play buttons for your church app." },
   { key: "socialLinks", label: "Social media links", detail: "Facebook, Instagram, YouTube, X and TikTok icons." },
   { key: "ministries", label: "Ministry highlights", detail: "List the ministries visitors can join." },
@@ -37,7 +37,7 @@ export const ENHANCED_FEATURES: Array<{ key: EnhancedFeature; label: string; det
   { key: "map", label: "Interactive map", detail: "An embedded map on your profile in addition to the free directions link." },
   { key: "events", label: "Events on the county calendar", detail: "Publish events, including weekly ones, with calendar downloads." },
   { key: "detailedInsights", label: "Detailed activity counts", detail: "90-day breakdown of profile views and clicks on directions, website, livestream and more." },
-  { key: "photoUploads", label: "Photo uploads", detail: "Upload your church and pastor photos directly. Free listings can add them by pasting an image link." }
+  { key: "photoUploads", label: "Photo uploads", detail: "Upload your church, pastor, and gallery photos directly. Free listings can add them by pasting an image link." }
 ];
 
 export const FREE_FEATURES: string[] = [
@@ -46,7 +46,8 @@ export const FREE_FEATURES: string[] = [
   "“Plan your first visit” details (parking, accessibility, children, what to expect)",
   "Community resources such as food pantries and meals (reviewed before publishing)",
   "Inclusion in search and the Find a Service filters",
-  "Church and pastor photos added by image link",
+  "Church, pastor, and gallery photos added by image link",
+  "Posts on the Church Collaboration Board (reviewed before publishing)",
   "QR code and share link",
   "Total profile views for the last 30 days"
 ];

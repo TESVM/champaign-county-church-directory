@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { removeChurchPhotoAction, removePastorPhotoAction, saveChurchPhotoAction, savePastorPhotoAction } from "@/app/actions";
+import { addGalleryPhotoAction, removeChurchPhotoAction, removeGalleryPhotoAction, removePastorPhotoAction, saveChurchPhotoAction, savePastorPhotoAction } from "@/app/actions";
 import { ChurchTabs } from "@/components/dashboard/church-tabs";
 import { PhotoFileInput } from "@/components/dashboard/photo-file-input";
 import { ActionForm, SubmitButton } from "@/components/forms/action-form";
@@ -9,7 +9,7 @@ import { TextAreaField, TextField } from "@/components/ui/field";
 import { loadManagedChurch } from "@/lib/dashboard";
 import { shouldOptimizeImage } from "@/lib/images";
 import { uploadsUnavailableReason } from "@/lib/media";
-import { UPLOAD_REQUIRES_ENHANCED, canUploadPhotos } from "@/lib/services/media";
+import { MAX_GALLERY_PHOTOS, UPLOAD_REQUIRES_ENHANCED, canUploadPhotos, listGalleryPhotos } from "@/lib/services/media";
 
 function UploadNotice({ reason, slug, canManage }: { reason: string; slug: string; canManage: boolean }) {
   return (
@@ -32,6 +32,7 @@ export default async function PhotoPage({ params }: { params: Promise<{ slug: st
   // Why the upload box is hidden, if it is. Storage problems take priority.
   const uploadBlocked = storageProblem ?? (allowed ? null : UPLOAD_REQUIRES_ENHANCED);
   const pastor = row.seniorPastor;
+  const gallery = await listGalleryPhotos(church.id);
 
   return (
     <>
@@ -124,6 +125,47 @@ export default async function PhotoPage({ params }: { params: Promise<{ slug: st
           </Card>
         ) : null}
       </div>
+
+      <Card className="mt-6 p-6">
+        <h2 className="font-display text-2xl">Photo gallery</h2>
+        <p className="mt-2 text-sm leading-6 text-stone-700">
+          Up to {MAX_GALLERY_PHOTOS} more photos for your profile: the building, the sanctuary, ministries in action. Only add photos your church took or has permission to use, and only show people who agreed to be photographed.
+        </p>
+        {gallery.length ? (
+          <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {gallery.map((photo) => (
+              <li key={photo.id} className="overflow-hidden rounded-2xl border border-line">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo.url} alt={photo.caption ?? ""} className="aspect-[4/3] w-full object-cover" />
+                <div className="space-y-2 p-3 text-xs text-stone-600">
+                  {photo.caption ? <p className="text-sm text-ink">{photo.caption}</p> : null}
+                  <p>Photo: {photo.credit}</p>
+                  <ActionForm action={removeGalleryPhotoAction}>
+                    <input type="hidden" name="churchId" value={church.id} />
+                    <input type="hidden" name="photoId" value={photo.id} />
+                    <SubmitButton variant="secondary" pendingLabel="Removing…">
+                      Remove
+                    </SubmitButton>
+                  </ActionForm>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {gallery.length < MAX_GALLERY_PHOTOS ? (
+          <div className="mt-6 max-w-2xl">
+            <ActionForm action={addGalleryPhotoAction} resetOnSuccess fieldLabels={{ imageUrl: "Image link", file: "Photo file" }}>
+              <input type="hidden" name="churchId" value={church.id} />
+              {uploadBlocked ? <UploadNotice reason={uploadBlocked} slug={slug} canManage={canManage} /> : <PhotoFileInput />}
+              <TextField name="imageUrl" label={uploadBlocked ? "Image link (https)" : "…or paste an image link (https)"} type="url" />
+              <TextField name="caption" label="Caption (optional)" />
+              <TextField name="credit" label="Who took or published it?" required />
+              <TextAreaField name="permission" label="Why we may use it" required hint="For example: “Our own photo”." />
+              <SubmitButton pendingLabel="Adding…">Add to gallery</SubmitButton>
+            </ActionForm>
+          </div>
+        ) : null}
+      </Card>
     </>
   );
 }

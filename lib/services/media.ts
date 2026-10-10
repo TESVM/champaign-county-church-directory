@@ -195,3 +195,69 @@ export async function removePastorPhoto(actor: Actor, churchId: string) {
     details: { previous: church.seniorPastor.photoUrl }
   });
 }
+
+// ---------------------------------------------------------------------------
+// Photo gallery
+// ---------------------------------------------------------------------------
+
+export const MAX_GALLERY_PHOTOS = 8;
+
+export async function listGalleryPhotos(churchId: string) {
+  const prisma = await db();
+  return prisma.churchPhoto.findMany({ where: { churchId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] });
+}
+
+/** Adds a gallery photo: uploads for Enhanced listings, image links for everyone. */
+export async function addGalleryPhoto(
+  actor: Actor,
+  churchId: string,
+  input: { file?: File | null; imageUrl?: unknown; caption?: unknown; credit?: unknown; permission?: unknown }
+) {
+  assertCanEditChurch(actor, churchId);
+  const prisma = await db();
+  const church = await prisma.church.findUniqueOrThrow({ where: { id: churchId }, select: { slug: true } });
+  if ((await prisma.churchPhoto.count({ where: { churchId } })) >= MAX_GALLERY_PHOTOS) {
+    throw new ValidationError(`The gallery holds ${MAX_GALLERY_PHOTOS} photos. Remove one to add another.`);
+  }
+  const hasFile = input.file instanceof File && input.file.size > 0;
+  if (hasFile && !(await canUploadPhotos(actor, churchId))) throw new ForbiddenError(UPLOAD_REQUIRES_ENHANCED);
+  const fieldErrors: Record<string, string> = {};
+  let imageUrl: string | null = null;
+  if (!hasFile) {
+    try {
+      imageUrl = normalizeLink(input.imageUrl, "image");
+    } catch (error) {
+      fieldErrors.imageUrl = (error as LinkError).message;
+    }
+    if (!imageUrl && !fieldErrors.imageUrl) fieldErrors.imageUrl = "Upload a photo or paste an image link.";
+    if (imageUrl && imageUrl.startsWith("http:")) fieldErrors.imageUrl = "Image links must use https://.";
+  }
+  const provenance = provenanceSchema.safeParse({ credit: input.credit ?? "", permission: input.permission ?? "" });
+  if (!provenance.success) for (const issue of provenance.error.issues) fieldErrors[String(issue.path[0])] ??= issue.message;
+  const caption = typeof input.caption === "string" ? input.caption.trim().slice(0, 160) || null : null;
+  if (Object.keys(fieldErrors).length || !provenance.success) throw new ValidationError("Please fix the highlighted fields. The photo was not added.", fieldErrors);
+
+  if (hasFile) {
+    try {
+      imageUrl = await storeUploadedImage(input.file as File, `${church.slug}-gallery`);
+    } catch (error) {
+      if (error instanceof StorageError) throw new ValidationError(error.message, { file: error.message });
+      throw error;
+    }
+  }
+  const last = await prisma.churchPhoto.findFirst({ where: { churchId }, orderBy: { sortOrder: "desc" }, select: { sortOrder: true } });
+  const photo = await prisma.churchPhoto.create({
+    data: { churchId, url: imageUrl!, caption, credit: provenance.data.credit, permission: provenance.data.permission, sortOrder: (last?.sortOrder ?? -1) + 1, createdBy: actor.email }
+  });
+  await audit(actor, { action: "church.gallery_added", entityType: "ChurchPhoto", entityId: photo.id, churchId, summary: `Added gallery photo (${provenance.data.credit})`, details: { permission: provenance.data.permission, uploaded: hasFile } });
+  return photo;
+}
+
+export async function removeGalleryPhoto(actor: Actor, photoId: string) {
+  const prisma = await db();
+  const photo = await prisma.churchPhoto.findUnique({ where: { id: photoId } });
+  if (!photo) throw new ValidationError("That photo was already removed.");
+  assertCanEditChurch(actor, photo.churchId);
+  await prisma.churchPhoto.delete({ where: { id: photoId } });
+  await audit(actor, { action: "church.gallery_removed", entityType: "ChurchPhoto", entityId: photoId, churchId: photo.churchId, summary: "Removed a gallery photo", details: { url: photo.url } });
+}

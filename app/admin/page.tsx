@@ -18,7 +18,8 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
     ["Messages and corrections", counts.inbox, "/admin/inbox"],
     ["Website review proposals", counts.changes, "/admin/review"],
     ["Community programs", counts.resources, "/admin/resources"],
-    ["Campus Faith listings", counts.campus, "/admin/campus"]
+    ["Campus Faith listings", counts.campus, "/admin/campus"],
+    ["Collaboration Board posts", counts.collab, "/admin/collaboration"]
   ] as const;
   const setup = [
     ["Email delivery", env.emailProvider === "resend" && Boolean(env.resendApiKey && env.emailFrom)],
@@ -35,7 +36,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
         <p className="text-sm text-stone-600">Signed in as {actor.email} ({actor.staffRole?.toLowerCase()})</p>
         <h1 className="font-display text-4xl">Directory overview</h1>
       </div>
-      {denied ? <p role="alert" className="rounded-2xl bg-rose-50 p-4 text-sm text-rose-900">That page needs a reviewer or administrator role.</p> : null}
+      {denied ? <p role="alert" className="rounded-2xl bg-red-50 p-4 text-sm text-red-900">That page needs a reviewer or administrator role.</p> : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {queues.map(([label, count, href]) => (

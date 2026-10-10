@@ -36,6 +36,10 @@ import { STUDENT_MINISTRY_PATTERN, studentTagLabel } from "@/lib/campus";
 import { shouldOptimizeImage } from "@/lib/images";
 import { featureVisible } from "@/lib/plans";
 import { getChurchBySlug, getMergeTarget, verificationStatus } from "@/lib/services/churches";
+import { listCollabPosts } from "@/lib/services/collab";
+import { isLive, latestServiceVideo } from "@/lib/services/live";
+import { listGalleryPhotos } from "@/lib/services/media";
+import { collabCategoryLabel } from "@/lib/collab";
 import { RESOURCE_CATEGORIES, listResources, listUpcomingEvents } from "@/lib/services/engagement";
 import { siteUrl } from "@/lib/site";
 import { formatChicago } from "@/lib/time/chicago";
@@ -98,10 +102,14 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
 
   const enhanced = Boolean(church.enhancedProfile);
   const show = (feature: Parameters<typeof featureVisible>[0]) => featureVisible(feature, enhanced);
-  const [events, resources] = await Promise.all([
+  const [events, resources, opportunities, gallery, latestVideo] = await Promise.all([
     show("events") ? listUpcomingEvents({ churchId: church.id, days: 120 }) : Promise.resolve([]),
-    listResources({ churchId: church.id })
+    listResources({ churchId: church.id }),
+    listCollabPosts({ churchId: church.id }),
+    listGalleryPhotos(church.id),
+    latestServiceVideo(church)
   ]);
+  const liveNow = show("livestream") && Boolean(church.livestreamUrl) && isLive(row);
 
   const profileUrl = `${siteUrl()}/churches/${church.slug}`;
   const websiteUrl = externalUrl(church.websiteUrl);
@@ -190,6 +198,11 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-700">{church.city}, Illinois</p>
+          {liveNow ? (
+            <a href={livestreamUrl ?? church.livestreamUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 rounded-full bg-red-700 px-3 py-1 text-sm font-bold text-white hover:bg-red-800">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-white motion-reduce:animate-none" aria-hidden="true" /> Live now · watch
+            </a>
+          ) : null}
           <h1 className="mt-3 font-display text-4xl sm:text-5xl">{church.name}</h1>
           <div className="mt-4">
             <VerifiedBadge
@@ -323,6 +336,32 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
             )}
           </Card>
 
+          {livestreamUrl || latestVideo ? (
+            <Card className="p-6 sm:p-8">
+              <h2 className="font-display text-3xl">Watch online</h2>
+              {liveNow ? <p className="mt-2 text-sm font-semibold text-red-700">The church says it is streaming now.</p> : null}
+              {latestVideo ? (
+                <a href={latestVideo.url} target="_blank" rel="noopener noreferrer" className="mt-4 flex gap-4 rounded-2xl border border-line p-3 hover:border-brand-700">
+                  {latestVideo.thumbnailUrl ? (
+                    <span className="relative aspect-video w-40 shrink-0 overflow-hidden rounded-xl bg-stone-900">
+                      <Image src={latestVideo.thumbnailUrl} alt="" fill sizes="160px" className="object-cover" unoptimized />
+                    </span>
+                  ) : null}
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">Most recent on YouTube</span>
+                    <span className="mt-1 block font-semibold text-ink">{latestVideo.title}</span>
+                    <span className="text-sm text-stone-600">{formatChicago(latestVideo.publishedAt, { month: "long", day: "numeric" })}</span>
+                  </span>
+                </a>
+              ) : null}
+              {livestreamUrl ? (
+                <TrackedLink churchSlug={church.slug} metric="livestream_click" href={livestreamUrl} target="_blank" rel="noopener noreferrer" className={`${pill} mt-4`}>
+                  <PlayCircle className="h-4 w-4" aria-hidden="true" /> Open the church’s livestream page
+                </TrackedLink>
+              ) : null}
+            </Card>
+          ) : null}
+
           <Card className="p-6 sm:p-8" id="plan-your-visit">
             <h2 className="font-display text-3xl">Plan your first visit</h2>
             {guide ? (
@@ -451,6 +490,45 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
                         <span className="font-semibold">Who can use it:</span> {r.eligibility}
                       </p>
                     ) : null}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
+
+          {opportunities.length ? (
+            <Card className="p-6 sm:p-8">
+              <h2 className="font-display text-3xl">Ministry opportunities</h2>
+              <p className="mt-2 text-sm text-stone-600">Shared by the church on the Church Collaboration Board.</p>
+              <ul className="mt-5 space-y-3">
+                {opportunities.map((p) => (
+                  <li key={p.id} className="rounded-2xl border border-line p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">{collabCategoryLabel(p.category)}</p>
+                    <Link href={`/collaborate/${p.id}`} className="mt-1 block font-semibold text-ink hover:text-brand-700">
+                      {p.title}
+                    </Link>
+                    <p className="mt-1 line-clamp-2 text-sm text-stone-700">{p.body}</p>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
+
+          {gallery.length ? (
+            <Card className="p-6 sm:p-8">
+              <h2 className="font-display text-3xl">Photos</h2>
+              <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+                {gallery.map((photo) => (
+                  <li key={photo.id}>
+                    <figure className="overflow-hidden rounded-2xl border border-line">
+                      <div className="relative aspect-[4/3] bg-stone-100">
+                        <Image src={photo.url} alt={photo.caption ?? `Photo of ${church.name}`} fill sizes="(min-width: 1024px) 25vw, 50vw" className="object-cover" unoptimized={!shouldOptimizeImage(photo.url)} />
+                      </div>
+                      <figcaption className="px-3 py-2 text-xs text-stone-600">
+                        {photo.caption ? <span className="block text-sm text-ink">{photo.caption}</span> : null}
+                        Photo: {photo.credit}
+                      </figcaption>
+                    </figure>
                   </li>
                 ))}
               </ul>

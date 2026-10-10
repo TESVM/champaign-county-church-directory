@@ -227,6 +227,12 @@ model Church {
   correctionReports          CorrectionReport[]
   campusOrganizations        CampusOrganization[]
   campusEvents               CampusEvent[]
+  /// "Live now" is only ever set by the church (or staff) and expires on its own.
+  liveUntil                  DateTime?
+  liveMarkedAt               DateTime?
+  liveMarkedBy               String?
+  photos                     ChurchPhoto[]
+  collabPosts                CollabPost[]
 
   @@index([cityId])
   @@index([status])
@@ -739,4 +745,65 @@ model CampusEvent {
   church          Church?             @relation(fields: [churchId], references: [id], onDelete: Cascade)
 
   @@index([status, startsAt])
+}
+
+/// Additional church photos shown in a gallery. Each states a credit and permission basis.
+model ChurchPhoto {
+  id         String   @id @default(cuid())
+  churchId   String
+  church     Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  url        String
+  caption    String?
+  credit     String
+  permission String
+  sortOrder  Int      @default(0)
+  createdBy  String?
+  createdAt  DateTime @default(now())
+
+  @@index([churchId, sortOrder])
+}
+
+/// A moderated Church Collaboration Board post. Never public until approved,
+/// and hidden automatically once it expires or collects enough reports.
+model CollabPost {
+  id               String         @id @default(cuid())
+  churchId         String?
+  church           Church?        @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  /// For posts staff enter on behalf of a ministry without a church listing.
+  organizationName String?
+  category         String
+  title            String
+  body             String
+  location         String?
+  contactName      String?
+  contactEmail     String?
+  contactPhone     String?
+  contactUrl       String?
+  expiresAt        DateTime
+  status           ReviewStatus   @default(PENDING)
+  reviewerNote     String?
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  closedAt         DateTime?
+  createdBy        String
+  reportCount      Int            @default(0)
+  reports          CollabReport[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([status, expiresAt])
+  @@index([churchId])
+}
+
+model CollabReport {
+  id          String     @id @default(cuid())
+  postId      String
+  post        CollabPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reason      String
+  /// Hash of the reporter's network key: limits one report per person, identifies no one.
+  reporterKey String
+  resolvedAt  DateTime?
+  createdAt   DateTime   @default(now())
+
+  @@unique([postId, reporterKey])
 }

@@ -32,7 +32,7 @@ export function PhotoFileInput({ name = "file", label = "Upload a photo (JPEG, P
         }}
         className="mt-2 block w-full text-sm file:mr-4 file:min-h-[44px] file:rounded-full file:border-0 file:bg-brand-900 file:px-4 file:text-white"
       />
-      <span id={`${name}-help`} role={message ? "alert" : undefined} className={message ? "mt-2 block text-sm font-medium text-rose-800" : "sr-only"}>
+      <span id={`${name}-help`} role={message ? "alert" : undefined} className={message ? "mt-2 block text-sm font-medium text-red-800" : "sr-only"}>
         {message ?? "Photos are checked before upload."}
       </span>
     </label>

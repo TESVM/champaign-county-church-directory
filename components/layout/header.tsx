@@ -8,12 +8,16 @@ const nav = [
   { href: "/directory", label: "Directory" },
   { href: "/map", label: "Explore the Map" },
   { href: "/campus", label: "Campus Faith" },
+  { href: "/live", label: "Live & Next" },
   { href: "/find-a-service", label: "Find a Service" },
   { href: "/events", label: "Events" },
   { href: "/resources", label: "Community Help" },
   { href: "/saved", label: "Saved" }
 ];
-const mobileOnly = [{ href: "/cities", label: "Cities" }];
+const mobileOnly = [
+  { href: "/collaborate", label: "Collaboration Board" },
+  { href: "/cities", label: "Cities" }
+];
 
 export async function Header() {
   const actor = await getActor();
