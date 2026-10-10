@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { ForbiddenError, ValidationError } from "@/lib/errors";
 import { featureVisible } from "@/lib/plans";
 import { computeEntitlement } from "@/lib/services/entitlements";
-import { StorageError, storeUploadedImage } from "@/lib/media";
+import { sniffImageType, StorageError, storeUploadedImage } from "@/lib/media";
 import { audit } from "@/lib/services/audit";
 import { LinkError, normalizeLink } from "@/lib/validation/links";
 
@@ -260,4 +260,66 @@ export async function removeGalleryPhoto(actor: Actor, photoId: string) {
   assertCanEditChurch(actor, photo.churchId);
   await prisma.churchPhoto.delete({ where: { id: photoId } });
   await audit(actor, { action: "church.gallery_removed", entityType: "ChurchPhoto", entityId: photoId, churchId: photo.churchId, summary: "Removed a gallery photo", details: { url: photo.url } });
+}
+
+// ---------------------------------------------------------------------------
+// Embedded images
+// ---------------------------------------------------------------------------
+
+const DATA_URI = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=\s]+)$/;
+
+/**
+ * Moves images that were saved as embedded `data:` URIs into regular image
+ * storage and replaces them with links. The picture is unchanged; it is
+ * resized to at most 1600px and stored as WebP, which keeps the directory API
+ * and pages from carrying megabytes of inline image data on every request.
+ */
+export async function moveEmbeddedImagesToStorage(actor: Actor) {
+  if (!isStaff(actor) || actor.staffRole !== "ADMIN") throw new ForbiddenError("Only administrators can run this.");
+  const prisma = await db();
+  const sharp = (await import("sharp")).default;
+  const { store } = await import("@/lib/media");
+
+  async function convert(value: string, key: string) {
+    const match = value.match(DATA_URI);
+    if (!match) return null;
+    const original = Buffer.from(match[2], "base64");
+    if (!sniffImageType(original)) return null;
+    const webp = await sharp(original).rotate().resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true }).webp({ quality: 85 }).toBuffer();
+    return store(`${key}.webp`, webp, "image/webp");
+  }
+
+  let moved = 0;
+  let skipped = 0;
+  const churches = await prisma.church.findMany({
+    where: { OR: [{ logoUrl: { startsWith: "data:" } }, { featuredImageUrl: { startsWith: "data:" } }] },
+    select: { id: true, slug: true, logoUrl: true, featuredImageUrl: true }
+  });
+  for (const c of churches) {
+    for (const field of ["logoUrl", "featuredImageUrl"] as const) {
+      const value = c[field];
+      if (!value?.startsWith("data:")) continue;
+      const url = await convert(value, `churches/${c.slug}-${field === "logoUrl" ? "logo" : "photo"}`);
+      if (!url) {
+        skipped += 1;
+        continue;
+      }
+      await prisma.church.update({ where: { id: c.id }, data: { [field]: url } });
+      await audit(actor, { action: "church.image_moved", entityType: "Church", entityId: c.id, churchId: c.id, summary: `Moved embedded ${field === "logoUrl" ? "logo" : "photo"} to image storage`, details: { url } });
+      moved += 1;
+    }
+  }
+  const pastors = await prisma.pastor.findMany({ where: { photoUrl: { startsWith: "data:" } }, select: { id: true, fullName: true, photoUrl: true, seniorForChurch: { select: { id: true, slug: true } } } });
+  for (const p of pastors) {
+    const church = p.seniorForChurch;
+    const url = await convert(p.photoUrl!, `pastors/${church?.slug ?? p.id}-pastor`);
+    if (!url) {
+      skipped += 1;
+      continue;
+    }
+    await prisma.pastor.update({ where: { id: p.id }, data: { photoUrl: url } });
+    await audit(actor, { action: "pastor.image_moved", entityType: "Pastor", entityId: p.id, churchId: church?.id ?? null, summary: `Moved embedded photo of ${p.fullName} to image storage`, details: { url } });
+    moved += 1;
+  }
+  return { moved, skipped };
 }

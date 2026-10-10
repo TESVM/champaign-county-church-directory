@@ -18,7 +18,7 @@ export async function adminQueueCounts() {
 
 export async function adminOverview() {
   const prisma = await db();
-  const [active, closed, hidden, sourceChecked, leadership, claimed, withPhoto, enhancedSubs, complimentary, stale, unmapped] = await Promise.all([
+  const [active, closed, hidden, sourceChecked, leadership, claimed, withPhoto, enhancedSubs, complimentary, stale, unmapped, embeddedChurch, embeddedPastor] = await Promise.all([
     prisma.church.count({ where: { status: "ACTIVE" } }),
     prisma.church.count({ where: { status: "CLOSED" } }),
     prisma.church.count({ where: { status: "HIDDEN" } }),
@@ -35,6 +35,8 @@ export async function adminOverview() {
       select: { slug: true, name: true, lastUpdatedAt: true }
     }),
     prisma.church.count({ where: { status: "ACTIVE", latitude: null } }),
+    prisma.church.count({ where: { OR: [{ logoUrl: { startsWith: "data:" } }, { featuredImageUrl: { startsWith: "data:" } }] } }),
+    prisma.pastor.count({ where: { photoUrl: { startsWith: "data:" } } }),
   ]);
-  return { active, closed, hidden, sourceChecked, leadership, claimed, withPhoto, enhancedSubs, complimentary, stale, unmapped };
+  return { active, closed, hidden, sourceChecked, leadership, claimed, withPhoto, enhancedSubs, complimentary, stale, unmapped, embedded: embeddedChurch + embeddedPastor };
 }
