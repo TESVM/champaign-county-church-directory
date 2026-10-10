@@ -26,6 +26,13 @@ const nextConfig = {
   // and the Expo client, so Next must compile it rather than expect a build step.
   transpilePackages: ["@cccd/shared"],
 
+  // Church photos are uploaded through a server action. The default 1 MB body
+  // limit would reject most phone photos; uploads are validated at 4 MB in
+  // lib/media.ts, and Vercel caps request bodies at 4.5 MB.
+  experimental: {
+    serverActions: { bodySizeLimit: "4.5mb" }
+  },
+
   images: {
     remotePatterns: imageHosts.map((hostname) => ({
       protocol: "https",

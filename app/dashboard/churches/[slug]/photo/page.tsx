@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { removeChurchPhotoAction, saveChurchPhotoAction } from "@/app/actions";
 import { ChurchTabs } from "@/components/dashboard/church-tabs";
+import { PhotoFileInput } from "@/components/dashboard/photo-file-input";
 import { ActionForm, SubmitButton } from "@/components/forms/action-form";
 import { Card } from "@/components/ui/card";
 import { TextAreaField, TextField } from "@/components/ui/field";
@@ -52,10 +53,7 @@ export default async function PhotoPage({ params }: { params: Promise<{ slug: st
               {uploadBlocked ? (
                 <p className="rounded-2xl bg-amber-50 p-3 text-sm text-amber-950">{uploadBlocked}</p>
               ) : (
-                <label className="block text-sm">
-                  <span className="font-medium text-stone-700">Upload a photo (JPEG, PNG, or WebP, up to 4 MB)</span>
-                  <input id="field-file" type="file" name="file" accept="image/jpeg,image/png,image/webp" className="mt-2 block w-full text-sm file:mr-4 file:min-h-[44px] file:rounded-full file:border-0 file:bg-brand-900 file:px-4 file:text-white" />
-                </label>
+                <PhotoFileInput />
               )}
               <TextField name="imageUrl" label={uploadBlocked ? "Image link (https)" : "…or paste an image link (https)"} type="url" />
               <TextField name="credit" label="Who took or published it?" required placeholder="Our church / photographer name" />
