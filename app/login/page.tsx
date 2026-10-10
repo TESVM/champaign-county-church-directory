@@ -26,7 +26,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           We email you a one-time link. There is no password to remember. Use the address your access was approved for.
         </p>
         {params.error === "link" ? (
-          <p role="alert" className="mt-4 rounded-2xl bg-rose-50 p-4 text-sm text-rose-900">
+          <p role="alert" className="mt-4 rounded-2xl bg-red-50 p-4 text-sm text-red-900">
             That sign-in link is invalid, already used, or expired. Request a new one below.
           </p>
         ) : null}

@@ -26,9 +26,23 @@ sign-in, verification labels, billing, musician-directory links, `/api/v1`.
    flag. Sheriff Temple is featured on the map and in campus collections where it
    qualifies. Search order, distance sort and "next service" stay neutral.
 
-## Phase 2 — after phase 1 is approved
-Worship Live & Next, Church Collaboration Board, profile additions (college
-students section, recent service, ministry opportunities), photo galleries.
+## Phase 1 status
+Live since 2026-10-10 (PR #4).
+
+## Phase 2 — branch feat/phase2-live-collab
+1. **Worship Live & Next** (`/live`): "Live now" only when the church's own
+   team (or staff) presses "We're live now" in the dashboard; it switches off
+   after 1–4 hours. Next services across the county from listed times.
+   Recent services from the church's public YouTube channel (public RSS feed,
+   no API key). Live switch and recent videos follow the Enhanced livestream rule.
+2. **Church Collaboration Board** (`/collaborate`): nine categories, posts by
+   church team members (free) or staff for a ministry, reviewed before
+   publishing, required end date (max 90 days), take-down by poster, anonymous
+   reports (one per person, stored as a keyed hash) that hide a post for review
+   at 3, admin queue at `/admin/collaboration`.
+3. **Profiles**: Live badge, "Watch online" with latest service, "Ministry
+   opportunities" from the board, photo gallery (8 photos; credit and
+   permission required; uploads Enhanced, links free).
 
 ## Not doing
 Public prayer requests; unattributed or invented organization details;

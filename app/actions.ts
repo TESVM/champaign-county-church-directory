@@ -26,7 +26,9 @@ import {
   submitCorrection,
   submitNewChurch
 } from "@/lib/services/inbox";
-import { removeChurchPhoto, removePastorPhoto, saveChurchPhoto, savePastorPhoto } from "@/lib/services/media";
+import { closeCollabPost, reportCollabPost, reviewCollabPost, submitCollabPost } from "@/lib/services/collab";
+import { endLive, markLive } from "@/lib/services/live";
+import { addGalleryPhoto, removeChurchPhoto, removeGalleryPhoto, removePastorPhoto, saveChurchPhoto, savePastorPhoto } from "@/lib/services/media";
 
 /**
  * Server actions. Each resolves the signed-in actor from the session cookie
@@ -649,5 +651,92 @@ export async function addPublicOrganizationAction(_: FormState, formData: FormDa
     const org = await createPublicSourceOrganization(actor, fieldsWithLists(formData, ["campuses"]));
     revalidatePath("/campus", "layout");
     return `${org.name} is now listed, labeled “Compiled from public pages”.`;
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Worship Live & Next, Collaboration Board, photo gallery
+// ---------------------------------------------------------------------------
+
+export async function markLiveAction(_: FormState, formData: FormData) {
+  return run("live", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    if (str(formData, "end") === "true") {
+      await endLive(actor, churchId);
+      await revalidateChurch(churchId);
+      revalidatePath("/live");
+      return "Live status ended.";
+    }
+    const hours = Number(str(formData, "hours") ?? "2");
+    await markLive(actor, churchId, hours);
+    await revalidateChurch(churchId);
+    revalidatePath("/live");
+    return `Your church shows as live for the next ${hours} hour${hours === 1 ? "" : "s"}, or until you end it.`;
+  });
+}
+
+export async function submitCollabPostAction(_: FormState, formData: FormData) {
+  return run("collab-post", async () => {
+    const actor = await signedIn();
+    const post = await submitCollabPost(actor, fields(formData));
+    revalidatePath("/collaborate");
+    return post.status === "APPROVED" ? "Posted to the Collaboration Board." : "Thank you. Your post was sent for review; we email you when it is up.";
+  });
+}
+
+export async function closeCollabPostAction(_: FormState, formData: FormData) {
+  return run("collab-close", async () => {
+    const actor = await signedIn();
+    await closeCollabPost(actor, str(formData, "id") ?? "");
+    revalidatePath("/collaborate");
+    return "Post taken down.";
+  });
+}
+
+export async function reportCollabPostAction(_: FormState, formData: FormData) {
+  return run("collab-report", async () => {
+    assertHuman(formData);
+    const result = await reportCollabPost(str(formData, "id") ?? "", str(formData, "reason"), await clientKey());
+    revalidatePath("/collaborate");
+    return result.duplicate ? "You already reported this post. Thank you." : "Thank you. A reviewer will look at this post.";
+  });
+}
+
+export async function reviewCollabPostAction(_: FormState, formData: FormData) {
+  return run("collab-review", async () => {
+    const actor = await signedIn();
+    const decision = str(formData, "decision");
+    if (decision !== "APPROVED" && decision !== "REJECTED" && decision !== "REMOVED" && decision !== "DISMISS_REPORTS") throw new ValidationError("Choose a decision.");
+    await reviewCollabPost(actor, str(formData, "id") ?? "", decision, str(formData, "note"));
+    revalidatePath("/collaborate", "layout");
+    return "Saved.";
+  }).then((r) => doneRedirect(r, "/admin/collaboration", "collab"));
+}
+
+export async function addGalleryPhotoAction(_: FormState, formData: FormData) {
+  return run("gallery-add", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    const file = formData.get("file");
+    await addGalleryPhoto(actor, churchId, {
+      file: file instanceof File ? file : null,
+      imageUrl: str(formData, "imageUrl"),
+      caption: str(formData, "caption"),
+      credit: str(formData, "credit"),
+      permission: str(formData, "permission")
+    });
+    await revalidateChurch(churchId);
+    return "Photo added to your gallery.";
+  });
+}
+
+export async function removeGalleryPhotoAction(_: FormState, formData: FormData) {
+  return run("gallery-remove", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    await removeGalleryPhoto(actor, str(formData, "photoId") ?? "");
+    await revalidateChurch(churchId);
+    return "Photo removed.";
   });
 }

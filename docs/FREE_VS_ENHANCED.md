@@ -15,7 +15,9 @@ only from server-side state: an active/trialing/past-due Stripe subscription
 | Community resources (pantries, meals, support groups) | ✓ | ✓ | Public good; moderated before publishing. |
 | Find-a-Service inclusion, QR code, share link, report outdated info | ✓ | ✓ | Participation tools that improve data quality. |
 | Total profile views (30 days) | ✓ | ✓ | Gives every church a reason to claim and maintain its listing. |
-| Livestream button | | ✓ | Kept paid as previously decided. **Owner decision to revisit:** homebound visitors benefit; removing `livestream` from `ENHANCED_ONLY` makes it free everywhere. |
+| Livestream button, “Live now” switch, latest YouTube service | | ✓ | Kept paid as previously decided. **Owner decision to revisit:** homebound visitors benefit; removing `livestream` from `ENHANCED_ONLY` makes it free everywhere. |
+| Church Collaboration Board posts (reviewed) | ✓ | ✓ | Practical help between churches should not be paywalled. |
+| Photo gallery (up to 8) | ✓ by image link | ✓ upload | Same rule as the main photo. |
 | Apple App Store / Google Play / other app buttons | | ✓ | Promotion of the church’s own channels. |
 | Social media links | | ✓ | Promotion. |
 | Ministries list and full leadership team | | ✓ | Promotion; the lead pastor stays free. |

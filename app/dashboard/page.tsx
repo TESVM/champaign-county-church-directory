@@ -29,7 +29,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <SignOutButton />
         </div>
       </div>
-      {denied ? <p role="alert" className="mt-4 rounded-2xl bg-rose-50 p-4 text-sm text-rose-900">You do not have access to that page.</p> : null}
+      {denied ? <p role="alert" className="mt-4 rounded-2xl bg-red-50 p-4 text-sm text-red-900">You do not have access to that page.</p> : null}
 
       {churches.length ? (
         <div className="mt-8 grid gap-6 md:grid-cols-2">

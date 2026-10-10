@@ -36,6 +36,11 @@ const quickLinks = [
     href: "/map"
   },
   {
+    title: "Worship Live & Next",
+    description: "Churches streaming now, the next services across the county, and recent services online.",
+    href: "/live"
+  },
+  {
     title: "Campus Faith",
     description: "Campus ministries, student-friendly churches, and student events for UIUC, Parkland, and other students.",
     href: "/campus"
@@ -59,6 +64,11 @@ const quickLinks = [
     title: "Events calendar",
     description: "Upcoming events at churches across the county, with calendar downloads.",
     href: "/events"
+  },
+  {
+    title: "Church Collaboration Board",
+    description: "Volunteer needs, shared space, musicians, and partnerships between local churches.",
+    href: "/collaborate"
   },
   {
     title: "Find musicians",

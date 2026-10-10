@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Church, Music2 } from "lucide-react";
+import Image from "next/image";
+import { Music2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getActor } from "@/lib/auth";
 import { musicianDirectoryUrl } from "@/lib/utils";
@@ -8,12 +9,16 @@ const nav = [
   { href: "/directory", label: "Directory" },
   { href: "/map", label: "Explore the Map" },
   { href: "/campus", label: "Campus Faith" },
+  { href: "/live", label: "Live & Next" },
   { href: "/find-a-service", label: "Find a Service" },
   { href: "/events", label: "Events" },
   { href: "/resources", label: "Community Help" },
   { href: "/saved", label: "Saved" }
 ];
-const mobileOnly = [{ href: "/cities", label: "Cities" }];
+const mobileOnly = [
+  { href: "/collaborate", label: "Collaboration Board" },
+  { href: "/cities", label: "Cities" }
+];
 
 export async function Header() {
   const actor = await getActor();
@@ -25,14 +30,8 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-black/5 bg-surface/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="flex min-w-0 items-center gap-3 rounded-2xl focus-ring">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-700 via-brand-500 to-rose text-white shadow-card">
-            <Church className="h-6 w-6" aria-hidden="true" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate font-display text-lg text-ink sm:text-xl">Champaign County Church Directory</p>
-            <p className="hidden text-sm text-stone-600 sm:block xl:hidden 2xl:block">Find churches across Champaign County, Illinois</p>
-          </div>
+        <Link href="/" className="shrink-0 rounded-xl focus-ring">
+          <Image src="/brand/logo.png" alt="Champaign County Churches home" width={465} height={128} priority className="h-11 w-auto sm:h-12 xl:h-14" />
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-4 xl:flex">

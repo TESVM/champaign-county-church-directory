@@ -7,6 +7,7 @@ const TABS = [
   ["/photo", "Photo"],
   ["/events", "Events"],
   ["/students", "Students"],
+  ["/collaborate", "Collaborate"],
   ["/resources", "Community help"],
   ["/team", "Team"],
   ["/billing", "Billing"],
