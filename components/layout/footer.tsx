@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { env } from "@/lib/env";
 import { musicianDirectoryUrl } from "@/lib/utils";
@@ -7,6 +8,9 @@ export function Footer() {
     <footer className="mt-20 border-t border-line bg-brand-900 text-brand-50">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.3fr_0.7fr_0.7fr_0.7fr] lg:px-8">
         <div>
+          <div className="mb-5 inline-block rounded-2xl bg-white px-4 py-3">
+            <Image src="/brand/logo.png" alt="Champaign County Churches" width={465} height={128} className="h-12 w-auto" />
+          </div>
           <h2 className="font-display text-3xl">Helping people find churches with confidence.</h2>
           <p className="mt-3 max-w-xl text-sm leading-7 text-brand-100">
             Built for residents, families, students, seniors, and visitors looking for a church home in Champaign County.
