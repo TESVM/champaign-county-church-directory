@@ -1,3 +1,5 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useFonts } from "expo-font";
 import { useState } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -15,6 +17,9 @@ export default function RootLayout() {
   });
 
   const theme = useTheme();
+  // Load the tab icon font before the first frame so icons never flash as boxes.
+  const [fontsLoaded, fontError] = useFonts(Ionicons.font);
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
