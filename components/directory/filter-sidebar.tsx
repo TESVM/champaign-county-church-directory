@@ -1,49 +1,91 @@
-import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { CheckboxField, SelectField, TextField } from "@/components/ui/field";
+import { DAYS } from "@/lib/services/churches";
+
+export type FilterOptions = {
+  cities: Array<{ slug: string; name: string; churchCount: number }>;
+  denominations: string[];
+  languages: string[];
+};
 
 export function FilterSidebar({
-  searchParams
+  searchParams,
+  options,
+  action = "/directory"
 }: {
   searchParams: Record<string, string | undefined>;
+  options: FilterOptions;
+  action?: string;
 }) {
   return (
-    <aside className="overflow-hidden rounded-[28px] border border-white/70 bg-gradient-to-b from-brand-900 via-brand-700 to-brand-500 p-[1px] shadow-soft">
-      <div className="rounded-[27px] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(238,248,248,0.92))] p-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-brand-700">Refine results</p>
-        <h2 className="mt-3 font-display text-2xl">Filter Churches</h2>
-        <div className="mt-4 rounded-2xl bg-gradient-to-r from-brand-50 to-sky/70 p-4 text-sm leading-6 text-stone-700">
-          Narrow the directory by church type, leadership, worship timing, and digital presence.
+    <aside aria-labelledby="filter-heading" className="rounded-[28px] border border-line bg-white p-6 shadow-card">
+      <h2 id="filter-heading" className="font-display text-2xl">
+        Filter churches
+      </h2>
+
+      <form action={action} className="mt-5 space-y-4">
+        <TextField name="q" label="Search" defaultValue={searchParams.q} placeholder="Name, pastor, ministry…" />
+        <SelectField
+          name="city"
+          label="City"
+          defaultValue={searchParams.city ?? ""}
+          options={[{ value: "", label: "Any city" }, ...options.cities.map((c) => ({ value: c.slug, label: `${c.name} (${c.churchCount})` }))]}
+        />
+        <SelectField
+          name="denomination"
+          label="Denomination"
+          defaultValue={searchParams.denomination ?? ""}
+          options={[{ value: "", label: "Any denomination" }, ...options.denominations.map((d) => ({ value: d, label: d }))]}
+        />
+        <SelectField
+          name="serviceDay"
+          label="Service day"
+          defaultValue={searchParams.serviceDay ?? ""}
+          options={[{ value: "", label: "Any day" }, ...DAYS.map((d) => ({ value: d, label: d }))]}
+        />
+        <SelectField
+          name="timeOfDay"
+          label="Service time"
+          defaultValue={searchParams.timeOfDay ?? ""}
+          options={[
+            { value: "", label: "Any time" },
+            { value: "morning", label: "Morning (before noon)" },
+            { value: "afternoon", label: "Afternoon (noon–5 PM)" },
+            { value: "evening", label: "Evening (5 PM or later)" }
+          ]}
+        />
+        {options.languages.length ? (
+          <SelectField
+            name="language"
+            label="Language"
+            defaultValue={searchParams.language ?? ""}
+            options={[{ value: "", label: "Any language" }, ...options.languages.map((l) => ({ value: l, label: l }))]}
+          />
+        ) : null}
+        <TextField name="ministry" label="Ministry" defaultValue={searchParams.ministry} placeholder="Youth, choir, recovery…" />
+
+        <fieldset className="space-y-1 pt-2">
+          <legend className="text-sm font-medium text-stone-700">Show only churches that have</legend>
+          <CheckboxField name="wheelchair" label="Wheelchair access (church-reported)" value="true" defaultChecked={searchParams.wheelchair === "true"} />
+          <CheckboxField name="children" label="Children’s program (church-reported)" value="true" defaultChecked={searchParams.children === "true"} />
+          <CheckboxField name="hasLivestream" label="A livestream" value="true" defaultChecked={searchParams.hasLivestream === "true"} />
+          <CheckboxField name="hasWebsite" label="A website" value="true" defaultChecked={searchParams.hasWebsite === "true"} />
+          <CheckboxField name="verified" label="Checked or confirmed details" value="true" defaultChecked={searchParams.verified === "true"} />
+          <CheckboxField name="claimed" label="Church-managed listing" value="true" defaultChecked={searchParams.claimed === "true"} />
+        </fieldset>
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="submit"
+            className="min-h-[44px] flex-1 rounded-full bg-brand-900 px-5 py-3 font-semibold text-white hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          >
+            Apply filters
+          </button>
+          <Link href={action} className="inline-flex min-h-[44px] items-center rounded-full px-4 text-sm font-semibold text-brand-900 hover:underline focus-ring">
+            Clear
+          </Link>
         </div>
-        <form action="/directory" className="mt-6 space-y-4">
-          <Input name="q" defaultValue={searchParams.q} placeholder="Church name, city, or pastor" />
-          <Input name="city" defaultValue={searchParams.city} placeholder="City slug (ex: champaign)" />
-          <Input name="denomination" defaultValue={searchParams.denomination} placeholder="Denomination" />
-          <Input name="pastor" defaultValue={searchParams.pastor} placeholder="Senior pastor" />
-          <Input name="serviceDay" defaultValue={searchParams.serviceDay} placeholder="Service day" />
-          <Input name="serviceTime" defaultValue={searchParams.serviceTime} placeholder="Service time" />
-          <Input name="ministry" defaultValue={searchParams.ministry} placeholder="Ministry" />
-          <label className="flex items-center gap-3 text-sm text-stone-700">
-            <input type="checkbox" name="hasWebsite" value="true" defaultChecked={searchParams.hasWebsite === "true"} />
-            Has website
-          </label>
-          <label className="flex items-center gap-3 text-sm text-stone-700">
-            <input type="checkbox" name="hasApp" value="true" defaultChecked={searchParams.hasApp === "true"} />
-            Has app
-          </label>
-          <label className="flex items-center gap-3 text-sm text-stone-700">
-            <input type="checkbox" name="hasLivestream" value="true" defaultChecked={searchParams.hasLivestream === "true"} />
-            Has livestream
-          </label>
-          <label className="flex items-center gap-3 text-sm text-stone-700">
-            <input type="checkbox" name="verified" value="true" defaultChecked={searchParams.verified === "true"} />
-            Verified only
-          </label>
-          <label className="flex items-center gap-3 text-sm text-stone-700">
-            <input type="checkbox" name="claimed" value="true" defaultChecked={searchParams.claimed === "true"} />
-            Claimed only
-          </label>
-          <button className="w-full rounded-full bg-gradient-to-r from-brand-700 to-rose px-5 py-3 font-semibold text-white">Apply Filters</button>
-        </form>
-      </div>
+      </form>
     </aside>
   );
 }

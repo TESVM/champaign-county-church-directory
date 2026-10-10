@@ -8,17 +8,19 @@ import { PastorBadge } from "@/components/directory/pastor-badge";
 import { SocialIcons } from "@/components/directory/social-icons";
 import { VerifiedBadge } from "@/components/directory/verified-badge";
 import { SectionHeading } from "@/components/layout/section-heading";
-import { externalUrl, isInlineImageUrl } from "@/lib/utils";
+import { ChurchPhotoPlaceholder } from "@/components/directory/church-card";
+import { shouldOptimizeImage } from "@/lib/images";
+import { featureVisible } from "@/lib/plans";
+import { externalUrl } from "@/lib/utils";
 
 export function ChurchOfTheWeek({ church }: { church: ChurchRecord }) {
-  const imageSrc =
-    church.featuredImageUrl ??
-    church.logoUrl ??
-    "https://images.unsplash.com/photo-1438032005730-c779502df39b?auto=format&fit=crop&w=1200&q=80";
+  // No stock fallback: a generic church photo would be presented as this congregation's building.
+  const imageSrc = church.featuredImageUrl ?? church.logoUrl;
   const websiteUrl = externalUrl(church.websiteUrl);
-  const appUrl = externalUrl(church.appUrl);
-  const livestreamUrl = externalUrl(church.livestreamUrl);
-  const unoptimizedImage = isInlineImageUrl(imageSrc);
+  const enhanced = church.enhancedProfile ?? church.premiumProfile;
+  const appUrl = featureVisible("appLinks", enhanced) ? externalUrl(church.appStoreUrl ?? church.googlePlayUrl ?? church.appUrl) : null;
+  const livestreamUrl = featureVisible("livestream", enhanced) ? externalUrl(church.livestreamUrl) : null;
+  const unoptimizedImage = !shouldOptimizeImage(imageSrc);
 
   return (
     <section className="section-wash rounded-[40px] px-6 py-8 sm:px-8">
@@ -30,7 +32,11 @@ export function ChurchOfTheWeek({ church }: { church: ChurchRecord }) {
       <Card className="mt-10 overflow-hidden border-white/70 bg-white/90 shadow-soft">
         <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="relative min-h-[320px]">
-            <Image src={imageSrc} alt={church.name} fill className="object-cover" unoptimized={unoptimizedImage} />
+            {imageSrc ? (
+              <Image src={imageSrc} alt={church.name} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" unoptimized={unoptimizedImage} />
+            ) : (
+              <ChurchPhotoPlaceholder citySlug={church.citySlug} />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-brand-900/75 via-brand-700/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
               <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-100">{church.city}, Illinois</p>
@@ -41,7 +47,7 @@ export function ChurchOfTheWeek({ church }: { church: ChurchRecord }) {
 
           <div className="p-8">
             <div className="flex flex-wrap items-center gap-3">
-              <VerifiedBadge verified={church.verified} claimed={church.claimed} />
+              <VerifiedBadge verified={church.verified} claimed={church.claimed} leadershipConfirmedAt={church.leadershipConfirmedAt} publicSourceCheckedAt={church.publicSourceCheckedAt} />
               <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-brand-900">
                 Community Spotlight
               </span>
@@ -100,7 +106,7 @@ export function ChurchOfTheWeek({ church }: { church: ChurchRecord }) {
             </div>
 
             <div className="mt-6 flex items-center justify-between gap-4">
-              <SocialIcons links={church.socialLinks} />
+              {featureVisible("socialLinks", enhanced) ? <SocialIcons links={church.socialLinks} /> : null}
               <Link href={`/churches/${church.slug}`} className="inline-flex items-center gap-2 text-sm font-semibold text-brand-900">
                 View full profile
                 <ArrowRight className="h-4 w-4" />

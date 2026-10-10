@@ -6,3 +6,16 @@ dist
 coverage
 *.log
 .vercel
+tsconfig.tsbuildinfo
+
+# Expo / React Native
+mobile/node_modules
+mobile/.expo
+mobile/ios
+mobile/android
+mobile/dist
+.pglite-*
+
+# Locally generated images (MEDIA_DRIVER=local)
+public/uploads
+.next-*

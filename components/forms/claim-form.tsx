@@ -1,47 +1,51 @@
-import { claimListingAction } from "@/app/actions";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { submitClaimAction } from "@/app/actions";
+import { ActionForm, SubmitButton } from "@/components/forms/action-form";
+import { SelectField, TextAreaField, TextField } from "@/components/ui/field";
 
-export function ClaimForm({
-  churchName,
-  churchSlug
-}: {
-  churchName?: string;
-  churchSlug?: string;
-}) {
+export function ClaimForm({ churches, churchSlug }: { churches: Array<{ slug: string; name: string; city: string }>; churchSlug?: string }) {
   return (
-    <form action={claimListingAction} className="space-y-4">
-      <input type="hidden" name="churchSlug" value={churchSlug ?? ""} />
-      <div className="grid gap-4 md:grid-cols-2">
-        <Input name="churchName" placeholder="Church name" defaultValue={churchName} />
-        <Input name="contactName" placeholder="Your name" />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Input name="contactEmail" type="email" placeholder="Your email" />
-        <Input name="phone" type="tel" placeholder="Your direct phone" />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Input name="role" placeholder="Role at the church" />
-        <select
-          name="verificationMethod"
-          defaultValue="DOMAIN_EMAIL"
-          className="h-12 w-full rounded-2xl border border-line bg-white px-4 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
-        >
-          <option value="DOMAIN_EMAIL">Verify with church email domain</option>
-          <option value="PUBLIC_PHONE">Verify through public church phone</option>
-          <option value="MANUAL_REVIEW">Manual review with evidence</option>
-        </select>
-      </div>
-      <Textarea
-        name="evidence"
-        placeholder="Share the strongest proof you are authorized to manage this listing: official email domain, staff page URL, public phone contact, or another verifiable source."
+    <ActionForm
+      action={submitClaimAction}
+      honeypot
+      resetOnSuccess
+      fieldLabels={{ churchSlug: "Church", contactName: "Your name", contactEmail: "Your email", role: "Your role", verificationMethod: "Verification method", evidence: "Proof of authorisation" }}
+    >
+      <p className="text-sm leading-6 text-stone-600">Fields marked with an asterisk are required.</p>
+      <SelectField
+        name="churchSlug"
+        label="Church"
+        required
+        defaultValue={churchSlug ?? ""}
+        options={[{ value: "", label: "Choose your church…" }, ...churches.map((c) => ({ value: c.slug, label: `${c.name} — ${c.city}` }))]}
+        hint="Not listed? Submit the church first, then request to manage it."
       />
-      <Textarea name="message" placeholder="Tell us how you are connected to this church and what you need updated." />
-      <div className="rounded-2xl bg-brand-50 p-4 text-sm leading-6 text-stone-700">
-        Claims are approved only after a verification step that reasonably proves pastor or delegated staff authorization.
+      <div className="grid gap-5 md:grid-cols-2">
+        <TextField name="contactName" label="Your name" required autoComplete="name" />
+        <TextField name="contactEmail" label="Your email" type="email" required autoComplete="email" hint="An address on the church’s own domain is the fastest to verify. This is the address you will sign in with." />
+        <TextField name="phone" label="Your direct phone" type="tel" autoComplete="tel" />
+        <TextField name="role" label="Your role at the church" required placeholder="Pastor, office administrator…" />
       </div>
-      <Button type="submit">Request Claim Review</Button>
-    </form>
+      <SelectField
+        name="verificationMethod"
+        label="How should we verify you?"
+        required
+        defaultValue="DOMAIN_EMAIL"
+        options={[
+          { value: "DOMAIN_EMAIL", label: "My email is on the church’s website domain" },
+          { value: "PUBLIC_PHONE", label: "Call the church’s public phone number to confirm" },
+          { value: "MANUAL_REVIEW", label: "Other evidence (described below)" }
+        ]}
+      />
+      <TextAreaField
+        name="evidence"
+        label="How can we confirm you are authorised to manage this listing?"
+        required
+        hint="For example: a staff page that lists you, who we should ask for when we call, or another public source."
+      />
+      <p className="rounded-2xl bg-brand-50 p-4 text-sm leading-6 text-stone-700">
+        A reviewer checks every request before granting access. You will get an email with the result. Managing a listing is free.
+      </p>
+      <SubmitButton pendingLabel="Sending…">Request access</SubmitButton>
+    </ActionForm>
   );
 }

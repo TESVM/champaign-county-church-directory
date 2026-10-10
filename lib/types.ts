@@ -40,15 +40,33 @@ export type ChurchRecord = {
   address1: string;
   state: string;
   zip: string;
+  /** WGS84 latitude, set by scripts/geocode-churches.ts. */
+  latitude?: number;
+  /** WGS84 longitude, set by scripts/geocode-churches.ts. */
+  longitude?: number;
   phone?: string;
   email?: string;
   websiteUrl?: string;
   appUrl?: string;
+  appStoreUrl?: string;
+  googlePlayUrl?: string;
   livestreamUrl?: string;
   logoUrl?: string;
   featuredImageUrl?: string;
   verified: boolean;
   claimed: boolean;
+  /** Paid visitor-facing profile enhancements. Free listings keep core discovery details. */
+  premiumProfile?: boolean;
+  /**
+   * Invented record kept for local development and tests.
+   *
+   * Six records use `.example` domains and 555 phone numbers. They must never
+   * reach the public site, the API, or an app-store build: a real directory
+   * that lists churches which do not exist misleads the people relying on it.
+   * Read published data through `getPublishedChurches()` rather than importing
+   * the array directly.
+   */
+  isFixture?: boolean;
   lastUpdatedAt: string;
   lastScannedAt: string;
   pastor: {
@@ -72,6 +90,46 @@ export type ChurchRecord = {
     platform: SocialPlatform;
     url: string;
   }>;
+
+  // ---- Fields populated by the database read path (lib/services/churches.ts) ----
+  status?: "ACTIVE" | "CLOSED" | "MERGED" | "HIDDEN";
+  statusNote?: string;
+  address2?: string;
+  featuredImageIsAi?: boolean;
+  featuredImageCredit?: string;
+  featuredImageSourceUrl?: string;
+  publicSourceUrl?: string;
+  publicSourceCheckedAt?: string;
+  leadershipConfirmedAt?: string;
+  /** Server-computed: an active subscription or complimentary grant. */
+  enhancedProfile?: boolean;
+  /** Service time detail with derived fields, when read from the database. */
+  serviceDetails?: Array<{
+    id: string;
+    serviceName: string;
+    dayOfWeek: string;
+    startTime: string;
+    endTime?: string;
+    notes?: string;
+    language?: string;
+    startMinutes?: number;
+  }>;
+  visitorGuide?: VisitorGuideRecord | null;
+};
+
+export type VisitorGuideRecord = {
+  parking?: string;
+  entrance?: string;
+  accessibility?: string;
+  wheelchairAccessible?: boolean | null;
+  hearingAssistance?: boolean | null;
+  childrenCheckIn?: string;
+  hasChildrenProgram?: boolean | null;
+  serviceLength?: string;
+  dress?: string;
+  languages: string[];
+  whatToExpect?: string;
+  updatedAt: string;
 };
 
 export type CityRecord = {

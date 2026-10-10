@@ -1,166 +1,78 @@
-import Image from "next/image";
 import Link from "next/link";
-import { saveChurchListingAction, saveChurchMediaAction } from "@/app/actions";
-import { notFound } from "next/navigation";
-import { ChurchDashboardSidebar } from "@/components/dashboard/church-dashboard-sidebar";
-import { ChurchMediaForm } from "@/components/forms/church-media-form";
-import { Button } from "@/components/ui/button";
+import { CheckCircle2, Circle } from "lucide-react";
+import { ChurchTabs } from "@/components/dashboard/church-tabs";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { requireChurchAccess } from "@/lib/auth-guards";
-import { getChurchBySlug } from "@/lib/data/queries";
-import {
-  getPersistedChurchMediaBySlug,
-  getPersistedClaimRequestByChurchSlug,
-  getPersistedMembershipsByChurchSlug,
-  getPersistedMembershipsByEmail,
-  hasDatabaseUrl
-} from "@/lib/data/admin-store";
-import { formatDate, isInlineImageUrl } from "@/lib/utils";
+import { loadManagedChurch } from "@/lib/dashboard";
+import { featureVisible } from "@/lib/plans";
+import { profileChecklist } from "@/lib/services/completion";
+import { ACTIVITY_METRICS, getActivitySummary } from "@/lib/services/engagement";
 
-export default async function ChurchWorkspacePage({
-  params,
-  searchParams
-}: {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+export default async function ChurchOverviewPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const resolvedSearchParams = await searchParams;
-  const savedState = Array.isArray(resolvedSearchParams.saved) ? resolvedSearchParams.saved[0] : resolvedSearchParams.saved;
-  const canPersistChanges = hasDatabaseUrl();
-  const session = await requireChurchAccess(slug);
-  const church = getChurchBySlug(slug);
-
-  if (!church) {
-    notFound();
-  }
-
-  const persistedMedia = await getPersistedChurchMediaBySlug(slug);
-  const featuredImageUrl = persistedMedia?.featuredImageUrl ?? church.featuredImageUrl ?? "";
-  const logoUrl = persistedMedia?.logoUrl ?? church.logoUrl ?? "";
-  const previewImage =
-    featuredImageUrl ||
-    logoUrl ||
-    "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1200&q=80";
-  const unoptimizedPreviewImage = isInlineImageUrl(previewImage);
-  const memberships = await getPersistedMembershipsByEmail(session.user.email ?? "");
-  const team = await getPersistedMembershipsByChurchSlug(slug);
-  const claim = await getPersistedClaimRequestByChurchSlug(slug);
-  const canAccessAdmin = session.user.role === "ADMIN" || session.user.role === "REVIEWER" || session.user.role === "SUPPORT";
+  const { church, canManage } = await loadManagedChurch(slug);
+  const detailed = featureVisible("detailedInsights", church.enhancedProfile);
+  const activity = await getActivitySummary(church.id, detailed ? 90 : 30);
+  const items = profileChecklist(church);
+  const done = items.filter((i) => i.done).length;
+  const max = Math.max(1, ...activity.series.map((d) => d.views));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-        <ChurchDashboardSidebar memberships={memberships} canAccessAdmin={canAccessAdmin} />
-        <div className="space-y-8 admin-shell rounded-[36px] border border-white/70 p-5 sm:p-8">
-          <div className="section-strong rounded-[30px] border border-white/70 px-6 py-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-700">Church Workspace</p>
-            <h1 className="mt-4 font-display text-5xl">{church.name}</h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-stone-600">
-              Manage public listing details, invite staff editors, and route risky changes into review without exposing the full admin back office.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <span className="rounded-full bg-brand-900 px-4 py-2 text-sm font-semibold text-white">{church.city}</span>
-              <span className="rounded-full bg-white px-4 py-2 text-sm font-medium text-stone-700 ring-1 ring-brand-100">
-                Last updated {formatDate(church.lastUpdatedAt)}
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-sm font-medium text-stone-700 ring-1 ring-brand-100">
-                {church.claimed ? "Claimed listing" : "Pending claim setup"}
-              </span>
-            </div>
-            {savedState ? (
-              <div className="mt-5 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-900 ring-1 ring-brand-100">
-                {savedState === "media" && "Church image saved."}
-                {savedState === "record" && "Listing changes saved."}
-                {savedState === "needs-db" && "This site needs DATABASE_URL in Vercel before church photos and profile edits can persist."}
-              </div>
-            ) : null}
-            {!canPersistChanges ? (
-              <div className="mt-5 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">
-                Persistent church edits are currently disabled because `DATABASE_URL` is not configured for this deployment.
-              </div>
-            ) : null}
-          </div>
+    <>
+      <ChurchTabs slug={slug} current="" canManage={canManage} />
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1fr]">
+        <Card className="p-6">
+          <h2 className="font-display text-2xl">Profile checklist</h2>
+          <p className="mt-1 text-sm text-stone-600">{done} of {items.length} complete. Complete listings are easier for visitors to trust.</p>
+          <ul className="mt-4 space-y-2">
+            {items.map((item) => (
+              <li key={item.key}>
+                <Link href={item.href} className="flex min-h-[44px] items-center gap-3 rounded-xl px-2 text-sm hover:bg-brand-50 focus-ring">
+                  {item.done ? <CheckCircle2 className="h-5 w-5 text-emerald-700" aria-hidden="true" /> : <Circle className="h-5 w-5 text-stone-400" aria-hidden="true" />}
+                  <span className={item.done ? "text-stone-500 line-through" : "text-ink"}>{item.label}</span>
+                  <span className="sr-only">{item.done ? "(done)" : "(to do)"}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
 
-          <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-            <Card className="border-white/70 bg-gradient-to-br from-white via-brand-50 to-sky/30 p-8">
-              <h2 className="font-display text-3xl">Listing editor</h2>
-              <p className="mt-3 text-sm leading-7 text-stone-600">
-                This MVP stages a church-owned editing experience. Public-safe fields can be edited here; sensitive changes can be routed to review in the next persistence pass.
-              </p>
-              <div className="mt-8 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-                <div className="space-y-4">
-                  <div className="relative h-60 overflow-hidden rounded-[28px] border border-white/70 bg-white">
-                    <Image src={previewImage} alt={church.name} fill className="object-cover" unoptimized={unoptimizedPreviewImage} />
-                  </div>
-                  <ChurchMediaForm
-                    action={saveChurchMediaAction}
-                    churchSlug={church.slug}
-                    returnPath={`/dashboard/churches/${church.slug}`}
-                    featuredImageUrl={featuredImageUrl}
-                    logoUrl={logoUrl}
-                  />
-                </div>
-                <form action={saveChurchListingAction} className="grid gap-4 md:grid-cols-2">
-                  <input type="hidden" name="churchSlug" value={church.slug} />
-                  <input type="hidden" name="returnPath" value={`/dashboard/churches/${church.slug}`} />
-                  <Input name="name" defaultValue={church.name} aria-label="Church name" />
-                  <Input name="pastorFullName" defaultValue={church.pastor.fullName} aria-label="Lead pastor" />
-                  <Input name="websiteUrl" defaultValue={church.websiteUrl} aria-label="Website URL" />
-                  <Input name="phone" defaultValue={church.phone} aria-label="Public phone" />
-                  <Input name="email" defaultValue={church.email} aria-label="Public email" />
-                  <Input name="livestreamUrl" defaultValue={church.livestreamUrl} aria-label="Livestream URL" />
-                  <div className="md:col-span-2">
-                    <Textarea name="description" defaultValue={church.description} aria-label="Description" />
-                  </div>
-                  <div className="md:col-span-2 flex flex-wrap gap-3">
-                    <Button type="submit">Save draft</Button>
-                    <Button asChild variant="secondary">
-                      <Link href={`/claim?church=${church.slug}`}>Request review</Link>
-                    </Button>
-                    <Button asChild variant="secondary">
-                      <Link href={`/claim?church=${church.slug}`}>Invite editor</Link>
-                    </Button>
-                  </div>
-                </form>
+        <Card className="p-6">
+          <h2 className="font-display text-2xl">Activity</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Counts of actions on this directory in the last {detailed ? 90 : 30} days. These are not visits to your church or attendance. No visitor is identified.
+          </p>
+          {activity.hasData ? (
+            <>
+              <p className="mt-4 font-display text-4xl">{activity.totals.profile_view}</p>
+              <p className="text-sm text-stone-700">profile views</p>
+              <div className="mt-4 flex h-24 items-end gap-[2px]" role="img" aria-label={`Daily profile views from ${activity.from} to ${activity.to}`}>
+                {activity.series.map((d) => (
+                  <div key={d.day} title={`${d.day}: ${d.views}`} className="flex-1 rounded-t bg-brand-500" style={{ height: `${(d.views / max) * 100}%`, minHeight: d.views ? 2 : 0 }} />
+                ))}
               </div>
-            </Card>
-
-            <div className="space-y-6">
-              <Card className="border-white/70 bg-gradient-to-br from-white via-sky/20 to-brand-50 p-6">
-                <h2 className="font-display text-2xl">Verification status</h2>
-                {claim ? (
-                  <div className="mt-4 rounded-2xl bg-white/80 p-4 ring-1 ring-brand-100">
-                    <p className="font-semibold text-ink">{claim.status.replaceAll("_", " ")}</p>
-                    <p className="mt-1 text-sm text-stone-600">{claim.evidenceSummary}</p>
-                    <p className="mt-2 text-xs uppercase tracking-[0.18em] text-brand-700">
-                      {claim.verificationMethod.replaceAll("_", " ")} • submitted {formatDate(claim.submittedAt)}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="mt-4 text-sm text-stone-600">No open claim request. This church is already in the active management pool.</p>
-                )}
-              </Card>
-
-              <Card className="border-white/70 bg-gradient-to-br from-white via-brand-50 to-rose/10 p-6">
-                <h2 className="font-display text-2xl">Team access</h2>
-                <div className="mt-4 space-y-3">
-                  {team.map((member) => (
-                    <div key={member.id} className="rounded-2xl bg-white/80 p-4 ring-1 ring-brand-100">
-                      <p className="font-semibold text-ink">{member.userName}</p>
-                      <p className="mt-1 text-sm text-stone-600">
-                        {member.userEmail} • {member.role === "CHURCH_OWNER" ? "Owner" : "Editor"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </div>
-          </div>
-        </div>
+              {detailed ? (
+                <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
+                  {Object.entries(ACTIVITY_METRICS)
+                    .filter(([key]) => key !== "profile_view")
+                    .map(([key, label]) => (
+                      <div key={key} className="rounded-xl bg-brand-50 p-3">
+                        <dt className="text-stone-600">{label}</dt>
+                        <dd className="text-xl font-semibold text-ink">{activity.totals[key as keyof typeof activity.totals]}</dd>
+                      </div>
+                    ))}
+                </dl>
+              ) : (
+                <p className="mt-4 text-sm text-stone-700">
+                  The Enhanced Church Profile adds a 90-day breakdown of directions, website, phone, livestream, and share clicks.{" "}
+                  {canManage ? <Link href={`/dashboard/churches/${slug}/billing`} className="font-semibold underline">See billing</Link> : null}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="mt-4 rounded-2xl bg-brand-50 p-4 text-sm text-stone-700">No activity has been recorded yet. Counts start from the day this feature went live and are never estimated.</p>
+          )}
+        </Card>
       </div>
-    </div>
+    </>
   );
 }

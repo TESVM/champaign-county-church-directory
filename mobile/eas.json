@@ -1,0 +1,43 @@
+{
+  "cli": {
+    "version": ">= 5.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": { "simulator": true },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://127.0.0.1:3004"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": { "simulator": false },
+      "android": { "buildType": "apk" },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://champaign-county-church-directory.vercel.app"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://champaign-county-church-directory.vercel.app"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "//": "appleId, ascAppId and appleTeamId are supplied interactively or via EAS secrets. They are deliberately not committed.",
+        "language": "en-US"
+      },
+      "android": {
+        "//": "Requires a Play service-account key uploaded to EAS as a secret; do not commit the JSON.",
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    }
+  }
+}

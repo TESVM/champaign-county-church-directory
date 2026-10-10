@@ -1,34 +1,27 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { type UserActor, canEditChurch, canReview, isStaff } from "@/lib/actor";
+import { getActor } from "@/lib/auth";
 
-export async function requireSignedIn() {
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    redirect("/login");
-  }
-
-  return session;
+export async function requireUser(nextPath = "/dashboard"): Promise<UserActor> {
+  const actor = await getActor();
+  if (actor.kind !== "user") redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+  return actor;
 }
 
-export async function requireAdminAccess() {
-  const session = await requireSignedIn();
-  const role = session.user.role;
-
-  if (role !== "ADMIN" && role !== "REVIEWER" && role !== "SUPPORT") {
-    redirect("/dashboard");
-  }
-
-  return session;
+export async function requireStaff(nextPath = "/admin"): Promise<UserActor> {
+  const actor = await requireUser(nextPath);
+  if (!isStaff(actor)) redirect("/dashboard?denied=1");
+  return actor;
 }
 
-export async function requireChurchAccess(churchSlug: string) {
-  const session = await requireSignedIn();
-  const churchSlugs = session.user.churchSlugs ?? [];
+export async function requireReviewer(nextPath = "/admin"): Promise<UserActor> {
+  const actor = await requireUser(nextPath);
+  if (!canReview(actor)) redirect("/admin?denied=1");
+  return actor;
+}
 
-  if (!churchSlugs.includes(churchSlug) && session.user.role !== "ADMIN") {
-    redirect("/dashboard");
-  }
-
-  return session;
+export async function requireChurchEditor(churchId: string, nextPath: string): Promise<UserActor> {
+  const actor = await requireUser(nextPath);
+  if (!canEditChurch(actor, churchId)) redirect("/dashboard?denied=1");
+  return actor;
 }

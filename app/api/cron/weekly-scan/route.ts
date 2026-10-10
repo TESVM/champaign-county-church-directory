@@ -1,19 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runWeeklyScan } from "@/lib/scan/weekly-scan";
+import { env } from "@/lib/env";
+import { log } from "@/lib/log";
+import { runWebsiteReview } from "@/lib/scan/website-review";
+import { constantTimeEquals } from "@/lib/security";
+import { pruneExpiredAuthRecords } from "@/lib/services/auth";
+import { pruneRateLimits } from "@/lib/services/rate-limit";
 
+// Fits the Vercel Hobby limit; the review itself stops starting new checks after 45s.
+export const maxDuration = 60;
+
+/**
+ * Weekly website review (see lib/scan/website-review.ts) plus housekeeping.
+ * Fails closed without CRON_SECRET. Reports exactly how many sites were
+ * fetched and what happened; it never edits listings.
+ */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  const secret = process.env.CRON_SECRET;
-
-  if (secret && authHeader !== `Bearer ${secret}`) {
+  const secret = env.cronSecret;
+  if (!secret) {
+    log.error("cron.unconfigured");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const header = request.headers.get("authorization") ?? "";
+  if (!constantTimeEquals(header, `Bearer ${secret}`, "cron")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const results = await runWeeklyScan();
-
-  return NextResponse.json({
-    ok: true,
-    ranAt: new Date().toISOString(),
-    results
-  });
+  try {
+    const review = await runWebsiteReview();
+    await Promise.all([pruneRateLimits(), pruneExpiredAuthRecords()]);
+    return NextResponse.json({ ok: true, ranAt: new Date().toISOString(), ...review });
+  } catch (error) {
+    log.error("cron.failed", { error });
+    return NextResponse.json({ ok: false, error: "scan_failed" }, { status: 500 });
+  }
 }

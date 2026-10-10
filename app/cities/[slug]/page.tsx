@@ -1,61 +1,47 @@
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { ChurchCard } from "@/components/directory/church-card";
 import { SectionHeading } from "@/components/layout/section-heading";
-import { absoluteUrl } from "@/lib/utils";
-import { getChurchesByCity, getCitiesWithCounts, getCityBySlug } from "@/lib/data/queries";
-
-export function generateStaticParams() {
-  return getCitiesWithCounts().map((city) => ({ slug: city.slug }));
-}
+import { EmptyState } from "@/components/ui/empty-state";
+import { Pagination } from "@/components/ui/pagination";
+import { getCity, listChurches } from "@/lib/services/churches";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const city = getCityBySlug(slug);
-
-  if (!city) {
-    return {};
-  }
-
+  const city = await getCity(slug);
+  if (!city) return {};
   return {
-    title: `${city.name} Churches | Champaign County Church Directory`,
-    description: `Browse churches in ${city.name}, Illinois with pastor info, service times, websites, and directions.`,
-    alternates: {
-      canonical: absoluteUrl(`/cities/${city.slug}`)
-    }
+    title: `Churches in ${city.name}, IL`,
+    description: `Browse ${city.churchCount} churches in ${city.name}, Illinois with service times, pastors, and directions.`,
+    alternates: { canonical: `/cities/${city.slug}` }
   };
 }
 
-export default async function CityPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function CityPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ page?: string }> }) {
   const { slug } = await params;
-  const city = getCityBySlug(slug);
-
-  if (!city) {
-    notFound();
-  }
-
-  const churches = getChurchesByCity(city.slug);
+  const { page } = await searchParams;
+  const city = await getCity(slug);
+  if (!city) notFound();
+  const results = await listChurches({ city: city.slug }, Number(page ?? "1") || 1, 24);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="section-strong overflow-hidden rounded-[36px] border border-white/70 px-6 py-8 shadow-soft sm:px-8">
         <SectionHeading
-          eyebrow={`${churches.length} churches`}
-          title={`${city.name} churches`}
-          description={city.description}
+          as="h1"
+          eyebrow={`${results.total} ${results.total === 1 ? "church" : "churches"}`}
+          title={`Churches in ${city.name}, Illinois`}
+          description={city.description || `Churches listed in ${city.name}.`}
         />
       </div>
-      <div className="mt-6 flex flex-wrap gap-3">
-        <div className="rounded-full bg-brand-900 px-4 py-2 text-sm font-semibold text-white">
-          {city.name}, Illinois
-        </div>
-        <div className="rounded-full bg-white/80 px-4 py-2 text-sm font-medium text-stone-700 ring-1 ring-brand-100">
-          {churches.length} listings
-        </div>
-      </div>
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
-        {churches.length ? churches.map((church) => <ChurchCard key={church.id} church={church} />) : <p>No churches yet.</p>}
+        {results.items.length ? (
+          results.items.map((church) => <ChurchCard key={church.id} church={church} />)
+        ) : (
+          <EmptyState title={`No churches listed in ${city.name} yet`} body="Know one? Use “Submit a church” so we can add it." />
+        )}
       </div>
+      <Pagination page={results.page} pageCount={results.pageCount} basePath={`/cities/${city.slug}`} params={{}} />
     </div>
   );
 }

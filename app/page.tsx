@@ -8,23 +8,23 @@ import { PinnedChurchSpotlight } from "@/components/directory/pinned-church-spot
 import { RecentlyUpdated } from "@/components/directory/recently-updated";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { Button } from "@/components/ui/button";
-import { getChurchOfTheWeek, getCitiesWithCounts, getFeaturedChurches, getPinnedFrontPageChurch, getRecentlyUpdatedChurches } from "@/lib/data/queries";
+import { getHomepageData } from "@/lib/services/churches";
 import { musicianDirectoryUrl } from "@/lib/utils";
 
 const featureItems = [
   {
-    title: "Search by how people actually look",
-    description: "Filter by city, denomination, pastor, ministries, service day, website, app, and livestream.",
+    title: "Find a service that fits",
+    description: "Filter by day and time of service, city, denomination, language, accessibility, children’s programs, and livestream.",
     icon: Search
   },
   {
-    title: "Spot verified and maintained listings",
-    description: "Quickly see churches with fuller information and signs of active upkeep.",
+    title: "Know how current a listing is",
+    description: "Each listing says whether it was checked against a public source or confirmed by the church itself, and when.",
     icon: ShieldCheck
   },
   {
-    title: "Jump straight to websites, apps, and streams",
-    description: "Reduce friction for visitors who just need the next clear step.",
+    title: "Plan your first visit",
+    description: "Churches can share parking, accessibility, children’s check-in, and what to expect on Sunday.",
     icon: Smartphone
   }
 ];
@@ -41,9 +41,14 @@ const quickLinks = [
     href: "/cities"
   },
   {
-    title: "Submit a church",
-    description: "Add a new church listing for review and publishing.",
-    href: "/submit"
+    title: "Community help",
+    description: "Food pantries, meals, clothing, and support groups run by local churches.",
+    href: "/resources"
+  },
+  {
+    title: "Events calendar",
+    description: "Upcoming events at churches across the county, with calendar downloads.",
+    href: "/events"
   },
   {
     title: "Find musicians",
@@ -52,12 +57,13 @@ const quickLinks = [
   }
 ];
 
-export default function HomePage() {
-  const cities = getCitiesWithCounts().slice(0, 6);
-  const churchOfTheWeek = getChurchOfTheWeek();
-  const pinnedChurch = getPinnedFrontPageChurch();
-  const featuredChurches = getFeaturedChurches();
-  const recentlyUpdated = getRecentlyUpdatedChurches();
+export default async function HomePage() {
+  const home = await getHomepageData();
+  const cities = [...home.cities].sort((a, b) => b.churchCount - a.churchCount).slice(0, 6);
+  const churchOfTheWeek = home.churchOfTheWeek;
+  const pinnedChurch = home.pinned;
+  const featuredChurches = home.featured;
+  const recentlyUpdated = home.recentlyUpdated;
 
   return (
     <div className="pb-20">
@@ -87,9 +93,9 @@ export default function HomePage() {
           </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {[
-              ["80+", "Church listings across the county"],
-              ["Cities", "Browse by community instead of guessing"],
-              ["Clear", "Easy links to websites, apps, and livestreams"]
+              [String(home.totalChurches), "Church listings across the county"],
+              [String(home.cities.length), "Communities with listed churches"],
+              ["Dated", "Every listing shows when it was last checked"]
             ].map(([value, label]) => (
               <div key={label} className="rounded-[24px] border border-white/80 bg-white/80 p-5 shadow-card">
                 <p className="text-2xl font-semibold text-ink">{value}</p>
@@ -125,7 +131,7 @@ export default function HomePage() {
           <h2 id="church-quick-links-heading" className="font-display text-3xl text-ink">
             Quick paths
           </h2>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {quickLinks.map((item) => (
               <div key={item.title} className="rounded-[24px] border border-white/80 bg-brand-50/60 p-5">
                 <h3 className="font-semibold text-ink">{item.title}</h3>
