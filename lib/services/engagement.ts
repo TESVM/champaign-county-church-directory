@@ -1,3 +1,4 @@
+import { EVENT_CATEGORY_KEYS } from "@/lib/campus";
 import { z } from "zod";
 import { type Actor, assertCanEditChurch, assertReviewer, canReview, isStaff } from "@/lib/actor";
 import { db } from "@/lib/db";
@@ -151,8 +152,10 @@ export async function saveEvent(actor: Actor, churchId: string, input: Record<st
   }
   const data = parsed.data;
   const prisma = await db();
+  const categories = (Array.isArray(input.categories) ? input.categories : input.categories ? [input.categories] : []).map(String).filter((c) => EVENT_CATEGORY_KEYS.has(c));
   const record = {
     ...data,
+    categories,
     registrationUrl,
     recurrenceUntil: data.recurrence === "WEEKLY" ? data.recurrenceUntil : null,
     startsAt: chicagoToUtc(data.startDate, data.startTime ?? "00:00")

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Music2, Search, ShieldCheck, Smartphone } from "lucide-react";
+import { ArrowRight, MapPinned, Music2, Search, ShieldCheck, Smartphone } from "lucide-react";
 import { HeroSearch } from "@/components/directory/hero-search";
 import { CityCard } from "@/components/directory/city-card";
 import { ChurchOfTheWeek } from "@/components/directory/church-of-the-week";
@@ -30,6 +30,16 @@ const featureItems = [
 ];
 
 const quickLinks = [
+  {
+    title: "Explore the map",
+    description: "See every church on a map, filter by service time or ministry, and sort by what is near you.",
+    href: "/map"
+  },
+  {
+    title: "Campus Faith",
+    description: "Campus ministries, student-friendly churches, and student events for UIUC, Parkland, and other students.",
+    href: "/campus"
+  },
   {
     title: "Browse churches",
     description: "Open the full directory and scan church listings side by side.",
@@ -82,6 +92,12 @@ export default async function HomePage() {
               <Link href="/directory">
                 Browse Churches
                 <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" size="lg">
+              <Link href="/map">
+                <MapPinned className="mr-2 h-4 w-4" />
+                Explore the Map
               </Link>
             </Button>
             <Button asChild variant="secondary" size="lg">

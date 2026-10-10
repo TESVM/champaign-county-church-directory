@@ -116,6 +116,10 @@ export type ChurchRecord = {
     startMinutes?: number;
   }>;
   visitorGuide?: VisitorGuideRecord | null;
+  featured?: boolean;
+  studentTags?: string[];
+  studentTagsSource?: string;
+  studentTagsUpdatedAt?: string;
 };
 
 export type VisitorGuideRecord = {

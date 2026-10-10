@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import type { Actor } from "@/lib/actor";
+import { type Actor, assertAdmin } from "@/lib/actor";
 import { clearSessionCookie, clientKey, getActor, readSessionToken, setSessionCookie } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { AppError, ValidationError, publicMessageFor } from "@/lib/errors";
@@ -13,7 +13,9 @@ import { safeReturnPath } from "@/lib/safe-redirect";
 import { decideSuggestedChange, runWebsiteReview } from "@/lib/scan/website-review";
 import { endAllSessionsForUser, endSession, passwordSignIn, requestSignInLink } from "@/lib/services/auth";
 import { openBillingPortal, setComplimentary, startCheckout } from "@/lib/services/billing";
-import { markPublicSourceChecked, setChurchStatus, updateChurchProfile } from "@/lib/services/churches";
+import { reviewCampusEvent, reviewOrganization, submitCampusEvent, submitOrganization } from "@/lib/services/campus";
+import { markPublicSourceChecked, setChurchStatus, setFeatured, setStudentTags, updateChurchProfile } from "@/lib/services/churches";
+import { geocodeMissingChurches } from "@/lib/services/geocode";
 import { inviteTeamMember, reviewClaim, revokeTeamMember, setStaffRole, setUserDisabled, submitClaim } from "@/lib/services/claims";
 import { cancelEvent, moderateResource, removeResource, saveEvent, saveResource, saveVisitorGuide } from "@/lib/services/engagement";
 import {
@@ -273,7 +275,7 @@ export async function saveEventAction(_: FormState, formData: FormData) {
   return run("event", async () => {
     const actor = await signedIn();
     const churchId = churchIdFromForm(formData);
-    await saveEvent(actor, churchId, fields(formData), str(formData, "eventId") || undefined);
+    await saveEvent(actor, churchId, fieldsWithLists(formData, ["categories"]), str(formData, "eventId") || undefined);
     await revalidateChurch(churchId);
     revalidatePath("/events");
     return "Event saved and listed on the county calendar.";
@@ -557,4 +559,86 @@ export async function generateChurchImageAction(formData: FormData) {
   const target = new URL(returnPath, "https://internal.invalid");
   target.searchParams.set("ai", result.status);
   redirect(`${target.pathname}${target.search}`);
+}
+
+// ---------------------------------------------------------------------------
+// Campus Faith and the map
+// ---------------------------------------------------------------------------
+
+/** Like fields(), but keeps every value of multi-select checkbox groups. */
+function fieldsWithLists(formData: FormData, listKeys: string[]) {
+  const out = fields(formData);
+  for (const key of listKeys) out[key] = formData.getAll(key).map(String);
+  return out;
+}
+
+export async function submitOrganizationAction(_: FormState, formData: FormData) {
+  return run("campus-org", async () => {
+    assertHuman(formData);
+    const result = await submitOrganization(fieldsWithLists(formData, ["campuses", "meetingTypes"]), await clientKey());
+    return `Thank you. ${result.name} was submitted for review. We will email you when it is published or if we have questions.`;
+  });
+}
+
+export async function submitCampusEventAction(_: FormState, formData: FormData) {
+  return run("campus-event", async () => {
+    assertHuman(formData);
+    await submitCampusEvent(fieldsWithLists(formData, ["campuses", "categories"]), await clientKey());
+    return "Thank you. The event was submitted for review and will appear on the calendar once approved.";
+  });
+}
+
+export async function reviewOrganizationAction(_: FormState, formData: FormData) {
+  return run("campus-org-review", async () => {
+    const actor = await signedIn();
+    const decision = str(formData, "decision");
+    if (decision !== "APPROVED" && decision !== "REJECTED" && decision !== "CHANGES") throw new ValidationError("Choose a decision.");
+    await reviewOrganization(actor, { id: str(formData, "id") ?? "", decision, note: str(formData, "note"), verify: str(formData, "verify") === "true" });
+    revalidatePath("/campus", "layout");
+    return "Saved.";
+  }).then((r) => doneRedirect(r, "/admin/campus", "campus-org"));
+}
+
+export async function reviewCampusEventAction(_: FormState, formData: FormData) {
+  return run("campus-event-review", async () => {
+    const actor = await signedIn();
+    const decision = str(formData, "decision");
+    if (decision !== "APPROVED" && decision !== "REJECTED") throw new ValidationError("Choose a decision.");
+    await reviewCampusEvent(actor, str(formData, "id") ?? "", decision, str(formData, "note"));
+    revalidatePath("/campus", "layout");
+    return "Saved.";
+  }).then((r) => doneRedirect(r, "/admin/campus", "campus-event"));
+}
+
+export async function setStudentTagsAction(_: FormState, formData: FormData) {
+  return run("student-tags", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    await setStudentTags(actor, churchId, formData.getAll("studentTags").map(String));
+    await revalidateChurch(churchId);
+    revalidatePath("/campus", "layout");
+    return "Student details saved. They now appear on your profile and in Student-Friendly Churches.";
+  });
+}
+
+export async function setFeaturedAction(_: FormState, formData: FormData) {
+  return run("featured", async () => {
+    const actor = await signedIn();
+    const churchId = churchIdFromForm(formData);
+    const featured = str(formData, "featured") === "true";
+    await setFeatured(actor, churchId, featured);
+    await revalidateChurch(churchId);
+    revalidatePath("/map");
+    return featured ? "This church is now Featured (always labeled as such)." : "Featured placement removed.";
+  });
+}
+
+export async function geocodeChurchesAction(_: FormState) {
+  return run("geocode", async () => {
+    const actor = await signedIn();
+    assertAdmin(actor);
+    const result = await geocodeMissingChurches({ limit: 40 });
+    revalidatePath("/map");
+    return `Checked ${result.checked} addresses: ${result.matched} placed on the map, ${result.unmatched} could not be matched and were left blank.`;
+  });
 }

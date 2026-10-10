@@ -6,12 +6,14 @@ import { musicianDirectoryUrl } from "@/lib/utils";
 
 const nav = [
   { href: "/directory", label: "Directory" },
+  { href: "/map", label: "Explore the Map" },
+  { href: "/campus", label: "Campus Faith" },
   { href: "/find-a-service", label: "Find a Service" },
   { href: "/events", label: "Events" },
   { href: "/resources", label: "Community Help" },
-  { href: "/cities", label: "Cities" },
   { href: "/saved", label: "Saved" }
 ];
+const mobileOnly = [{ href: "/cities", label: "Cities" }];
 
 export async function Header() {
   const actor = await getActor();
@@ -29,23 +31,23 @@ export async function Header() {
           </div>
           <div className="min-w-0">
             <p className="truncate font-display text-lg text-ink sm:text-xl">Champaign County Church Directory</p>
-            <p className="hidden text-sm text-stone-600 sm:block">Find churches across Champaign County, Illinois</p>
+            <p className="hidden text-sm text-stone-600 sm:block xl:hidden 2xl:block">Find churches across Champaign County, Illinois</p>
           </div>
         </Link>
 
-        <nav aria-label="Primary" className="hidden items-center gap-5 xl:flex">
+        <nav aria-label="Primary" className="hidden items-center gap-4 xl:flex">
           {nav.map((item) => (
-            <Link key={item.href} href={item.href} className="text-sm font-medium text-stone-700 hover:text-brand-900 focus-ring">
+            <Link key={item.href} href={item.href} className="whitespace-nowrap text-sm font-medium text-stone-700 hover:text-brand-900 focus-ring">
               {item.label}
             </Link>
           ))}
         </nav>
 
         <div className="hidden items-center gap-2 xl:flex">
-          <Button asChild variant="ghost">
+          <Button asChild variant="ghost" className="whitespace-nowrap">
             <Link href="/for-churches">For churches</Link>
           </Button>
-          <Button asChild variant="secondary">
+          <Button asChild variant="secondary" className="whitespace-nowrap">
             <Link href={account.href}>{account.label}</Link>
           </Button>
         </div>
@@ -56,7 +58,7 @@ export async function Header() {
           </summary>
           <div className="absolute right-4 top-[68px] max-h-[80vh] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto rounded-[24px] border border-line bg-white p-4 shadow-soft">
             <nav aria-label="Mobile primary" className="flex flex-col gap-1">
-              {[...nav, { href: "/for-churches", label: "For churches" }, account, { href: "/submit", label: "Submit a church" }].map((item) => (
+              {[...nav, ...mobileOnly, { href: "/for-churches", label: "For churches" }, account, { href: "/submit", label: "Submit a church" }].map((item) => (
                 <Link key={item.href + item.label} href={item.href} className="rounded-2xl px-4 py-3 text-sm font-medium text-stone-700 hover:bg-brand-50 focus-ring">
                   {item.label}
                 </Link>

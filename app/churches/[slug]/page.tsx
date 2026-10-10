@@ -10,6 +10,7 @@ import {
   Clock3,
   DoorOpen,
   Globe,
+  GraduationCap,
   HandHeart,
   Languages,
   Mail,
@@ -18,6 +19,7 @@ import {
   PlayCircle,
   Shirt,
   Smartphone,
+  Star,
   Timer
 } from "lucide-react";
 import { ChurchPhotoPlaceholder } from "@/components/directory/church-card";
@@ -30,12 +32,14 @@ import { TrackedLink } from "@/components/directory/tracked-link";
 import { VerifiedBadge } from "@/components/directory/verified-badge";
 import { CorrectionForm } from "@/components/forms/correction-form";
 import { Card } from "@/components/ui/card";
+import { STUDENT_MINISTRY_PATTERN, studentTagLabel } from "@/lib/campus";
 import { shouldOptimizeImage } from "@/lib/images";
 import { featureVisible } from "@/lib/plans";
 import { getChurchBySlug, getMergeTarget, verificationStatus } from "@/lib/services/churches";
 import { RESOURCE_CATEGORIES, listResources, listUpcomingEvents } from "@/lib/services/engagement";
 import { siteUrl } from "@/lib/site";
 import { formatChicago } from "@/lib/time/chicago";
+import { nextService } from "@/lib/time/next-service";
 import { externalUrl, formatDate } from "@/lib/utils";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -141,6 +145,8 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
     sameAs: [websiteUrl, ...(show("socialLinks") ? church.socialLinks.map((l) => l.url) : [])].filter(Boolean)
   };
 
+  const next = nextService(church.serviceDetails ?? []);
+  const studentMinistries = church.ministries.filter((m) => STUDENT_MINISTRY_PATTERN.test(m));
   let verificationText: React.ReactNode;
   if (verification.level === "leadership") {
     verificationText = `Details confirmed by church leadership on ${formatDate(verification.date)}.`;
@@ -196,9 +202,15 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
           <p className="mt-3 text-sm leading-6 text-stone-600">
             {verificationText} Last updated {formatDate(church.lastUpdatedAt)}.
           </p>
-          {church.denomination ? (
-            <p className="mt-4 inline-flex rounded-full bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-900">{church.denomination}</p>
-          ) : null}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {church.denomination ? <p className="inline-flex rounded-full bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-900">{church.denomination}</p> : null}
+            {church.featured ? (
+              <p className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">
+                <Star className="h-4 w-4" aria-hidden="true" /> Featured in the directory
+              </p>
+            ) : null}
+          </div>
+          {next ? <p className="mt-3 text-sm font-medium text-stone-800">Next service: {next.label}{next.serviceName ? ` · ${next.serviceName}` : ""}</p> : null}
           <div className="mt-5">
             <PastorBadge name={church.pastor.fullName} title={church.pastor.title} photoUrl={church.pastor.photoUrl} />
           </div>
@@ -258,6 +270,29 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-8">
+          {church.studentTags?.length || studentMinistries.length ? (
+            <section className="rounded-[28px] border border-brand-100 bg-brand-50/60 p-6">
+              <h2 className="flex items-center gap-2 font-display text-2xl">
+                <GraduationCap className="h-6 w-6 text-brand-700" aria-hidden="true" /> For students
+              </h2>
+              {church.studentTags?.length ? (
+                <>
+                  <ul className="mt-3 flex flex-wrap gap-2">
+                    {church.studentTags.map((t) => (
+                      <li key={t} className="rounded-full bg-white px-3 py-1 text-sm font-medium text-brand-900">
+                        {studentTagLabel(t)}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-xs text-stone-600">{church.studentTagsSource === "church" ? "Confirmed by the church." : "From the church’s public website; not yet confirmed by the church."}</p>
+                </>
+              ) : null}
+              {studentMinistries.length ? <p className="mt-3 text-sm text-stone-700">Listed ministries: {studentMinistries.join(", ")}</p> : null}
+              <Link href="/campus" className="mt-3 inline-block text-sm font-semibold text-brand-900 underline-offset-4 hover:underline">
+                More on Campus Faith
+              </Link>
+            </section>
+          ) : null}
           <Card className="p-6 sm:p-8">
             <h2 className="font-display text-3xl">Service times</h2>
             {church.serviceDetails?.length ? (

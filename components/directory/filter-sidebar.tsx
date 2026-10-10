@@ -72,6 +72,7 @@ export function FilterSidebar({
           <CheckboxField name="hasWebsite" label="A website" value="true" defaultChecked={searchParams.hasWebsite === "true"} />
           <CheckboxField name="verified" label="Checked or confirmed details" value="true" defaultChecked={searchParams.verified === "true"} />
           <CheckboxField name="claimed" label="Church-managed listing" value="true" defaultChecked={searchParams.claimed === "true"} />
+          <CheckboxField name="studentFriendly" label="Student-friendly details" value="true" defaultChecked={searchParams.studentFriendly === "true"} />
         </fieldset>
 
         <div className="flex flex-wrap gap-3">
