@@ -140,9 +140,9 @@ model City {
 }
 
 model Church {
-  id                         String              @id @default(cuid())
+  id                         String               @id @default(cuid())
   name                       String
-  slug                       String              @unique
+  slug                       String               @unique
   cityId                     String
   denomination               String?
   description                String?
@@ -165,26 +165,26 @@ model Church {
   /// True when featuredImageUrl was produced by the AI generator rather than
   /// uploaded. Drives the "AI-generated image" label and protects uploaded
   /// photos from ever being overwritten by a generation.
-  featuredImageIsAi          Boolean             @default(false)
+  featuredImageIsAi          Boolean              @default(false)
   featuredImageModel         String?
-  aiImageStatus              AiImageStatus       @default(NONE)
+  aiImageStatus              AiImageStatus        @default(NONE)
   aiImageError               String?
   aiImageRequestedAt         DateTime?
   /// Where the uploaded/linked featured photo came from and on what basis it is used.
   featuredImageSourceUrl     String?
   featuredImageCredit        String?
   featuredImagePermission    String?
-  seniorPastorId             String?             @unique
+  seniorPastorId             String?              @unique
   /// Kept in sync with publicSourceCheckedAt/leadershipConfirmedAt for filtering.
-  verified                   Boolean             @default(false)
-  claimed                    Boolean             @default(false)
+  verified                   Boolean              @default(false)
+  claimed                    Boolean              @default(false)
   /// Deprecated. Entitlement comes from Subscription or complimentaryPremiumUntil.
   /// Values present before billing launched were migrated to complimentary grants.
-  premiumProfile             Boolean             @default(false)
+  premiumProfile             Boolean              @default(false)
   /// Complimentary enhanced profile granted by an administrator.
   complimentaryPremiumUntil  DateTime?
   complimentaryPremiumReason String?
-  status                     ChurchStatus        @default(ACTIVE)
+  status                     ChurchStatus         @default(ACTIVE)
   statusNote                 String?
   mergedIntoId               String?
   /// Public source the listing details were last checked against, and when.
@@ -195,16 +195,22 @@ model Church {
   leadershipConfirmedBy      String?
   /// Import bookkeeping: lastUpdatedAt of the source record when last imported.
   importedSourceUpdatedAt    DateTime?
+  /// Admin-set, visibly labelled "Featured" placement.
+  featured                   Boolean              @default(false)
+  /// Student-relevant tags (see lib/campus.ts STUDENT_TAGS) and where they came from.
+  studentTags                String[]             @default([])
+  studentTagsSource          String?
+  studentTagsUpdatedAt       DateTime?
   latitude                   Float?
   longitude                  Float?
   geocodedAt                 DateTime?
   lastScannedAt              DateTime?
   lastUpdatedAt              DateTime?
-  createdAt                  DateTime            @default(now())
-  updatedAt                  DateTime            @updatedAt
-  cityRecord                 City                @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  seniorPastor               Pastor?             @relation("SeniorPastor", fields: [seniorPastorId], references: [id])
-  leaders                    Pastor[]            @relation("ChurchLeaders")
+  createdAt                  DateTime             @default(now())
+  updatedAt                  DateTime             @updatedAt
+  cityRecord                 City                 @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  seniorPastor               Pastor?              @relation("SeniorPastor", fields: [seniorPastorId], references: [id])
+  leaders                    Pastor[]             @relation("ChurchLeaders")
   ministries                 Ministry[]
   serviceTimes               ServiceTime[]
   socialLinks                SocialLink[]
@@ -219,6 +225,8 @@ model Church {
   activity                   ActivityDaily[]
   websiteChecks              WebsiteCheck[]
   correctionReports          CorrectionReport[]
+  campusOrganizations        CampusOrganization[]
+  campusEvents               CampusEvent[]
 
   @@index([cityId])
   @@index([status])
@@ -528,6 +536,8 @@ model Event {
   recurrence      EventRecurrence @default(NONE)
   recurrenceUntil String?
   registrationUrl String?
+  /// Campus event categories (lib/campus.ts EVENT_CATEGORIES); empty for general events.
+  categories      String[]        @default([])
   status          EventStatus     @default(PUBLISHED)
   createdBy       String?
   createdAt       DateTime        @default(now())
@@ -648,4 +658,85 @@ model OutboundEmail {
   createdAt  DateTime    @default(now())
 
   @@index([createdAt])
+}
+
+/// Campus ministry or Christian student organization.
+model CampusOrganization {
+  id                 String        @id @default(cuid())
+  slug               String        @unique
+  name               String
+  campuses           String[]      @default([])
+  affiliation        String?
+  churchId           String?
+  description        String
+  whoIsWelcome       String?
+  meetingDay         String?
+  meetingTime        String?
+  meetingLocation    String?
+  meetingTypes       String[]      @default([])
+  firstTimeNote      String?
+  accessibilityNote  String?
+  websiteUrl         String?
+  instagramUrl       String?
+  facebookUrl        String?
+  otherSocialUrl     String?
+  registrationUrl    String?
+  logoUrl            String?
+  /// Published only when publishContact is true.
+  publicContactName  String?
+  publicContactRole  String?
+  publicContactEmail String?
+  publishContact     Boolean       @default(false)
+  /// Private submitter details for review; never shown publicly.
+  submitterName      String?
+  submitterRole      String?
+  submitterEmail     String?
+  consentToPublish   Boolean       @default(false)
+  status             ReviewStatus  @default(PENDING)
+  reviewerNote       String?
+  reviewedBy         String?
+  reviewedAt         DateTime?
+  /// "public-source" or "organization" — where the details came from.
+  source             String        @default("organization")
+  sourceUrl          String?
+  verifiedAt         DateTime?
+  claimed            Boolean       @default(false)
+  lastCheckedAt      DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  church             Church?       @relation(fields: [churchId], references: [id], onDelete: SetNull)
+  events             CampusEvent[]
+
+  @@index([status])
+}
+
+/// Student-focused event submitted by a campus organization (or added by staff).
+model CampusEvent {
+  id              String              @id @default(cuid())
+  organizationId  String?
+  churchId        String?
+  title           String
+  description     String?
+  location        String?
+  startDate       String
+  startTime       String?
+  endTime         String?
+  startsAt        DateTime
+  recurrence      EventRecurrence     @default(NONE)
+  recurrenceUntil String?
+  campuses        String[]            @default([])
+  categories      String[]            @default([])
+  registrationUrl String?
+  status          ReviewStatus        @default(PENDING)
+  reviewerNote    String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  submitterName   String?
+  submitterEmail  String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  organization    CampusOrganization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  church          Church?             @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([status, startsAt])
 }

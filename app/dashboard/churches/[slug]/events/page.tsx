@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { cancelEventAction, saveEventAction } from "@/app/actions";
+import { CheckboxGroup } from "@/components/campus/checkbox-group";
 import { ChurchTabs } from "@/components/dashboard/church-tabs";
 import { ActionForm, SubmitButton } from "@/components/forms/action-form";
 import { Card } from "@/components/ui/card";
 import { SelectField, TextAreaField, TextField } from "@/components/ui/field";
 import { isStaff } from "@/lib/actor";
 import { loadManagedChurch } from "@/lib/dashboard";
+import { EVENT_CATEGORIES, eventCategoryLabel } from "@/lib/campus";
 import { featureVisible } from "@/lib/plans";
 import { listChurchEventsForEditing } from "@/lib/services/engagement";
 import { displayTime } from "@/lib/time/chicago";
@@ -45,6 +47,7 @@ export default async function EventsDashboardPage({ params }: { params: Promise<
                 <TextField name="location" label="Location" hint="Leave blank to use the church address." />
                 <TextAreaField name="description" label="Description" />
                 <TextField name="registrationUrl" label="Registration link" type="url" />
+                <CheckboxGroup name="categories" legend="Also show on the Campus Faith student calendar as" options={EVENT_CATEGORIES} hint="Optional. Tick any that fit and the event also appears on the student events calendar." />
                 <SubmitButton>Publish event</SubmitButton>
               </ActionForm>
             </div>
@@ -61,6 +64,7 @@ export default async function EventsDashboardPage({ params }: { params: Promise<
                       {e.startTime ? ` · ${displayTime(e.startTime)}` : " · all day"}
                       {e.recurrence === "WEEKLY" ? ` · weekly until ${e.recurrenceUntil}` : ""} · {e.status === "CANCELLED" ? "Cancelled" : "Published"}
                     </p>
+                    {e.categories.length ? <p className="text-xs text-brand-900">Student calendar: {e.categories.map(eventCategoryLabel).join(", ")}</p> : null}
                     {e.status === "PUBLISHED" ? (
                       <div className="mt-2">
                         <ActionForm action={cancelEventAction}>

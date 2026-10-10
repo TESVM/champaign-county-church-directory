@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { geocodeChurchesAction } from "@/app/actions";
+import { ActionForm, SubmitButton } from "@/components/forms/action-form";
 import { Card } from "@/components/ui/card";
 import { requireStaff } from "@/lib/auth-guards";
 import { env } from "@/lib/env";
@@ -15,7 +17,8 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
     ["New church submissions", counts.submissions, "/admin/submissions"],
     ["Messages and corrections", counts.inbox, "/admin/inbox"],
     ["Website review proposals", counts.changes, "/admin/review"],
-    ["Community programs", counts.resources, "/admin/resources"]
+    ["Community programs", counts.resources, "/admin/resources"],
+    ["Campus Faith listings", counts.campus, "/admin/campus"]
   ] as const;
   const setup = [
     ["Email delivery", env.emailProvider === "resend" && Boolean(env.resendApiKey && env.emailFrom)],
@@ -34,7 +37,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
       </div>
       {denied ? <p role="alert" className="rounded-2xl bg-rose-50 p-4 text-sm text-rose-900">That page needs a reviewer or administrator role.</p> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {queues.map(([label, count, href]) => (
           <Link key={href} href={href} className="rounded-[20px] border border-line bg-white p-4 shadow-card hover:border-brand-700 focus-ring">
             <p className="font-display text-3xl">{count}</p>
@@ -85,6 +88,17 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
             ))}
           </ul>
           <p className="mt-2 text-xs text-stone-600">Full status: /api/health</p>
+          {actor.staffRole === "ADMIN" ? (
+            <div className="mt-6">
+              <h2 className="font-display text-2xl">Map placement</h2>
+              <p className="mt-1 text-sm text-stone-600">{overview.unmapped} active {overview.unmapped === 1 ? "church has" : "churches have"} no map pin. Look up their street addresses with the US Census geocoder; addresses it cannot match stay off the map.</p>
+              <div className="mt-3">
+                <ActionForm action={geocodeChurchesAction}>
+                  <SubmitButton pendingLabel="Looking up addresses…">Place churches on the map</SubmitButton>
+                </ActionForm>
+              </div>
+            </div>
+          ) : null}
         </Card>
       </div>
     </div>

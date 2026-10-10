@@ -11,7 +11,9 @@ const MESSAGES: Record<string, string> = {
   "change-approved": "Change applied to the listing.",
   "change-rejected": "Proposal rejected; it will not be suggested again.",
   "resource-approved": "Program published.",
-  "resource-rejected": "Program rejected with your note."
+  "resource-rejected": "Program rejected with your note.",
+  "campus-org": "Decision saved. The organization’s contact was emailed.",
+  "campus-event": "Decision saved. The person who submitted the event was emailed."
 };
 
 /** Confirms a queue decision after the decided item has left the list. */

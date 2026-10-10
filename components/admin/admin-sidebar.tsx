@@ -9,6 +9,7 @@ export function AdminSidebar({ counts, isAdmin }: { counts: Record<string, numbe
     { href: "/admin/inbox", label: "Messages & corrections", count: counts.inbox },
     { href: "/admin/review", label: "Website review", count: counts.changes },
     { href: "/admin/resources", label: "Community programs", count: counts.resources },
+    { href: "/admin/campus", label: "Campus Faith", count: counts.campus },
     { href: "/admin/churches", label: "Churches" },
     ...(isAdmin ? [{ href: "/admin/users", label: "Users & staff" }] : []),
     { href: "/admin/audit", label: "Audit log" },

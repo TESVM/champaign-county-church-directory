@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { markSourceCheckedAction, setChurchStatusAction, setComplimentaryAction } from "@/app/actions";
+import { markSourceCheckedAction, setChurchStatusAction, setComplimentaryAction, setFeaturedAction } from "@/app/actions";
 import { ActionForm, SubmitButton } from "@/components/forms/action-form";
 import { Card } from "@/components/ui/card";
 import { SelectField, TextField } from "@/components/ui/field";
@@ -86,6 +86,20 @@ export default async function AdminChurchPage({ params }: { params: Promise<{ sl
                   <SubmitButton>Grant complimentary</SubmitButton>
                   {billing.complimentaryUntil ? <SubmitButton name="remove" value="true" variant="secondary">Remove complimentary</SubmitButton> : null}
                 </div>
+              </ActionForm>
+            </div>
+          ) : null}
+          {isAdmin(actor) ? (
+            <div className="mt-5 border-t border-line pt-4">
+              <h3 className="font-semibold">Featured placement</h3>
+              <p className="mt-1 text-sm text-stone-600">
+                {church.featured ? "Featured: highlighted pin on the map, first in labeled lists, and the “Featured church” slot on Campus Faith." : "Not featured."} Featured churches are always labeled “Featured” to visitors; it never changes search matching.
+              </p>
+              <ActionForm action={setFeaturedAction}>
+                <input type="hidden" name="churchId" value={church.id} />
+                <SubmitButton name="featured" value={church.featured ? "false" : "true"} variant={church.featured ? "secondary" : "primary"}>
+                  {church.featured ? "Remove Featured" : "Make Featured"}
+                </SubmitButton>
               </ActionForm>
             </div>
           ) : null}

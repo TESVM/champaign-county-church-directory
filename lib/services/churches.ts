@@ -1,11 +1,13 @@
 import type { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { type Actor, assertCanEditChurch, assertReviewer, membershipFor } from "@/lib/actor";
+import { type Actor, assertAdmin, assertCanEditChurch, assertReviewer, membershipFor } from "@/lib/actor";
 import { db } from "@/lib/db";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { audit } from "@/lib/services/audit";
 import { computeEntitlement } from "@/lib/services/entitlements";
+import { featureVisible } from "@/lib/plans";
 import { parseTimeToMinutes } from "@/lib/time/chicago";
+import { nextService } from "@/lib/time/next-service";
 import type { ChurchRecord, CityRecord, SocialPlatform } from "@/lib/types";
 import { LinkError, normalizeLink, normalizePhone, SOCIAL_KINDS } from "@/lib/validation/links";
 
@@ -86,6 +88,10 @@ export function mapChurchRow(row: ChurchRow, now = new Date()): ChurchRecord {
     enhancedProfile: entitlement.active,
     status: row.status,
     statusNote: opt(row.statusNote),
+    featured: row.featured,
+    studentTags: row.studentTags,
+    studentTagsSource: opt(row.studentTagsSource),
+    studentTagsUpdatedAt: row.studentTagsUpdatedAt?.toISOString(),
     publicSourceUrl: opt(row.publicSourceUrl),
     publicSourceCheckedAt: row.publicSourceCheckedAt?.toISOString(),
     leadershipConfirmedAt: row.leadershipConfirmedAt?.toISOString(),
@@ -161,6 +167,8 @@ export type ChurchFilters = {
   verified?: boolean;
   claimed?: boolean;
   slugs?: string[];
+  studentTag?: string;
+  anyStudentTag?: boolean;
 };
 
 const TIME_WINDOWS = {
@@ -196,7 +204,9 @@ export function parseChurchFilters(params: Record<string, string | string[] | un
     hasApp: flag("hasApp"),
     hasLivestream: flag("hasLivestream"),
     verified: flag("verified"),
-    claimed: flag("claimed")
+    claimed: flag("claimed"),
+    studentTag: get("studentTag"),
+    anyStudentTag: flag("studentFriendly")
   };
 }
 
@@ -251,6 +261,8 @@ export function buildChurchWhere(filters: ChurchFilters): Prisma.ChurchWhereInpu
   if (filters.verified) and.push({ verified: true });
   if (filters.claimed) and.push({ claimed: true });
   if (filters.slugs) and.push({ slug: { in: filters.slugs.slice(0, 100) } });
+  if (filters.studentTag) and.push({ studentTags: { has: filters.studentTag } });
+  if (filters.anyStudentTag) and.push({ NOT: { studentTags: { isEmpty: true } } });
 
   return { AND: and };
 }
@@ -772,6 +784,13 @@ export async function updateChurchProfile(actor: Actor, churchId: string, input:
     );
   }, { timeout: 20_000, maxWait: 10_000 });
 
+  if (addressMoved && data.address1) {
+    // Best effort: a church that cannot be matched simply stays off the map.
+    const { geocodeAddress } = await import("@/lib/services/geocode");
+    const coords = await geocodeAddress(`${data.address1}, ${city.name}, IL ${data.zip ?? ""}`.trim());
+    if (coords) await prisma.church.update({ where: { id: churchId }, data: { ...coords, geocodedAt: new Date() } });
+  }
+
   return { slug: existing.slug, changedFields: Object.keys(changed) };
 }
 
@@ -953,5 +972,79 @@ export async function listChurchOptions() {
     where: { status: "ACTIVE" },
     select: { slug: true, name: true, city: true },
     orderBy: [{ name: "asc" }]
+  });
+}
+
+/** Admin-only "Featured" placement. Always shown with a visible label. */
+export async function setFeatured(actor: Actor, churchId: string, featured: boolean) {
+  assertAdmin(actor);
+  const prisma = await db();
+  const church = await prisma.church.update({ where: { id: churchId }, data: { featured } });
+  await audit(actor, { action: featured ? "church.featured" : "church.unfeatured", entityType: "Church", entityId: churchId, churchId, summary: `${featured ? "Featured" : "Removed featured placement for"} ${church.name}` });
+}
+
+/**
+ * Student-relevant tags. Set by the church's own team ("church") or by a
+ * reviewer from a public source ("public-source"); the label is shown to students.
+ */
+export async function setStudentTags(actor: Actor, churchId: string, rawTags: unknown) {
+  assertCanEditChurch(actor, churchId);
+  const { STUDENT_TAG_KEYS } = await import("@/lib/campus");
+  const list = (Array.isArray(rawTags) ? rawTags : [rawTags]).map(String).filter(Boolean);
+  const invalid = list.filter((t) => !STUDENT_TAG_KEYS.has(t));
+  if (invalid.length) throw new ValidationError("Choose tags from the list.");
+  const tags = [...new Set(list)];
+  const source = membershipFor(actor, churchId) ? "church" : "public-source";
+  const prisma = await db();
+  await prisma.church.update({
+    where: { id: churchId },
+    data: { studentTags: tags, studentTagsSource: tags.length ? source : null, studentTagsUpdatedAt: new Date(), lastUpdatedAt: new Date() }
+  });
+  await audit(actor, { action: "church.student_tags_updated", entityType: "Church", entityId: churchId, churchId, summary: `Student tags: ${tags.join(", ") || "none"} (${source})` });
+}
+
+export type MapPin = {
+  slug: string;
+  name: string;
+  city: string;
+  denomination: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  imageUrl: string | null;
+  nextService: string | null;
+  verified: boolean;
+  claimed: boolean;
+  featured: boolean;
+  livestream: boolean;
+  wheelchair: boolean;
+  children: boolean;
+  student: boolean;
+};
+
+/** Every matching church, unpaginated, with only what a map pin and preview card need. */
+export async function listChurchesForMap(filters: ChurchFilters, now = new Date()): Promise<MapPin[]> {
+  const prisma = await db();
+  const rows = await prisma.church.findMany({ where: buildChurchWhere(filters), include: churchInclude, orderBy: [{ featured: "desc" }, { name: "asc" }], take: 500 });
+  return rows.map((row) => {
+    const church = mapChurchRow(row, now);
+    const enhanced = church.enhancedProfile ?? false;
+    const next = nextService(church.serviceDetails ?? [], now);
+    return {
+      slug: church.slug,
+      name: church.name,
+      city: church.city,
+      denomination: church.denomination ?? null,
+      latitude: church.latitude ?? null,
+      longitude: church.longitude ?? null,
+      imageUrl: church.featuredImageUrl ?? church.logoUrl ?? null,
+      nextService: next ? `${next.label}${next.serviceName ? ` · ${next.serviceName}` : ""}` : null,
+      verified: church.verified,
+      claimed: church.claimed,
+      featured: Boolean(church.featured),
+      livestream: Boolean(featureVisible("livestream", enhanced) && church.livestreamUrl),
+      wheelchair: church.visitorGuide?.wheelchairAccessible === true,
+      children: church.visitorGuide?.hasChildrenProgram === true,
+      student: Boolean(church.studentTags?.length)
+    };
   });
 }

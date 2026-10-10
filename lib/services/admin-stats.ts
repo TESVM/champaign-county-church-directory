@@ -2,20 +2,22 @@ import { db } from "@/lib/db";
 
 export async function adminQueueCounts() {
   const prisma = await db();
-  const [claims, submissions, contacts, corrections, changes, resources] = await Promise.all([
+  const [claims, submissions, contacts, corrections, changes, resources, campusOrgs, campusEvents] = await Promise.all([
     prisma.claimRequest.count({ where: { status: "PENDING" } }),
     prisma.submission.count({ where: { status: "PENDING" } }),
     prisma.contactMessage.count({ where: { status: "NEW" } }),
     prisma.correctionReport.count({ where: { status: "NEW" } }),
     prisma.suggestedChange.count({ where: { status: "PENDING" } }),
-    prisma.communityResource.count({ where: { status: "PENDING" } })
+    prisma.communityResource.count({ where: { status: "PENDING" } }),
+    prisma.campusOrganization.count({ where: { status: "PENDING" } }),
+    prisma.campusEvent.count({ where: { status: "PENDING" } })
   ]);
-  return { claims, submissions, inbox: contacts + corrections, changes, resources };
+  return { claims, submissions, inbox: contacts + corrections, changes, resources, campus: campusOrgs + campusEvents };
 }
 
 export async function adminOverview() {
   const prisma = await db();
-  const [active, closed, hidden, sourceChecked, leadership, claimed, withPhoto, enhancedSubs, complimentary, stale] = await Promise.all([
+  const [active, closed, hidden, sourceChecked, leadership, claimed, withPhoto, enhancedSubs, complimentary, stale, unmapped] = await Promise.all([
     prisma.church.count({ where: { status: "ACTIVE" } }),
     prisma.church.count({ where: { status: "CLOSED" } }),
     prisma.church.count({ where: { status: "HIDDEN" } }),
@@ -30,7 +32,8 @@ export async function adminOverview() {
       orderBy: [{ lastUpdatedAt: { sort: "asc", nulls: "first" } }],
       take: 8,
       select: { slug: true, name: true, lastUpdatedAt: true }
-    })
+    }),
+    prisma.church.count({ where: { status: "ACTIVE", latitude: null } }),
   ]);
-  return { active, closed, hidden, sourceChecked, leadership, claimed, withPhoto, enhancedSubs, complimentary, stale };
+  return { active, closed, hidden, sourceChecked, leadership, claimed, withPhoto, enhancedSubs, complimentary, stale, unmapped };
 }
