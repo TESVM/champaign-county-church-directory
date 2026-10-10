@@ -18,7 +18,12 @@ export default async function AdminCampusPage({ searchParams }: { searchParams: 
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-4xl">Campus Faith</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-display text-4xl">Campus Faith</h1>
+        <Link href="/admin/campus/new" className="inline-flex min-h-[44px] items-center rounded-full border border-line px-4 text-sm font-semibold">
+          Add from a public source
+        </Link>
+      </div>
       <FlashBanner code={params.done} />
       <p className="text-sm text-stone-700">
         Check that the group is a real Christian student organization or ministry, the submitter plausibly leads it (role, email domain, matching public pages), and nothing private about a student is published without their

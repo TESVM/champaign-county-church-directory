@@ -248,17 +248,21 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        <figure className="relative min-h-[280px] overflow-hidden rounded-[32px] border border-line shadow-soft">
+        <figure className="relative min-h-[280px] overflow-hidden rounded-[32px] border border-line bg-stone-900 shadow-soft">
           {image ? (
-            <Image
-              src={image}
-              alt={church.name}
-              fill
-              priority
-              sizes="(min-width: 1024px) 45vw, 100vw"
-              className="object-cover"
-              unoptimized={!shouldOptimizeImage(image)}
-            />
+            <>
+              {/* The whole photo is shown; a blurred copy fills any space a wide or tall photo leaves. */}
+              <Image src={image} alt="" aria-hidden="true" fill sizes="(min-width: 1024px) 45vw, 100vw" className="scale-110 object-cover opacity-70 blur-2xl" unoptimized={!shouldOptimizeImage(image)} />
+              <Image
+                src={image}
+                alt={church.name}
+                fill
+                priority
+                sizes="(min-width: 1024px) 45vw, 100vw"
+                className="object-contain"
+                unoptimized={!shouldOptimizeImage(image)}
+              />
+            </>
           ) : (
             <ChurchPhotoPlaceholder citySlug={church.citySlug} className="min-h-[280px]" />
           )}

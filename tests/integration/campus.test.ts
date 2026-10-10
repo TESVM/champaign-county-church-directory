@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { ForbiddenError, ValidationError } from "@/lib/errors";
 import { setComplimentary } from "@/lib/services/billing";
 import {
+  createPublicSourceOrganization,
   getOrganization,
   listCampusEvents,
   listOrganizations,
@@ -79,6 +80,21 @@ describe("List Your Organization", () => {
 
     const audit = await (await db()).auditLog.findMany({ where: { entityId: id } });
     expect(audit.map((a) => a.action)).toEqual(expect.arrayContaining(["campus_org.changes", "campus_org.approved"]));
+  });
+});
+
+describe("public-source ministries", () => {
+  beforeEach(resetDatabase);
+
+  it("need a reviewer and a source link, publish labeled, and never take meeting times", async () => {
+    const input = { name: "Public Ministry", campuses: ["uiuc"], description: "As described on its own public website.", sourceUrl: "https://ministry.test/about", meetingTime: "7 PM" };
+    const editor = await actorFor("editor@test.invalid");
+    await expect(createPublicSourceOrganization(editor, input)).rejects.toBeInstanceOf(ForbiddenError);
+    const reviewer = await actorFor("reviewer@test.invalid", "REVIEWER");
+    await expect(createPublicSourceOrganization(reviewer, { ...input, sourceUrl: "" })).rejects.toBeInstanceOf(ValidationError);
+    const org = await createPublicSourceOrganization(reviewer, input);
+    expect(org).toMatchObject({ status: "APPROVED", source: "public-source", claimed: false, meetingTime: null, sourceUrl: "https://ministry.test/about" });
+    expect((await listOrganizations()).map((o) => o.slug)).toEqual([org.slug]);
   });
 });
 

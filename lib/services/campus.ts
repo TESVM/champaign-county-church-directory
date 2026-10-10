@@ -404,3 +404,60 @@ export async function listFeaturedChurches(limit = 1) {
   const rows = await prisma.church.findMany({ where: { status: "ACTIVE", featured: true }, include: churchInclude, orderBy: { name: "asc" }, take: limit });
   return rows.map((row) => mapChurchRow(row));
 }
+
+const publicOrgSchema = z.object({
+  name: z.string().trim().min(2, "Enter the organization name.").max(140),
+  campuses: z.array(z.string()).min(1, "Choose at least one campus.").refine((v) => v.every((c) => CAMPUS_KEYS.has(c)), "Choose campuses from the list."),
+  affiliation: text(140),
+  description: z.string().trim().min(20, "Use the organization’s own description (at least 20 characters).").max(2000),
+  meetingLocation: text(200)
+});
+
+/**
+ * Staff add an organization from its own public pages before it lists itself.
+ * The source link is required, it is labeled "Compiled from public pages", and
+ * meeting times are deliberately not accepted because they go stale.
+ */
+export async function createPublicSourceOrganization(actor: Actor, input: Record<string, unknown>) {
+  assertReviewer(actor);
+  const parsed = publicOrgSchema.safeParse({ ...input, campuses: list(input.campuses) });
+  const fieldErrors = parsed.success ? {} : fieldErrorsOf(parsed.error);
+  const links: Record<string, string | null> = {};
+  for (const [key, kind] of [
+    ["sourceUrl", "website"],
+    ["websiteUrl", "website"],
+    ["instagramUrl", "instagram"],
+    ["facebookUrl", "facebook"]
+  ] as const) {
+    try {
+      links[key] = normalizeLink(input[key], kind);
+    } catch (error) {
+      fieldErrors[key] = (error as LinkError).message;
+    }
+  }
+  if (!links.sourceUrl) fieldErrors.sourceUrl ??= "Link the public page this came from.";
+  if (!parsed.success || Object.keys(fieldErrors).length) throw new ValidationError("Please fix the highlighted fields. Nothing was saved.", fieldErrors);
+  const data = parsed.data;
+  const prisma = await db();
+  let slug = slugify(data.name) || "campus-organization";
+  for (let i = 2; await prisma.campusOrganization.findUnique({ where: { slug }, select: { id: true } }); i += 1) slug = `${slugify(data.name)}-${i}`;
+  const now = new Date();
+  const org = await prisma.campusOrganization.create({
+    data: {
+      slug,
+      ...data,
+      ...links,
+      meetingTypes: [],
+      status: "APPROVED",
+      source: "public-source",
+      claimed: false,
+      consentToPublish: false,
+      publishContact: false,
+      reviewedBy: actor.email,
+      reviewedAt: now,
+      lastCheckedAt: now
+    }
+  });
+  await audit(actor, { action: "campus_org.added_public_source", entityType: "CampusOrganization", entityId: org.id, summary: `Added ${org.name} from ${links.sourceUrl}` });
+  return org;
+}

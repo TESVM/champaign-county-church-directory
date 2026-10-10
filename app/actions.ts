@@ -13,7 +13,7 @@ import { safeReturnPath } from "@/lib/safe-redirect";
 import { decideSuggestedChange, runWebsiteReview } from "@/lib/scan/website-review";
 import { endAllSessionsForUser, endSession, passwordSignIn, requestSignInLink } from "@/lib/services/auth";
 import { openBillingPortal, setComplimentary, startCheckout } from "@/lib/services/billing";
-import { reviewCampusEvent, reviewOrganization, submitCampusEvent, submitOrganization } from "@/lib/services/campus";
+import { createPublicSourceOrganization, reviewCampusEvent, reviewOrganization, submitCampusEvent, submitOrganization } from "@/lib/services/campus";
 import { markPublicSourceChecked, setChurchStatus, setFeatured, setStudentTags, updateChurchProfile } from "@/lib/services/churches";
 import { geocodeMissingChurches } from "@/lib/services/geocode";
 import { inviteTeamMember, reviewClaim, revokeTeamMember, setStaffRole, setUserDisabled, submitClaim } from "@/lib/services/claims";
@@ -640,5 +640,14 @@ export async function geocodeChurchesAction(_: FormState) {
     const result = await geocodeMissingChurches({ limit: 40 });
     revalidatePath("/map");
     return `Checked ${result.checked} addresses: ${result.matched} placed on the map, ${result.unmatched} could not be matched and were left blank.`;
+  });
+}
+
+export async function addPublicOrganizationAction(_: FormState, formData: FormData) {
+  return run("campus-org-public", async () => {
+    const actor = await signedIn();
+    const org = await createPublicSourceOrganization(actor, fieldsWithLists(formData, ["campuses"]));
+    revalidatePath("/campus", "layout");
+    return `${org.name} is now listed, labeled “Compiled from public pages”.`;
   });
 }

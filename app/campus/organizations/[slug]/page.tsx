@@ -143,7 +143,25 @@ export default async function OrganizationPage({ params }: Props) {
               {org.verifiedAt ? <ShieldCheck className="h-4 w-4 text-emerald-700" aria-hidden="true" /> : <Info className="h-4 w-4" aria-hidden="true" />}
               {org.verifiedAt ? `Verified by the directory ${formatChicago(org.verifiedAt, { month: "short", year: "numeric" })}` : "Not yet verified"}
             </p>
-            <p>{org.source === "organization" ? "Listed by the organization’s own leaders." : "Compiled from the organization’s public website or pages."}</p>
+            <p>
+              {org.source === "organization" ? (
+                "Listed by the organization’s own leaders."
+              ) : (
+                <>
+                  Compiled from public pages{org.sourceUrl ? (
+                    <>
+                      {" "}
+                      (
+                      <a href={org.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                        source
+                      </a>
+                      )
+                    </>
+                  ) : null}
+                  ; not yet confirmed by the organization.
+                </>
+              )}
+            </p>
             {org.lastCheckedAt ? <p>Last checked {formatChicago(org.lastCheckedAt, { month: "long", day: "numeric", year: "numeric" })}.</p> : null}
             <p>
               Lead this group?{" "}

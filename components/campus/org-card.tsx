@@ -68,6 +68,7 @@ export function OrgCard({ org }: { org: OrgSummary }) {
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> Verified by the directory
           </span>
         ) : null}
+        {org.source === "public-source" ? <span className="rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-700">From public pages</span> : null}
         {org.meetingTypes.slice(0, 4).map((t) => (
           <span key={t} className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-900">
             {typeLabel(t)}
