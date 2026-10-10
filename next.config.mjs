@@ -33,6 +33,13 @@ const nextConfig = {
     }))
   },
 
+  // Old church addresses that changed, so existing links and search results keep working.
+  async redirects() {
+    return [
+      { source: "/churches/stonecreek-church-urbana", destination: "/churches/stone-creek-church-urbana", permanent: true }
+    ];
+  },
+
   async headers() {
     return [
       {
