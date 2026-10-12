@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  /* Light-only design: opts out of browser-applied automatic dark modes. */
+  color-scheme: only light;
   --font-body: "Source Sans 3";
   --font-display: "Fraunces";
 }
