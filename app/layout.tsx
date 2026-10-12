@@ -53,6 +53,10 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#12363E",
+  // The site is designed light-only. Without this, Android browsers (Chrome's
+  // "Darken websites", Samsung Internet's dark mode) repaint it themselves and
+  // its translucent white panels turn murky and see-through.
+  colorScheme: "only light",
   width: "device-width",
   initialScale: 1,
   // No maximum-scale or user-scalable: false. Blocking pinch-zoom fails
