@@ -46,6 +46,29 @@ describe("Stripe webhooks and entitlements", () => {
     expect(verifyStripeSignature(payload, null, "whsec_x")).toBe(false);
   });
 
+  it("treats a portal cancellation as scheduled to end, in both old and new Stripe API shapes", async () => {
+    const church = await makeChurch();
+    const t = now();
+    const periodEnd = t + 30 * DAY;
+    await processStripeEvent(subEvent("evt_c1", "customer.subscription.created", t, church.id, "active", periodEnd));
+    expect((await getBillingSummary(church.id)).subscription?.cancelAtPeriodEnd).toBe(false);
+
+    // 2026 API: cancel_at_period_end stays false; the end is scheduled with cancel_at.
+    await processStripeEvent(subEvent("evt_c2", "customer.subscription.updated", t + 1, church.id, "active", periodEnd, { cancel_at: periodEnd, canceled_at: t + 1 }));
+    let summary = await getBillingSummary(church.id);
+    expect(summary.subscription?.cancelAtPeriodEnd).toBe(true);
+    expect(summary.active).toBe(true);
+
+    // Resuming clears it.
+    await processStripeEvent(subEvent("evt_c3", "customer.subscription.updated", t + 2, church.id, "active", periodEnd, { cancel_at: null, canceled_at: null }));
+    expect((await getBillingSummary(church.id)).subscription?.cancelAtPeriodEnd).toBe(false);
+
+    // Older API shape still works.
+    await processStripeEvent(subEvent("evt_c4", "customer.subscription.updated", t + 3, church.id, "active", periodEnd, { cancel_at_period_end: true }));
+    summary = await getBillingSummary(church.id);
+    expect(summary.subscription?.cancelAtPeriodEnd).toBe(true);
+  });
+
   it("activates on payment, survives retries and out-of-order delivery, and expires on cancellation", async () => {
     const church = await makeChurch();
     const t = now();

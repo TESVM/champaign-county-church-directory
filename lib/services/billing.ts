@@ -145,6 +145,8 @@ type StripeSubscription = {
   status: string;
   customer: string;
   cancel_at_period_end?: boolean;
+  /** Newer API versions schedule a portal cancellation here and leave cancel_at_period_end false. */
+  cancel_at?: number | null;
   canceled_at?: number | null;
   current_period_end?: number;
   metadata?: Record<string, string>;
@@ -210,7 +212,8 @@ async function applySubscription(sub: StripeSubscription, event: StripeEventPayl
     status,
     priceId: sub.items?.data?.[0]?.price?.id ?? existing?.priceId ?? null,
     currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : existing?.currentPeriodEnd ?? null,
-    cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end),
+    // Scheduled to end: older API versions set cancel_at_period_end, newer ones set cancel_at.
+    cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end || sub.cancel_at),
     canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
     lastEventCreated: event.created,
     lastEventId: event.id
