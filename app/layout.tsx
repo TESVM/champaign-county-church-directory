@@ -4,7 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { absoluteUrl } from "@/lib/utils";
-import { siteUrl, SITE_NAME } from "@/lib/site";
+import { siteUrl, SITE_ALTERNATE_NAME, SITE_NAME } from "@/lib/site";
 
 // Every page reads live directory data (and the header reads the session), so
 // render on request. This also means builds never need database access.
@@ -13,17 +13,17 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: {
-    default: "Champaign County Church Directory",
-    template: "%s | Champaign County Church Directory"
+    default: "Champaign County Churches: Find a Church in Champaign-Urbana",
+    template: `%s | ${SITE_NAME}`
   },
   description:
-    "Find churches in Champaign County, Illinois by city, denomination, pastor, service time, and ministry.",
+    "Find a church in Champaign, Urbana, Savoy, Mahomet, Rantoul, and across Champaign County, Illinois. Service times, pastors, directions, and campus ministries, with every listing dated.",
+  applicationName: SITE_NAME,
   openGraph: {
-    title: "Champaign County Church Directory",
-    description:
-      "A local directory for discovering churches in Champaign County, Illinois.",
+    title: SITE_NAME,
+    description: "Find a church in Champaign-Urbana and across Champaign County, Illinois.",
     url: absoluteUrl("/"),
-    siteName: "Champaign County Church Directory",
+    siteName: SITE_NAME,
     type: "website",
     locale: "en_US",
     images: [
@@ -31,15 +31,14 @@ export const metadata: Metadata = {
         url: absoluteUrl("/og-image.png"),
         width: 1200,
         height: 630,
-        alt: "Champaign County Church Directory"
+        alt: SITE_NAME
       }
     ]
   },
   twitter: {
     card: "summary_large_image",
-    title: "Champaign County Church Directory",
-    description:
-      "Find a church in Champaign County, Illinois by city, service time, and ministry.",
+    title: SITE_NAME,
+    description: "Find a church in Champaign County, Illinois by city, service time, and ministry.",
     images: [absoluteUrl("/og-image.png")]
   },
   icons: {
@@ -79,6 +78,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
               "@context": "https://schema.org",
               "@type": "WebSite",
               name: SITE_NAME,
+              alternateName: SITE_ALTERNATE_NAME,
               url: siteUrl(),
               potentialAction: {
                 "@type": "SearchAction",

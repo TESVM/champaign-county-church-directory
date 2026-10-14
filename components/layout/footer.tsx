@@ -28,6 +28,7 @@ export function Footer() {
             <Link href="/events">Events calendar</Link>
             <Link href="/resources">Community help</Link>
             <Link href="/cities">Browse cities</Link>
+            <Link href="/denominations">Browse by denomination</Link>
           </div>
         </nav>
         <nav aria-label="Footer: churches">

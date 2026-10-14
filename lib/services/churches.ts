@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { audit } from "@/lib/services/audit";
 import { computeEntitlement } from "@/lib/services/entitlements";
+import { DENOMINATION_FAMILIES } from "@/lib/denominations";
 import { featureVisible } from "@/lib/plans";
 import { parseTimeToMinutes } from "@/lib/time/chicago";
 import { nextService } from "@/lib/time/next-service";
@@ -1047,4 +1048,16 @@ export async function listChurchesForMap(filters: ChurchFilters, now = new Date(
       student: Boolean(church.studentTags?.length)
     };
   });
+}
+
+/** Active churches grouped by denomination family, for the denomination pages. */
+export async function listDenominationFamilies(options: { citySlug?: string } = {}) {
+  const prisma = await db();
+  const rows = await prisma.church.findMany({
+    where: { status: "ACTIVE", denomination: { not: null }, ...(options.citySlug ? { cityRecord: { slug: options.citySlug } } : {}) },
+    include: churchInclude,
+    orderBy: [{ name: "asc" }]
+  });
+  const churches = rows.map((row) => mapChurchRow(row));
+  return DENOMINATION_FAMILIES.map((family) => ({ family, churches: churches.filter((c) => family.matches(c.denomination ?? "")) })).filter((g) => g.churches.length > 0);
 }

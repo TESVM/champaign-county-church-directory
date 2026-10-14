@@ -8,6 +8,8 @@ export default async function SharePage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const { church, canManage } = await loadManagedChurch(slug, "/share");
   const url = `${siteUrl()}/churches/${church.slug}`;
+  const badge = `${siteUrl()}/brand/find-us-badge.png`;
+  const badgeHtml = `<a href="${url}" title="${church.name} on Champaign County Churches"><img src="${badge}" alt="Find us on Champaign County Churches" width="200" height="85"></a>`;
   return (
     <>
       <ChurchTabs slug={slug} current="/share" canManage={canManage} />
@@ -28,6 +30,18 @@ export default async function SharePage({ params }: { params: Promise<{ slug: st
             <a href={`/api/churches/${church.slug}/qr?download=1`} className="inline-flex min-h-[44px] items-center rounded-full bg-brand-900 px-5 text-sm font-semibold text-white focus-ring">Download PNG</a>
             <a href={`/api/churches/${church.slug}/qr?format=svg&download=1`} className="inline-flex min-h-[44px] items-center rounded-full border border-line px-5 text-sm font-semibold focus-ring">Download SVG (for print)</a>
           </div>
+        </Card>
+        <Card className="p-6 lg:col-span-2">
+          <h2 className="font-display text-2xl">Add a badge to your website</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Paste this code into your church website (for example in the footer or on your “Visit” page). Visitors can see your service times and directions, and links from church websites help people find churches here when they search.
+          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/find-us-badge.png" alt="Find us on Champaign County Churches" width={200} height={85} className="mt-4" />
+          <div className="mt-4">
+            <CopyField value={badgeHtml} label="Badge code" slug={church.slug} />
+          </div>
+          <p className="mt-2 text-xs text-stone-500">Using Wix, Squarespace, or WordPress? Add an “Embed code” or “Custom HTML” block and paste it there.</p>
         </Card>
       </div>
     </>
