@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
-  const staticPaths = ["/", "/directory", "/map", "/denominations", "/live", "/collaborate", "/campus", "/campus/uiuc", "/campus/parkland", "/campus/other-students", "/campus/organizations", "/campus/churches", "/campus/events", "/campus/new-to-champaign-urbana", "/campus/list-your-organization", "/find-a-service", "/events", "/resources", "/cities", "/for-churches", "/about", "/submit", "/claim", "/contact", "/privacy", "/terms"];
+  const staticPaths = ["/", "/directory", "/map", "/denominations", "/live", "/collaborate", "/campus", "/campus/uiuc", "/campus/parkland", "/campus/other-students", "/campus/organizations", "/campus/churches", "/campus/events", "/campus/new-to-champaign-urbana", "/campus/list-your-organization", "/find-a-service", "/events", "/resources", "/cities", "/for-churches", "/about", "/submit", "/claim", "/contact", "/privacy", "/terms", "/accessibility"];
   try {
     const [churches, cities, orgs, families] = await Promise.all([listAllChurchSlugs(), listCities(), listOrganizations(), listDenominationFamilies()]);
     return [

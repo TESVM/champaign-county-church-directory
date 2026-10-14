@@ -10,7 +10,7 @@ export function PinnedChurchSpotlight({ church }: { church: ChurchRecord }) {
   const websiteUrl = externalUrl(church.websiteUrl);
 
   return (
-    <Card className="border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_24%),linear-gradient(135deg,#12363e_0%,#1f5f63_36%,#f28b66_100%)] p-8 text-white shadow-soft">
+    <Card className="border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_24%),linear-gradient(135deg,#12363e_0%,#1f5f63_36%,#8f4529_100%)] p-8 text-white shadow-soft">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-brand-100">First Church Profile Completed</p>

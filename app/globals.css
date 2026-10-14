@@ -11,6 +11,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* Keeps focused and anchored content clear of the sticky header (WCAG 2.2, 2.4.11). */
+  scroll-padding-top: 6rem;
 }
 
 body {

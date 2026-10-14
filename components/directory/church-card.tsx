@@ -22,7 +22,8 @@ export function ChurchPhotoPlaceholder({ citySlug, className = "" }: { citySlug:
   const gradient = cityGradients[citySlug] ?? "from-brand-700 via-sage to-sky";
   return (
     <div className={`flex h-full items-center justify-center bg-gradient-to-br ${gradient} px-8 text-center ${className}`}>
-      <p className="font-display text-xl text-white/95">Photo not yet provided</p>
+      {/* The gradient is decorative; the dark backing keeps the words above 4.5:1 on every colour. */}
+      <p className="rounded-full bg-brand-900/80 px-4 py-1.5 font-display text-lg text-white">Photo not yet provided</p>
     </div>
   );
 }

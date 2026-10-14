@@ -23,7 +23,9 @@ const config: Config = {
         },
         sage: "#6ba292",
         sky: "#d9eef6",
-        rose: "#f28b66"
+        rose: "#f28b66",
+        /** Darker rose for backgrounds behind white text: 5.5:1 or better (WCAG AA). */
+        clay: "#8f4529"
       },
       fontFamily: {
         sans: ["var(--font-body)", "ui-sans-serif", "system-ui"],
