@@ -542,6 +542,8 @@ model Event {
   recurrence      EventRecurrence @default(NONE)
   recurrenceUntil String?
   registrationUrl String?
+  /// Optional event flyer image (uploaded to image storage or linked).
+  flyerUrl        String?
   /// Campus event categories (lib/campus.ts EVENT_CATEGORIES); empty for general events.
   categories      String[]        @default([])
   status          EventStatus     @default(PUBLISHED)

@@ -84,6 +84,7 @@ const baseSchema = z.object({
   // Stripe billing for the enhanced church profile.
   STRIPE_SECRET_KEY: optionalString,
   STRIPE_PRICE_ID: optionalString,
+  STRIPE_ANNUAL_PRICE_ID: optionalString,
   STRIPE_WEBHOOK_SECRET: optionalString,
 
   // Automated website review.
@@ -225,6 +226,7 @@ export const env = {
 
   stripeSecretKey: parsedEnv.STRIPE_SECRET_KEY,
   stripePriceId: parsedEnv.STRIPE_PRICE_ID,
+  stripeAnnualPriceId: parsedEnv.STRIPE_ANNUAL_PRICE_ID,
   stripeWebhookSecret: parsedEnv.STRIPE_WEBHOOK_SECRET,
 
   scanUserAgent:

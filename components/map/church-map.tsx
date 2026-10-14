@@ -111,7 +111,7 @@ export function ChurchMap({ pins, initialView = "map" }: { pins: MapPin[]; initi
     let cancelled = false;
     void import("leaflet").then((L) => {
       if (cancelled || !mapEl.current) return;
-      const map = L.map(mapEl.current, { scrollWheelZoom: false, zoomControl: true }).setView(COUNTY_CENTER, 11);
+      const map = L.map(mapEl.current, { scrollWheelZoom: true, wheelPxPerZoomLevel: 120, zoomSnap: 0.5, zoomDelta: 0.5, zoomControl: true }).setView(COUNTY_CENTER, 11);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 18,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

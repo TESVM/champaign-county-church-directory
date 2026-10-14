@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { Card } from "@/components/ui/card";
 import { env } from "@/lib/env";
-import { ENHANCED_PRICE_DOLLARS } from "@/lib/plans";
+import { ENHANCED_ANNUAL_PRICE_DOLLARS, ENHANCED_PRICE_DOLLARS } from "@/lib/plans";
+import { annualPlanAvailable } from "@/lib/services/billing";
 
 export const metadata: Metadata = {
   title: "Subscription Terms",
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
  * must be confirmed by the business owner before launch.
  */
 export default function TermsPage() {
+  const annual = annualPlanAvailable();
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
       <SectionHeading as="h1" eyebrow="For church leaders" title="Enhanced Church Profile: subscription terms" description="Plain-language summary of how the paid plan works." />
@@ -25,6 +27,12 @@ export default function TermsPage() {
             The Enhanced Church Profile costs ${ENHANCED_PRICE_DOLLARS} per month (US dollars), charged to a card through Stripe at the start of each
             monthly period. We never see or store your full card number. Receipts and invoices are available from “Manage billing” in your dashboard.
           </p>
+          {annual ? (
+            <p className="mt-2">
+              You can instead pay yearly: ${ENHANCED_ANNUAL_PRICE_DOLLARS} per year, charged at the start of each yearly period. That is 12 months for the price
+              of 11, so the twelfth month is free.
+            </p>
+          ) : null}
         </section>
         <section>
           <h2 className="font-display text-2xl text-ink">Who can subscribe</h2>
@@ -33,7 +41,7 @@ export default function TermsPage() {
         <section>
           <h2 className="font-display text-2xl text-ink">Cancelling</h2>
           <p>
-            Cancel any time from “Manage billing”. Enhanced features stay on until the end of the month you have paid for, then switch off. The
+            Cancel any time from “Manage billing”. Enhanced features stay on until the end of the month (or, on the yearly plan, the year) you have paid for, then switch off. The
             church’s free listing, service times, and visitor information remain published.
           </p>
         </section>
@@ -46,7 +54,7 @@ export default function TermsPage() {
         </section>
         <section>
           <h2 className="font-display text-2xl text-ink">Refunds</h2>
-          <p>Payments are not prorated or refunded for partial months unless required by law. Contact us if you believe you were charged in error.</p>
+          <p>Payments are not prorated or refunded for partial months or years unless required by law. Contact us if you believe you were charged in error.</p>
         </section>
         <section>
           <h2 className="font-display text-2xl text-ink">Price changes</h2>

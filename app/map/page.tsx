@@ -31,7 +31,7 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
         as="h1"
         eyebrow="Explore the Map"
         title="Churches across Champaign County"
-        description="Tap a pin to preview a church, switch to the list for an easier read, or use Near me to sort by distance. Your location never leaves your browser."
+        description="Scroll or pinch to zoom, drag to move, and tap a pin to preview a church. Switch to the list for an easier read, or use Near me to sort by distance. Your location never leaves your browser."
       />
       <div className="mt-8 grid gap-8 lg:grid-cols-[300px_1fr]">
         <ResponsiveDetails summary="Filters" defaultOpen={Object.entries(raw).some(([k, v]) => v && k !== "view")}>
