@@ -47,6 +47,7 @@ export function Footer() {
             {env.supportEmail ? <a href={`mailto:${env.supportEmail}`}>{env.supportEmail}</a> : null}
             <Link href="/contact">Send a message</Link>
             <Link href="/privacy">Privacy policy</Link>
+            <Link href="/accessibility">Accessibility</Link>
             <Link href="/terms">Subscription terms</Link>
             <a href={musicianDirectoryUrl("/")} target="_blank" rel="noreferrer">
               Find musicians

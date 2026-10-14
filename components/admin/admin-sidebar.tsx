@@ -23,7 +23,7 @@ export function AdminSidebar({ counts, isAdmin }: { counts: Record<string, numbe
         {items.map((item) => (
           <Link key={item.href} href={item.href} className="flex min-h-[44px] items-center justify-between rounded-2xl px-4 text-sm font-medium hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
             {item.label}
-            {item.count ? <span className="rounded-full bg-rose px-2 py-0.5 text-xs font-bold text-white">{item.count}<span className="sr-only"> waiting</span></span> : null}
+            {item.count ? <span className="rounded-full bg-clay px-2 py-0.5 text-xs font-bold text-white">{item.count}<span className="sr-only"> waiting</span></span> : null}
           </Link>
         ))}
       </nav>

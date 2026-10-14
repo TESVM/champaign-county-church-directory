@@ -234,11 +234,11 @@ export default async function HomePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pt-12 sm:px-6 lg:px-8">
-        <div className="rounded-[36px] bg-[linear-gradient(135deg,#12363e,#2f8f88_55%,#f28b66)] px-8 py-10 text-white shadow-soft sm:px-10">
+        <div className="rounded-[36px] bg-[linear-gradient(135deg,#12363e,#1f5f63_55%,#8f4529)] px-8 py-10 text-white shadow-soft sm:px-10">
           <div className="max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">Music Ministry</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-white/90">Music Ministry</p>
             <h2 className="mt-4 font-display text-4xl">Need a worship musician or vocalist for your church?</h2>
-            <p className="mt-4 text-lg leading-8 text-white/88">
+            <p className="mt-4 text-lg leading-8 text-white/90">
               We now run a separate musician directory for churches, pastors, worship leaders, and event planners who need dependable local talent.
             </p>
           </div>
