@@ -13,13 +13,13 @@ export function PinnedChurchSpotlight({ church }: { church: ChurchRecord }) {
     <Card className="border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_24%),linear-gradient(135deg,#12363e_0%,#1f5f63_36%,#f28b66_100%)] p-8 text-white shadow-soft">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-brand-100">Always Featured</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-brand-100">First Church Profile Completed</p>
           <h2 className="mt-4 font-display text-4xl">Sheriff Temple AOH Church of God</h2>
           <p className="mt-4 text-base leading-8 text-white/90">
-            Kept on the front page as a permanent neighborhood spotlight so visitors can quickly find this Champaign congregation.
+            The first congregation to complete its full profile on Champaign County Churches, with service times, photos, livestream, and directions all in one place.
           </p>
           <div className="mt-5">
-            <PastorBadge name={church.pastor.fullName} title={church.pastor.title} />
+            <PastorBadge name={church.pastor.fullName} title={church.pastor.title} photoUrl={church.pastor.photoUrl} tone="dark" />
           </div>
           <p className="mt-5 flex items-center gap-2 text-sm text-white/85">
             <MapPin className="h-4 w-4" />
