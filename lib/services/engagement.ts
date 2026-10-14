@@ -1,4 +1,5 @@
 import { EVENT_CATEGORY_KEYS } from "@/lib/campus";
+import { StorageError, storeUploadedImage } from "@/lib/media";
 import { z } from "zod";
 import { type Actor, assertCanEditChurch, assertReviewer, canReview, isStaff } from "@/lib/actor";
 import { db } from "@/lib/db";
@@ -147,16 +148,39 @@ export async function saveEvent(actor: Actor, churchId: string, input: Record<st
   } catch (error) {
     fieldErrors.registrationUrl = (error as LinkError).message;
   }
+  // Optional flyer: an uploaded image, or a link to one.
+  const flyerFile = input.flyerFile instanceof File && input.flyerFile.size > 0 ? input.flyerFile : null;
+  let flyerLink: string | null = null;
+  if (!flyerFile) {
+    try {
+      flyerLink = normalizeLink(input.flyerUrl, "image");
+      if (flyerLink?.startsWith("http:")) fieldErrors.flyerUrl = "Flyer links must use https://.";
+    } catch (error) {
+      fieldErrors.flyerUrl = (error as LinkError).message;
+    }
+  }
   if (!parsed.success || Object.keys(fieldErrors).length) {
     throw new ValidationError("Please fix the highlighted fields. The event was not saved.", fieldErrors);
   }
   const data = parsed.data;
   const prisma = await db();
+  let flyerUrl: string | null | undefined = flyerLink ?? (input.removeFlyer === "true" ? null : undefined);
+  if (flyerFile) {
+    const church = await prisma.church.findUniqueOrThrow({ where: { id: churchId }, select: { slug: true } });
+    try {
+      flyerUrl = await storeUploadedImage(flyerFile, `${church.slug}-event-flyer`);
+    } catch (error) {
+      if (error instanceof StorageError) throw new ValidationError(error.message, { flyerFile: error.message });
+      throw error;
+    }
+  }
   const categories = (Array.isArray(input.categories) ? input.categories : input.categories ? [input.categories] : []).map(String).filter((c) => EVENT_CATEGORY_KEYS.has(c));
   const record = {
     ...data,
     categories,
     registrationUrl,
+    // undefined keeps an existing flyer when editing; null removes it.
+    ...(flyerUrl !== undefined ? { flyerUrl } : {}),
     recurrenceUntil: data.recurrence === "WEEKLY" ? data.recurrenceUntil : null,
     startsAt: chicagoToUtc(data.startDate, data.startTime ?? "00:00")
   };
@@ -186,6 +210,7 @@ export type EventOccurrence = {
   description: string | null;
   location: string | null;
   registrationUrl: string | null;
+  flyerUrl: string | null;
   date: string;
   startTime: string | null;
   endTime: string | null;
@@ -196,7 +221,7 @@ export type EventOccurrence = {
 
 /** Expands one-off and weekly events into dated occurrences in [from, to] (Chicago dates). */
 export function expandOccurrences(
-  event: { id: string; title: string; description: string | null; location: string | null; registrationUrl: string | null; startDate: string; startTime: string | null; endTime: string | null; recurrence: "NONE" | "WEEKLY"; recurrenceUntil: string | null },
+  event: { id: string; title: string; description: string | null; location: string | null; registrationUrl: string | null; flyerUrl?: string | null; startDate: string; startTime: string | null; endTime: string | null; recurrence: "NONE" | "WEEKLY"; recurrenceUntil: string | null },
   church: EventOccurrence["church"],
   from: string,
   to: string
@@ -208,6 +233,7 @@ export function expandOccurrences(
     description: event.description,
     location: event.location,
     registrationUrl: event.registrationUrl,
+    flyerUrl: event.flyerUrl ?? null,
     date,
     startTime: event.startTime,
     endTime: event.endTime,

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CalendarDays, MapPin } from "lucide-react";
+import { EventFlyer } from "@/components/directory/event-flyer";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SelectField } from "@/components/ui/field";
@@ -50,7 +51,8 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
               </h2>
               <ul className="mt-3 space-y-3">
                 {items.map((event) => (
-                  <li key={`${event.eventId}-${event.date}`} className="rounded-[20px] border border-line bg-white p-4 shadow-card">
+                  <li key={`${event.eventId}-${event.date}`} className="flex flex-col gap-4 rounded-[20px] border border-line bg-white p-4 shadow-card sm:flex-row">
+                    <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 text-sm font-semibold text-brand-900">
                       <CalendarDays className="h-4 w-4" aria-hidden="true" />
                       {event.startTime ? formatChicago(event.startsAt, { hour: "numeric", minute: "2-digit" }) : "All day"}
@@ -79,6 +81,8 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
                         </a>
                       ) : null}
                     </p>
+                    </div>
+                    {event.flyerUrl ? <EventFlyer url={event.flyerUrl} title={event.title} /> : null}
                   </li>
                 ))}
               </ul>

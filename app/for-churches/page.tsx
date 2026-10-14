@@ -3,7 +3,8 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { Card } from "@/components/ui/card";
-import { ENHANCED_FEATURES, ENHANCED_PRICE_DOLLARS, FREE_FEATURES } from "@/lib/plans";
+import { annualPlanAvailable } from "@/lib/services/billing";
+import { ENHANCED_ANNUAL_PRICE_DOLLARS, ENHANCED_FEATURES, ENHANCED_PRICE_DOLLARS, FREE_FEATURES } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "For Churches: Free and Enhanced Listings",
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ForChurchesPage({ searchParams }: { searchParams: Promise<{ church?: string }> }) {
+  const annual = annualPlanAvailable();
   const { church } = await searchParams;
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
@@ -46,6 +48,11 @@ export default async function ForChurchesPage({ searchParams }: { searchParams: 
             ${ENHANCED_PRICE_DOLLARS}
             <span className="text-lg text-stone-600"> / month</span>
           </p>
+          {annual ? (
+            <p className="mt-1 text-sm font-semibold text-brand-900">
+              or ${ENHANCED_ANNUAL_PRICE_DOLLARS} / year: get one month free
+            </p>
+          ) : null}
           <p className="mt-2 text-sm text-stone-600">Everything in the free listing, plus:</p>
           <ul className="mt-6 space-y-3">
             {ENHANCED_FEATURES.map((f) => (
@@ -58,7 +65,7 @@ export default async function ForChurchesPage({ searchParams }: { searchParams: 
             ))}
           </ul>
           <p className="mt-6 text-sm leading-6 text-stone-600">
-            Billed monthly by card through Stripe. Cancel any time from your dashboard; features stay on until the end of the paid month. Your
+            Billed {annual ? "monthly or yearly" : "monthly"} by card through Stripe. Cancel any time from your dashboard; features stay on until the end of the period you paid for. Your
             free listing is never removed if you cancel. See the <Link href="/terms" className="underline">subscription terms</Link>.
           </p>
           <p className="mt-3 text-sm leading-6 text-stone-600">

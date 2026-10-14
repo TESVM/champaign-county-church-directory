@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cancelEventAction, saveEventAction } from "@/app/actions";
 import { CheckboxGroup } from "@/components/campus/checkbox-group";
 import { ChurchTabs } from "@/components/dashboard/church-tabs";
+import { PhotoFileInput } from "@/components/dashboard/photo-file-input";
 import { ActionForm, SubmitButton } from "@/components/forms/action-form";
 import { Card } from "@/components/ui/card";
 import { SelectField, TextAreaField, TextField } from "@/components/ui/field";
@@ -32,7 +33,7 @@ export default async function EventsDashboardPage({ params }: { params: Promise<
             <h2 className="font-display text-2xl">Add an event</h2>
             <p className="mt-1 text-sm text-stone-600">Times are Central Time; weekly events keep the same local time across daylight-saving changes.</p>
             <div className="mt-4">
-              <ActionForm action={saveEventAction} resetOnSuccess fieldLabels={{ startDate: "Date", startTime: "Start time", endTime: "End time", recurrenceUntil: "Repeat until", registrationUrl: "Registration link" }}>
+              <ActionForm action={saveEventAction} resetOnSuccess fieldLabels={{ startDate: "Date", startTime: "Start time", endTime: "End time", recurrenceUntil: "Repeat until", registrationUrl: "Registration link", flyerFile: "Flyer image", flyerUrl: "Flyer link" }}>
                 <input type="hidden" name="churchId" value={church.id} />
                 <TextField name="title" label="Title" required />
                 <div className="grid gap-4 sm:grid-cols-3">
@@ -47,6 +48,12 @@ export default async function EventsDashboardPage({ params }: { params: Promise<
                 <TextField name="location" label="Location" hint="Leave blank to use the church address." />
                 <TextAreaField name="description" label="Description" />
                 <TextField name="registrationUrl" label="Registration link" type="url" />
+                <fieldset className="space-y-3 rounded-2xl border border-line p-4">
+                  <legend className="px-1 text-sm font-medium text-stone-800">Flyer (optional)</legend>
+                  <PhotoFileInput name="flyerFile" label="Upload a flyer image (JPEG, PNG, or WebP, up to 4 MB)" />
+                  <TextField name="flyerUrl" label="…or paste a link to the flyer image (https)" type="url" />
+                  <p className="text-xs text-stone-500">Put the date, time, and place in the fields above too: people search those, and screen readers cannot read text inside an image.</p>
+                </fieldset>
                 <CheckboxGroup name="categories" legend="Also show on the Campus Faith student calendar as" options={EVENT_CATEGORIES} hint="Optional. Tick any that fit and the event also appears on the student events calendar." />
                 <SubmitButton>Publish event</SubmitButton>
               </ActionForm>
@@ -64,6 +71,11 @@ export default async function EventsDashboardPage({ params }: { params: Promise<
                       {e.startTime ? ` · ${displayTime(e.startTime)}` : " · all day"}
                       {e.recurrence === "WEEKLY" ? ` · weekly until ${e.recurrenceUntil}` : ""} · {e.status === "CANCELLED" ? "Cancelled" : "Published"}
                     </p>
+                    {e.flyerUrl ? (
+                      <a href={e.flyerUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-brand-900 underline">
+                        Flyer attached
+                      </a>
+                    ) : null}
                     {e.categories.length ? <p className="text-xs text-brand-900">Student calendar: {e.categories.map(eventCategoryLabel).join(", ")}</p> : null}
                     {e.status === "PUBLISHED" ? (
                       <div className="mt-2">

@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import { db } from "@/lib/db";
 import { ConfigurationError, NotFoundError, ValidationError } from "@/lib/errors";
 import { log } from "@/lib/log";
+import type { BillingPlan } from "@/lib/plans";
 import { audit } from "@/lib/services/audit";
 import { computeEntitlement } from "@/lib/services/entitlements";
 
@@ -60,10 +61,23 @@ async function stripe<T>(method: "GET" | "POST", path: string, params?: Record<s
   return json;
 }
 
-export async function startCheckout(actor: Actor, churchId: string, origin: string) {
+/** Whether the annual plan can be offered (its Stripe price is configured). */
+export function annualPlanAvailable() {
+  return billingConfigured() && Boolean(env.stripeAnnualPriceId);
+}
+
+/** "annual" when a subscription is on the annual price, otherwise "monthly". */
+export function planForPrice(priceId: string | null | undefined): BillingPlan {
+  return priceId && env.stripeAnnualPriceId && priceId === env.stripeAnnualPriceId ? "annual" : "monthly";
+}
+
+export async function startCheckout(actor: Actor, churchId: string, origin: string, plan: BillingPlan = "monthly") {
   assertCanManageChurch(actor, churchId);
   if (!billingConfigured()) {
     throw new ConfigurationError("Online payments are not set up yet. Please contact the directory to enable your enhanced profile.");
+  }
+  if (plan === "annual" && !env.stripeAnnualPriceId) {
+    throw new ValidationError("Annual billing is not available yet. Choose monthly, or contact the directory.");
   }
   const prisma = await db();
   const church = await prisma.church.findUnique({ where: { id: churchId }, include: { subscription: true } });
@@ -79,7 +93,7 @@ export async function startCheckout(actor: Actor, churchId: string, origin: stri
     "checkout/sessions",
     {
       mode: "subscription",
-      "line_items[0][price]": env.stripePriceId,
+      "line_items[0][price]": plan === "annual" ? env.stripeAnnualPriceId : env.stripePriceId,
       "line_items[0][quantity]": 1,
       client_reference_id: church.id,
       ...(church.subscription?.stripeCustomerId
@@ -93,10 +107,10 @@ export async function startCheckout(actor: Actor, churchId: string, origin: stri
       success_url: `${origin}/dashboard/churches/${church.slug}/billing?checkout=success`,
       cancel_url: `${origin}/dashboard/churches/${church.slug}/billing?checkout=cancelled`
     },
-    `checkout-${church.id}-${actor.id}-${Math.floor(Date.now() / 60000)}`
+    `checkout-${church.id}-${actor.id}-${plan}-${Math.floor(Date.now() / 60000)}`
   );
 
-  await audit(actor, { action: "billing.checkout_started", entityType: "Church", entityId: church.id, churchId: church.id, summary: "Opened Stripe checkout" });
+  await audit(actor, { action: "billing.checkout_started", entityType: "Church", entityId: church.id, churchId: church.id, summary: `Opened Stripe checkout (${plan})` });
   return session.url;
 }
 

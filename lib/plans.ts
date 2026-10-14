@@ -16,6 +16,10 @@
  */
 
 export const ENHANCED_PRICE_DOLLARS = 29;
+/** Annual plan: 12 months for the price of 11, so the 12th month is free. */
+export const ENHANCED_ANNUAL_PRICE_DOLLARS = ENHANCED_PRICE_DOLLARS * 11;
+export const ENHANCED_ANNUAL_SAVINGS_DOLLARS = ENHANCED_PRICE_DOLLARS * 12 - ENHANCED_ANNUAL_PRICE_DOLLARS;
+export type BillingPlan = "monthly" | "annual";
 
 export type EnhancedFeature =
   | "livestream"

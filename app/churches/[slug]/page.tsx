@@ -30,6 +30,7 @@ import { SaveChurchButton } from "@/components/directory/save-church-button";
 import { SocialIcons } from "@/components/directory/social-icons";
 import { TrackedLink } from "@/components/directory/tracked-link";
 import { VerifiedBadge } from "@/components/directory/verified-badge";
+import { EventFlyer } from "@/components/directory/event-flyer";
 import { CorrectionForm } from "@/components/forms/correction-form";
 import { breadcrumbs, JsonLd } from "@/components/seo/json-ld";
 import { Card } from "@/components/ui/card";
@@ -454,7 +455,8 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
               <h2 className="font-display text-3xl">Upcoming events</h2>
               <ul className="mt-5 space-y-3">
                 {events.slice(0, 8).map((event) => (
-                  <li key={`${event.eventId}-${event.date}`} className="rounded-2xl border border-line p-4">
+                  <li key={`${event.eventId}-${event.date}`} className="flex flex-col gap-4 rounded-2xl border border-line p-4 sm:flex-row">
+                    <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 text-sm font-semibold text-brand-900">
                       <CalendarDays className="h-4 w-4" aria-hidden="true" />
                       {formatChicago(event.startsAt, { weekday: "long", month: "long", day: "numeric" })}
@@ -472,6 +474,8 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
                         </a>
                       ) : null}
                     </p>
+                    </div>
+                    {event.flyerUrl ? <EventFlyer url={event.flyerUrl} title={event.title} /> : null}
                   </li>
                 ))}
               </ul>

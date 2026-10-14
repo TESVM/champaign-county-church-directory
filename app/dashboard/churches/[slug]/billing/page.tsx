@@ -6,8 +6,8 @@ import { ChurchTabs } from "@/components/dashboard/church-tabs";
 import { ActionForm, SubmitButton } from "@/components/forms/action-form";
 import { Card } from "@/components/ui/card";
 import { loadManagedChurch } from "@/lib/dashboard";
-import { ENHANCED_FEATURES, ENHANCED_PRICE_DOLLARS } from "@/lib/plans";
-import { billingConfigured, getBillingSummary } from "@/lib/services/billing";
+import { ENHANCED_ANNUAL_PRICE_DOLLARS, ENHANCED_ANNUAL_SAVINGS_DOLLARS, ENHANCED_FEATURES, ENHANCED_PRICE_DOLLARS } from "@/lib/plans";
+import { annualPlanAvailable, billingConfigured, getBillingSummary, planForPrice } from "@/lib/services/billing";
 import { formatDate } from "@/lib/utils";
 
 const STATUS_TEXT: Record<string, string> = {
@@ -28,6 +28,7 @@ export default async function BillingPage({ params, searchParams }: { params: Pr
   const billing = await getBillingSummary(church.id);
   const sub = billing.subscription;
   const configured = billingConfigured();
+  const annual = annualPlanAvailable();
 
   return (
     <>
@@ -52,6 +53,7 @@ export default async function BillingPage({ params, searchParams }: { params: Pr
           {sub ? (
             <dl className="mt-4 space-y-1 text-sm text-stone-700">
               <div><dt className="inline font-semibold">Subscription: </dt><dd className="inline">{STATUS_TEXT[sub.status] ?? sub.status}</dd></div>
+              <div><dt className="inline font-semibold">Billing: </dt><dd className="inline">{planForPrice(sub.priceId) === "annual" ? `Annual ($${ENHANCED_ANNUAL_PRICE_DOLLARS}/year)` : `Monthly ($${ENHANCED_PRICE_DOLLARS}/month)`}</dd></div>
               {sub.currentPeriodEnd ? (
                 <div><dt className="inline font-semibold">{sub.cancelAtPeriodEnd || sub.status === "canceled" ? "Ends" : "Renews"}: </dt><dd className="inline">{formatDate(sub.currentPeriodEnd.toISOString())}</dd></div>
               ) : null}
@@ -77,13 +79,27 @@ export default async function BillingPage({ params, searchParams }: { params: Pr
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-sm text-stone-600">Cancel any time; features stay on to the end of the paid month. <Link className="underline" href="/terms">Subscription terms</Link>.</p>
+          {annual ? (
+            <p className="mt-4 rounded-2xl bg-brand-50 p-4 text-sm text-brand-900">
+              <span className="font-semibold">Pay yearly and get a month free:</span> ${ENHANCED_ANNUAL_PRICE_DOLLARS} a year instead of ${ENHANCED_PRICE_DOLLARS * 12}. That is 12 months for the price of 11, a savings of ${ENHANCED_ANNUAL_SAVINGS_DOLLARS}.
+            </p>
+          ) : null}
+          <p className="mt-4 text-sm text-stone-600">Cancel any time; features stay on to the end of the period you paid for. <Link className="underline" href="/terms">Subscription terms</Link>.</p>
           {billing.source !== "subscription" ? (
             configured ? (
               <div className="mt-5">
                 <ActionForm action={startCheckoutAction}>
                   <input type="hidden" name="churchId" value={church.id} />
-                  <SubmitButton pendingLabel="Opening checkout…">Subscribe with Stripe</SubmitButton>
+                  <div className="flex flex-wrap gap-3">
+                    {annual ? (
+                      <SubmitButton name="plan" value="annual" pendingLabel="Opening checkout…">
+                        Pay yearly: ${ENHANCED_ANNUAL_PRICE_DOLLARS}/year (1 month free)
+                      </SubmitButton>
+                    ) : null}
+                    <SubmitButton name="plan" value="monthly" variant={annual ? "secondary" : "primary"} pendingLabel="Opening checkout…">
+                      {annual ? `Pay monthly: $${ENHANCED_PRICE_DOLLARS}/month` : "Subscribe with Stripe"}
+                    </SubmitButton>
+                  </div>
                 </ActionForm>
               </div>
             ) : (

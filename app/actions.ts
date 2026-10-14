@@ -350,7 +350,7 @@ export async function startCheckoutAction(_: FormState, formData: FormData) {
   let url: string | null = null;
   const result = await run("checkout", async () => {
     const actor = await signedIn();
-    url = await startCheckout(actor, churchIdFromForm(formData), await originOf());
+    url = await startCheckout(actor, churchIdFromForm(formData), await originOf(), str(formData, "plan") === "annual" ? "annual" : "monthly");
     return "Opening secure checkout…";
   });
   if (url) redirect(url);
