@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, MapPinned, Music2, Search, ShieldCheck, Smartphone } from "lucide-react";
 import { HeroSearch } from "@/components/directory/hero-search";
@@ -8,7 +9,9 @@ import { PinnedChurchSpotlight } from "@/components/directory/pinned-church-spot
 import { RecentlyUpdated } from "@/components/directory/recently-updated";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { Button } from "@/components/ui/button";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getHomepageData } from "@/lib/services/churches";
+import { siteUrl, SITE_ALTERNATE_NAME, SITE_NAME } from "@/lib/site";
 import { musicianDirectoryUrl } from "@/lib/utils";
 
 const featureItems = [
@@ -77,6 +80,8 @@ const quickLinks = [
   }
 ];
 
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
 export default async function HomePage() {
   const home = await getHomepageData();
   const cities = [...home.cities].sort((a, b) => b.churchCount - a.churchCount).slice(0, 6);
@@ -87,6 +92,17 @@ export default async function HomePage() {
 
   return (
     <div className="pb-20">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: SITE_NAME,
+          alternateName: SITE_ALTERNATE_NAME,
+          url: siteUrl(),
+          logo: `${siteUrl()}/icon.png`,
+          areaServed: { "@type": "AdministrativeArea", name: "Champaign County, Illinois" }
+        }}
+      />
       <section className="mx-auto grid max-w-7xl gap-10 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:pt-16">
         <div className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-700">Champaign County, Illinois</p>

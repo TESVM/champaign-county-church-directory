@@ -13,4 +13,6 @@ export function siteUrl(): string {
   }
 }
 
-export const SITE_NAME = "Champaign County Church Directory";
+/** Matches the domain and logo, which is what people type when they search for the site by name. */
+export const SITE_NAME = "Champaign County Churches";
+export const SITE_ALTERNATE_NAME = "Champaign County Church Directory";

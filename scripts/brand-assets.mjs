@@ -83,3 +83,16 @@ const splashLogo = await sharp(fullAlpha).resize({ width: 1000 }).png().toBuffer
 await sharp({ create: { width: 1024, height: 1024, channels: 4, background: CLEAR } }).composite([{ input: splashLogo, gravity: "center" }]).png().toFile("mobile/assets/splash-icon.png");
 await (await place(emblemAlpha, 64, 0.94, WHITE)).png().toFile("mobile/assets/favicon.png");
 console.log("mobile assets done");
+
+// "Find us on" badge for church websites (links back to their listing).
+{
+  const logoForBadge = await sharp(await whiteToAlpha(trimmed)).resize({ width: 340 }).png().toBuffer();
+  const { height: lh } = await sharp(logoForBadge).metadata();
+  const W = 400;
+  const H = 52 + lh + 24;
+  const frame = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="18" fill="#ffffff" stroke="#c8d8d6" stroke-width="2"/><text x="${W / 2}" y="36" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#1f5f63">Find us on</text></svg>`
+  );
+  await sharp(frame).composite([{ input: logoForBadge, top: 52, left: Math.round((W - 340) / 2) }]).png({ compressionLevel: 9 }).toFile("public/brand/find-us-badge.png");
+  console.log("badge done", W, H);
+}

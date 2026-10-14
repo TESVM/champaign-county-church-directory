@@ -31,6 +31,7 @@ import { SocialIcons } from "@/components/directory/social-icons";
 import { TrackedLink } from "@/components/directory/tracked-link";
 import { VerifiedBadge } from "@/components/directory/verified-badge";
 import { CorrectionForm } from "@/components/forms/correction-form";
+import { breadcrumbs, JsonLd } from "@/components/seo/json-ld";
 import { Card } from "@/components/ui/card";
 import { STUDENT_MINISTRY_PATTERN, studentTagLabel } from "@/lib/campus";
 import { shouldOptimizeImage } from "@/lib/images";
@@ -132,6 +133,7 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
     "@type": "Church",
     name: church.name,
     url: profileUrl,
+    ...(church.shortDescription || church.description ? { description: (church.shortDescription || church.description).slice(0, 300) } : {}),
     ...(church.address1
       ? {
           address: {
@@ -179,6 +181,13 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
+      <JsonLd
+        data={breadcrumbs([
+          { name: "Home", path: "/" },
+          ...(church.citySlug ? [{ name: church.city, path: `/cities/${church.citySlug}` }] : []),
+          { name: church.name, path: `/churches/${church.slug}` }
+        ])}
+      />
       {!closed ? <ProfileViewBeacon slug={church.slug} /> : null}
 
       {closed ? (
