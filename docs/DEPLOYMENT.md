@@ -116,3 +116,36 @@ Server code writes JSON lines (`{"level","event",…}`) to stdout/stderr; Vercel
 keeps them under Logs and can forward them with a log drain. Error pages show a
 reference code that matches the `digest` in the logs. There is no third-party
 error tracker; if the owner wants alerts, add a Vercel log drain or Sentry.
+
+## Dependency advisories
+
+SEC-001 review, 2026-11-10. Audit scope: `npm audit --omit=dev` (the
+production dependency graph, not proof of runtime exploitability). Before:
+1 critical / 8 high; after: 0 critical / 7 high. The exact CI command
+`npm audit --omit=dev --audit-level=critical` exits 0. High findings remain
+open for the architect; this is not acceptance of their risk.
+
+| Package / advisory | Affected range reported before | First patched version / disposition |
+| --- | --- | --- |
+| `next`: [GHSA-2464-fhr4-w9xw](https://github.com/advisories/GHSA-2464-fhr4-w9xw), critical | `>=10.0.0 <=15.5.27` | Fixed: 15.5.27 → **15.5.28**, the lowest patched 15.x. Existing sharp override retained. |
+| `next`: [GHSA-p3m5-59mp-jv5r](https://github.com/advisories/GHSA-p3m5-59mp-jv5r), high | `>=13.0.0 <=15.5.27` | Fixed in **15.5.28**. Matching `eslint-config-next` patch applied; no application changes. |
+| `undici`: [GHSA-4qv8-2p9j-2685](https://github.com/advisories/GHSA-4qv8-2p9j-2685), moderate | `>=6.5.0 <6.29.1` | Fixed: 6.29.0 → **6.29.1** within Blob's existing `^6.23.0` range; no override needed. |
+| `undici`: [GHSA-xjj6-f33q-929c](https://github.com/advisories/GHSA-xjj6-f33q-929c), high | `>=6.23.0 <6.29.1` | Fixed in **6.29.1**. |
+| `undici`: [GHSA-2m5v-pch6-74hx](https://github.com/advisories/GHSA-2m5v-pch6-74hx), high | `>=4.0.0 <6.29.1` | Fixed in **6.29.1**. |
+| `undici`: [GHSA-qrxm-fqhp-jwvm](https://github.com/advisories/GHSA-qrxm-fqhp-jwvm), high | `>=4.2.1 <6.29.1` | Fixed in **6.29.1**. |
+| `undici`: [GHSA-9fm3-97px-rjf6](https://github.com/advisories/GHSA-9fm3-97px-rjf6), moderate | `>=5.15.0 <6.29.1` | Fixed in **6.29.1**. |
+| `deepmerge-ts`: [GHSA-ggr8-5vv4-36mx](https://github.com/advisories/GHSA-ggr8-5vv4-36mx), high | `<8.0.0` | **8.0.0** fixes recursive object merging. Installed 7.1.5 is pinned by Prisma config. Retained pending review: forcing a new transitive major could change Prisma's migration/config tooling. The advisory requires recursive JavaScript objects; plain JSON cannot represent the trigger. No direct application import found. |
+| `@prisma/config` → `deepmerge-ts`, high (same GHSA) | `6.13.0-dev.1 - 7.10.0 || 8.1.0-dev.1 - 8.1.0-dev.4` | Installed/latest 6.x is **6.19.3**, still pins deepmerge-ts 7.1.5. No patched 6.x found; no major upgrade or override applied, per SEC-001's stop-and-report instruction. |
+| `prisma` → `@prisma/config`, high (same GHSA) | `6.13.0-dev.1 - 7.10.0 || 8.0.0-rc.3 - 8.1.0-dev.4` | CLI and client retained together at **6.19.3**. No patched 6.x; architect decision required before a major migration. |
+| `zod`: [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5), high | `<4.6.6` | First patch **4.6.6**; direct dependency retained at **3.25.76** pending approval for the 3 → 4 migration. The advisory concerns excessive array-validation work. `lib/services/campus.ts` org/event schemas parse submitted arrays without upper bounds; shared API schemas also use arrays. This API is used: do not classify this finding as inapplicable or fully mitigated. |
+| `@vercel/cli-config` → `zod`, high (same GHSA) | `<=0.3.5` | Installed **0.3.1** pins zod 4.1.11. Published **0.3.6** depends on `^4.6.6`; parent OIDC 3.x still pins affected config. No forced transitive override applied. |
+| `@vercel/oidc` → `@vercel/cli-config`, high (same GHSA) | `3.6.0 - 4.0.5` | Installed/latest 3.x **3.8.10** pins config 0.3.1. Latest published **4.0.8** uses config 0.3.8; moving to OIDC 4 requires a transitive major override and review. |
+| `@vercel/blob` → `@vercel/oidc`, high (same GHSA) | `>=2.4.1-b7027de-20260616193056` | Installed **2.8.0** retained. Newest **2.9.0** still requests OIDC `^3.6.1`, so it does not fix the chain. Audit proposes 2.4.0 as a downgrade, not a newer patch. Neither downgrade nor forced major override applied. `lib/media.ts` still uses explicit token + public `put()` with content type, random suffix and cache lifetime unchanged. |
+
+The seven remaining high package findings represent two underlying advisories
+(deepmerge-ts and zod), including their dependent package chains. Request an
+architect-approved follow-up for Zod 4 compatibility and the Prisma/Blob chains;
+do not run `npm audit fix --force`. Recheck registry metadata and audit results
+before selecting those updates. This patch leaves Node engines, existing
+overrides, schema, application markup, and production-only migration/build
+ordering unchanged. No production configuration or database was modified.

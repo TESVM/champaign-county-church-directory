@@ -1,16 +1,16 @@
 # 09 · Project Status
 
-Last updated: 2026-11-10 by the architect. Update this file whenever a task changes state.
+Last updated: 2026-11-10 by the implementing engineer (SEC-001; architect verdict pending). Update this file whenever a task changes state.
 
 ## Summary
 
-Planning complete. No implementation task has started. Live site is healthy (`/api/health` ok, 70 active churches).
+SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based on the documentation branch (PR #13 remains open). No production deployment or database write performed. Local typecheck/lint, 104 unit tests and 70 integration tests pass. Critical audit gate passes (1 critical / 8 high → 0 critical / 7 high). Build and preview verification are pending; remaining dependency decisions are documented in `docs/DEPLOYMENT.md`. UI-001 has not started.
 
 ## Tasks
 
 | ID | Title | Priority | State | PR | Reviewer verdict |
 |---|---|---|---|---|---|
-| SEC-001 | Next.js critical advisory and triage | P0 | **Ready: first assignment** | — | — |
+| SEC-001 | Next.js critical advisory and triage | P0 | **Awaiting verification / dependency decisions** | Pending creation | Pending architect review |
 | UI-001 | Load brand fonts | P1 | Pending (after SEC-001) | — | — |
 | SEC-003 | Admin password sign-in hardening | P1 | Pending | — | — |
 | SEC-002 | CSP report-only | P1 | Pending | — | — |
@@ -48,3 +48,13 @@ Planning complete. No implementation task has started. Live site is healthy (`/a
 - 2026-11-10: Motion is CSS-only; no animation library.
 - 2026-11-10: No church reviews or star ratings.
 - 2026-11-10: Stock and generated images never appear on church listings.
+
+## SEC-001 implementation notes
+
+- Changed `package.json`, `package-lock.json`, `docs/DEPLOYMENT.md` and this status file only (generated `next-env.d.ts` excluded from the commit).
+- Next.js and matching lint config: 15.5.27 → 15.5.28 (lowest patched 15.x); undici: 6.29.0 → 6.29.1 within its existing parent range. No new overrides.
+- Prisma/client remain 6.19.3 (latest 6.x, no patched config dependency). Stop-and-report rule applied rather than upgrading majors.
+- Zod's array API is used in campus submissions; a 3 → 4 compatibility migration requires architect review. No claim that this finding is inapplicable. Blob 2.9.0 still uses the affected OIDC 3.x chain; no blind downgrade applied.
+- Node 22.23.4 used locally; clean `npm ci --no-audit` and Prisma generation passed. Integration tests used only throwaway in-memory PGlite; initial sandbox port denial was resolved by rerunning with local-listener permission.
+- No visual or SEO changes; no schema, environment files, application code, production settings, mobile files or unrelated original working-copy edits changed.
+- Architect: review the advisory table, approve the patch independently of outstanding major upgrades, and decide the Zod/Prisma/Blob follow-up before UI-001.
