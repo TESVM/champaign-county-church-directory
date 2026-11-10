@@ -4,7 +4,7 @@ Last updated: 2026-11-10 by the implementing engineer (SEC-001; architect verdic
 
 ## Summary
 
-SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based on the documentation branch (PR #13 remains open). No production deployment or database write performed. Local typecheck/lint, 104 unit tests and 70 integration tests pass. Critical audit gate passes (1 critical / 8 high → 0 critical / 7 high). Local production build passes; preview verification is pending; remaining dependency decisions are documented in `docs/DEPLOYMENT.md`. UI-001 has not started.
+SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based on the documentation branch (PR #13 remains open). No production deployment or production database write performed. Local typecheck/lint, 104 unit tests and 70 integration tests pass. Critical audit gate passes (1 critical / 8 high → 0 critical / 7 high). Local production build passes; all five required preview paths redirect to Vercel login, so authenticated preview verification is pending; remaining dependency decisions are documented in `docs/DEPLOYMENT.md`. UI-001 has not started.
 
 ## Tasks
 
