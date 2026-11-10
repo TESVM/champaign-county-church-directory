@@ -4,13 +4,13 @@ Last updated: 2026-11-10 by the implementing engineer (SEC-001; architect verdic
 
 ## Summary
 
-SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based on the documentation branch (PR #13 remains open). No production deployment or production database write performed. Local typecheck/lint, 104 unit tests and 70 integration tests pass. Critical audit gate passes (1 critical / 8 high → 0 critical / 7 high). Local production build passes; all five required preview paths redirect to Vercel login, so authenticated preview verification is pending; remaining dependency decisions are documented in `docs/DEPLOYMENT.md`. UI-001 has not started.
+SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based on the documentation branch (PR #13 remains open). No production deployment or production database write performed. Local typecheck/lint, 104 unit tests and 70 integration tests pass. Critical audit gate passes (1 critical / 8 high → 0 critical / 7 high). Local and GitHub CI checks pass. After the owner-authorized Preview configuration repair and Preview-only redeploy, all five required routes load successfully in authenticated Chrome; remaining dependency decisions are documented in `docs/DEPLOYMENT.md`. UI-001 has not started.
 
 ## Tasks
 
 | ID | Title | Priority | State | PR | Reviewer verdict |
 |---|---|---|---|---|---|
-| SEC-001 | Next.js critical advisory and triage | P0 | **Awaiting verification / dependency decisions** | [#14](https://github.com/TESVM/champaign-county-church-directory/pull/14) (base: #13) | Pending architect review |
+| SEC-001 | Next.js critical advisory and triage | P0 | **Awaiting architect review / dependency decisions** | [#14](https://github.com/TESVM/champaign-county-church-directory/pull/14) (base: #13) | Pending architect review |
 | UI-001 | Load brand fonts | P1 | Pending (after SEC-001) | — | — |
 | SEC-003 | Admin password sign-in hardening | P1 | Pending | — | — |
 | SEC-002 | CSP report-only | P1 | Pending | — | — |
@@ -58,3 +58,13 @@ SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based
 - Node 22.23.4 used locally; clean `npm ci --no-audit` and Prisma generation passed. Integration tests used only throwaway in-memory PGlite; initial sandbox port denial was resolved by rerunning with local-listener permission.
 - No visual or SEO changes; no schema, environment files, application code, production settings, mobile files or unrelated original working-copy edits changed.
 - Architect: review the advisory table, approve the patch independently of outstanding major upgrades, and decide the Zod/Prisma/Blob follow-up before UI-001.
+
+## SEC-001 Preview configuration repair (owner authorized)
+
+- The owner explicitly authorized Preview-only configuration and redeployment, then confirmed making existing Preview credentials available to all Preview branches.
+- Removed `feat/production-launch` restrictions from the Preview entries for `CRON_SECRET` and `RESEND_API_KEY`; secret values were preserved without revealing them. Separate Production entries were untouched. `EMAIL_FROM` was already available to Preview and needed no edit.
+- Redeployed source commit `ad3aa58` to **Preview**, deployment `dpl_5bYqMifwVy9KMDfHgAjsTLSof7MC`, ready after 1m 8s. No promotion or merge. Production settings and live deployment unchanged.
+- Authenticated browser checks passed: `/`, `/directory` (70 churches), `/map` (70 churches, 2 unmatched addresses), `/churches/sheriff-temple-aoh-church-of-god`, `/api/health`. The health response reports `status: ok`, database ok, 70 active churches, email configured, cron configured and Blob uploads. Numeric HTTP statuses were not independently captured in this browser check.
+- No browser console errors captured during the directory check. This is a smoke test, not full axe or authenticated workflow verification. No forms, email sends, uploads, billing transactions or listing edits were performed.
+- The preview continues to share the production database; only read-only checks were performed. Future Preview branches can use the existing Preview email credential as approved by the owner.
+- Tested deployment: https://champaign-county-church-directory-ljugzblih-tesvms-projects.vercel.app/ . Subsequent changes in this status note are documentation only; runtime source remains the tested patch.
