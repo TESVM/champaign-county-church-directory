@@ -42,6 +42,7 @@ const baseSchema = z.object({
 
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_PASSWORD: z.string().min(MIN_ADMIN_PASSWORD_LENGTH).optional(),
+  ADMIN_PASSWORD_LOGIN: z.enum(["on", "off"]).default("on"),
 
   CRON_SECRET: z.string().min(16).optional(),
 
@@ -209,6 +210,7 @@ export const env = {
 
   adminEmail: parsedEnv.ADMIN_EMAIL?.toLowerCase(),
   adminPassword: parsedEnv.ADMIN_PASSWORD,
+  adminPasswordLogin: parsedEnv.ADMIN_PASSWORD_LOGIN,
 
   cronSecret: parsedEnv.CRON_SECRET,
 

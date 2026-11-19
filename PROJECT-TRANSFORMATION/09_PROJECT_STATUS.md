@@ -1,6 +1,6 @@
 # 09 · Project Status
 
-Last updated: 2026-11-19 by the implementing engineer (UI-001). Update this file whenever a task changes state.
+Last updated: 2026-11-19 by the implementing engineer (SEC-003). Update this file whenever a task changes state.
 
 ## Summary
 
@@ -12,7 +12,7 @@ SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based
 |---|---|---|---|---|---|
 | SEC-001 | Next.js critical advisory and triage | P0 | **Awaiting architect review / dependency decisions** | [#14](https://github.com/TESVM/champaign-county-church-directory/pull/14) (base: #13) | Pending architect review |
 | UI-001 | Load brand fonts | P1 | Implemented and smoke-tested; awaiting review | [#15](https://github.com/TESVM/champaign-county-church-directory/pull/15) (base: #14) | Pending review |
-| SEC-003 | Admin password sign-in hardening | P1 | Pending | — | — |
+| SEC-003 | Admin password sign-in hardening | P1 | Implemented; checks in progress | Pending | Pending review |
 | SEC-002 | CSP report-only | P1 | Pending | — | — |
 | UI-002 | Color tokens | P1 | Pending | — | — |
 | UX-004 | Claim prompt | P1 | Pending | — | — |
@@ -78,3 +78,11 @@ SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based
 - Before/after screenshots captured and reviewed for homepage/profile at 375 and 1366 px. All eight page/width checks passed for home, directory, profile and signed-out admin redirect: h1 computes to Fraunces; body computes to Source Sans 3; no horizontal overflow. Browser font preloads are same-origin WOFF2. Compiled CSS has no Google font origins. Full network recording, CLS measurement and axe audit were not run; no results are claimed for those checks.
 
 - UI-001 tested source commit `c0bc469`, automatic Vercel Preview deployment `dpl_8bro63SivZqRdXw6JLD5VToEMqC3` passed. Preview: https://champaign-county-church-directory-git-ta-aaa883-tesvms-projects.vercel.app/ . No browser console errors captured. No form submissions or database mutations. Documentation-only follow-up records these results.
+
+## SEC-003 — Administrator password sign-in (2026-11-19)
+
+- Owner instructed "move forward" after UI-001. SEC-003 is isolated on `task/sec-003-admin-signin`, stacked on the font branch; upstream merge dependencies remain outstanding. No production merge or environment-value change.
+- Added the planned 5-attempt normalized-email limit per 15-minute fixed window alongside the existing 10-attempt client limit. Expected authentication failures return null, so the existing server action continues to show one generic failure message; `app/actions.ts` needed no change.
+- Failed attempts are audited as anonymous with reason and HMAC-hashed client key; no submitted email, password or full IP. Successful password sign-in is audited against the administrator's user record. Both constant-time comparisons and existing session/email-link implementations are preserved.
+- `ADMIN_PASSWORD_LOGIN` is validated as on/off, defaults on, and off refuses credentials before comparison and hides the password form. Only the `.env.example` template is documented; no configured environment value changed.
+- Ten new integration cases passed, including account-limit bypass attempts from new clients, IP-limit preservation, audit privacy, flag off, default/invalid flag values, window reset and email-link regression. Local typecheck/lint, 104 unit tests and 80 integration tests passed. Production build passed. Local HTTP checks returned 200 with the flag on and off: the password form is visible only when on; email sign-in stays visible in both. Preview verification is pending.

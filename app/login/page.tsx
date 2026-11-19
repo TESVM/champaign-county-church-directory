@@ -37,7 +37,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <SubmitButton pendingLabel="Sending…">Email me a sign-in link</SubmitButton>
           </ActionForm>
         </div>
-        {env.adminPassword ? (
+        {env.adminPasswordLogin === "on" && env.adminPassword ? (
           <details className="mt-8 rounded-2xl border border-line p-4">
             <summary className="cursor-pointer text-sm font-semibold text-ink">Directory administrator password sign-in</summary>
             <div className="mt-4">

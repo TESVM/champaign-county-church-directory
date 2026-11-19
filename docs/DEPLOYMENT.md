@@ -149,3 +149,36 @@ do not run `npm audit fix --force`. Recheck registry metadata and audit results
 before selecting those updates. This patch leaves Node engines, existing
 overrides, schema, application markup, and production-only migration/build
 ordering unchanged. No production configuration or database was modified.
+
+## Administrator password sign-in
+
+`ADMIN_PASSWORD_LOGIN` accepts `on` (default) or `off`. The default preserves
+existing password access when `ADMIN_PASSWORD` is configured. With `off`, the
+password section is hidden and the server refuses password sign-in before any
+credential comparison. Email-link sign-in and existing sessions are unchanged.
+Test the emailed sign-in link before choosing email-only access.
+
+Password sign-in is limited to 10 attempts per client address and 5 per
+normalized submitted email per 15-minute fixed window, using the existing
+Postgres-backed limiter. Changing client address does not bypass the account
+limit; changing email case or whitespace does not create another account key.
+After the window resets, password sign-in can be attempted again. This can
+also temporarily delay a legitimate administrator if someone targets their
+email; email links remain a separate sign-in path.
+
+Expected authentication failures (wrong/missing credentials, password login
+off, or either limit exceeded) all return the same existing form message:
+"That email and password did not match." Operational database failures retain
+the existing safe error handling. No authentication failure reason is shown
+to the visitor.
+
+Audit actions: `auth.password_failed` and `auth.password_signed_in`. Failed
+attempts are attributed to anonymous and contain only a reason code and the
+existing HMAC hash of the client key. Submitted passwords, full IPs and failed
+email addresses are never included. Success is attributed to the configured
+administrator's user record. Audit write failures do not bypass sign-in checks.
+
+Owner note: set `ADMIN_PASSWORD_LOGIN=off` in Vercel when you are comfortable
+using email links only. **This task does not change deployed environment
+values.** The new setting is documented in `.env.example`; no real `.env`
+file or configured password is changed.
