@@ -11,7 +11,7 @@ SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based
 | ID | Title | Priority | State | PR | Reviewer verdict |
 |---|---|---|---|---|---|
 | SEC-001 | Next.js critical advisory and triage | P0 | **Awaiting architect review / dependency decisions** | [#14](https://github.com/TESVM/champaign-county-church-directory/pull/14) (base: #13) | Pending architect review |
-| UI-001 | Load brand fonts | P1 | Implemented; awaiting Preview verification | Pending | Pending review |
+| UI-001 | Load brand fonts | P1 | Implemented and smoke-tested; awaiting review | [#15](https://github.com/TESVM/champaign-county-church-directory/pull/15) (base: #14) | Pending review |
 | SEC-003 | Admin password sign-in hardening | P1 | Pending | — | — |
 | SEC-002 | CSP report-only | P1 | Pending | — | — |
 | UI-002 | Color tokens | P1 | Pending | — | — |
@@ -75,4 +75,6 @@ SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based
 - Only runtime changes: `app/layout.tsx` loads variable Fraunces and Source Sans 3 from `next/font/google` with Latin subsets, swap, automatic fallback adjustment and the approved CSS variables; adds their variable classes to `<html lang="en">`. `app/globals.css` removes the string-only font variables and applies `font-sans` to body. Existing Tailwind mappings are already correct and unchanged.
 - Next 15's Google loader accepts `weight: "variable"`; explicit numeric range strings are not valid. Variable fonts cover the approved heading/body weights; existing component weights, sizes, colors and content remain unchanged.
 - Node 22.23.4: clean install, typecheck, lint, 104 unit tests, 70 integration tests and production build all passed. Build generated local WOFF2 font assets and adjusted fallback faces. No new dependencies, schema edits, environment changes or production writes.
-- Before screenshots captured for homepage/profile at 375 and 1366 px. Preview screenshots and computed-font/network checks pending.
+- Before/after screenshots captured and reviewed for homepage/profile at 375 and 1366 px. All eight page/width checks passed for home, directory, profile and signed-out admin redirect: h1 computes to Fraunces; body computes to Source Sans 3; no horizontal overflow. Browser font preloads are same-origin WOFF2. Compiled CSS has no Google font origins. Full network recording, CLS measurement and axe audit were not run; no results are claimed for those checks.
+
+- UI-001 tested source commit `c0bc469`, automatic Vercel Preview deployment `dpl_8bro63SivZqRdXw6JLD5VToEMqC3` passed. Preview: https://champaign-county-church-directory-git-ta-aaa883-tesvms-projects.vercel.app/ . No browser console errors captured. No form submissions or database mutations. Documentation-only follow-up records these results.
