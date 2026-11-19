@@ -1,10 +1,25 @@
 import type { Metadata, Viewport } from "next";
+import { Fraunces, Source_Sans_3 } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { absoluteUrl } from "@/lib/utils";
 import { siteUrl, SITE_ALTERNATE_NAME, SITE_NAME } from "@/lib/site";
+
+const displayFont = Fraunces({
+  subsets: ["latin"],
+  display: "swap",
+  weight: "variable",
+  variable: "--font-display"
+});
+
+const bodyFont = Source_Sans_3({
+  subsets: ["latin"],
+  display: "swap",
+  weight: "variable",
+  variable: "--font-body"
+});
 
 // Every page reads live directory data (and the header reads the session), so
 // render on request. This also means builds never need database access.
@@ -65,7 +80,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${displayFont.variable} ${bodyFont.variable}`}>
       <body>
         <a href="#main-content" className="skip-link">
           Skip to main content
