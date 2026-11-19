@@ -1,17 +1,17 @@
 # 09 · Project Status
 
-Last updated: 2026-11-10 by the implementing engineer (SEC-001; architect verdict pending). Update this file whenever a task changes state.
+Last updated: 2026-11-19 by the implementing engineer (UI-001). Update this file whenever a task changes state.
 
 ## Summary
 
-SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based on the documentation branch (PR #13 remains open). No production deployment or production database write performed. Local typecheck/lint, 104 unit tests and 70 integration tests pass. Critical audit gate passes (1 critical / 8 high → 0 critical / 7 high). Local and GitHub CI checks pass. After the owner-authorized Preview configuration repair and Preview-only redeploy, all five required routes load successfully in authenticated Chrome; remaining dependency decisions are documented in `docs/DEPLOYMENT.md`. UI-001 has not started.
+SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based on the documentation branch (PR #13 remains open). No production deployment or production database write performed. Local typecheck/lint, 104 unit tests and 70 integration tests pass. Critical audit gate passes (1 critical / 8 high → 0 critical / 7 high). Local and GitHub CI checks pass. After the owner-authorized Preview configuration repair and Preview-only redeploy, all five required routes load successfully in authenticated Chrome; remaining dependency decisions are documented in `docs/DEPLOYMENT.md`. The owner approved proceeding on 2026-11-19. UI-001 is implemented on a separate branch stacked on SEC-001; production merges remain pending.
 
 ## Tasks
 
 | ID | Title | Priority | State | PR | Reviewer verdict |
 |---|---|---|---|---|---|
 | SEC-001 | Next.js critical advisory and triage | P0 | **Awaiting architect review / dependency decisions** | [#14](https://github.com/TESVM/champaign-county-church-directory/pull/14) (base: #13) | Pending architect review |
-| UI-001 | Load brand fonts | P1 | Pending (after SEC-001) | — | — |
+| UI-001 | Load brand fonts | P1 | Implemented and smoke-tested; awaiting review | [#15](https://github.com/TESVM/champaign-county-church-directory/pull/15) (base: #14) | Pending review |
 | SEC-003 | Admin password sign-in hardening | P1 | Pending | — | — |
 | SEC-002 | CSP report-only | P1 | Pending | — | — |
 | UI-002 | Color tokens | P1 | Pending | — | — |
@@ -68,3 +68,13 @@ SEC-001 implemented on `task/sec-001-next-upgrade` in an isolated checkout based
 - No browser console errors captured during the directory check. This is a smoke test, not full axe or authenticated workflow verification. No forms, email sends, uploads, billing transactions or listing edits were performed.
 - The preview continues to share the production database; only read-only checks were performed. Future Preview branches can use the existing Preview email credential as approved by the owner.
 - Tested deployment: https://champaign-county-church-directory-ljugzblih-tesvms-projects.vercel.app/ . Subsequent changes in this status note are documentation only; runtime source remains the tested patch.
+
+## UI-001 — Brand fonts (2026-11-19)
+
+- Owner said "approved" after the SEC-001 review handoff; treated as approval to proceed with the font task. PRs #13 and #14 remain open. UI-001 is stacked on `task/sec-001-next-upgrade` rather than merging or deploying production. Its merge dependency on SEC-001 remains outstanding.
+- Only runtime changes: `app/layout.tsx` loads variable Fraunces and Source Sans 3 from `next/font/google` with Latin subsets, swap, automatic fallback adjustment and the approved CSS variables; adds their variable classes to `<html lang="en">`. `app/globals.css` removes the string-only font variables and applies `font-sans` to body. Existing Tailwind mappings are already correct and unchanged.
+- Next 15's Google loader accepts `weight: "variable"`; explicit numeric range strings are not valid. Variable fonts cover the approved heading/body weights; existing component weights, sizes, colors and content remain unchanged.
+- Node 22.23.4: clean install, typecheck, lint, 104 unit tests, 70 integration tests and production build all passed. Build generated local WOFF2 font assets and adjusted fallback faces. No new dependencies, schema edits, environment changes or production writes.
+- Before/after screenshots captured and reviewed for homepage/profile at 375 and 1366 px. All eight page/width checks passed for home, directory, profile and signed-out admin redirect: h1 computes to Fraunces; body computes to Source Sans 3; no horizontal overflow. Browser font preloads are same-origin WOFF2. Compiled CSS has no Google font origins. Full network recording, CLS measurement and axe audit were not run; no results are claimed for those checks.
+
+- UI-001 tested source commit `c0bc469`, automatic Vercel Preview deployment `dpl_8bro63SivZqRdXw6JLD5VToEMqC3` passed. Preview: https://champaign-county-church-directory-git-ta-aaa883-tesvms-projects.vercel.app/ . No browser console errors captured. No form submissions or database mutations. Documentation-only follow-up records these results.
