@@ -481,7 +481,7 @@ const text = (max: number) => z.string().trim().max(max).optional().transform((v
 
 const serviceInput = z.object({
   serviceName: z.string().trim().min(1, "Give each service a name.").max(80),
-  dayOfWeek: z.enum(DAYS, { errorMap: () => ({ message: "Choose a day for each service." }) }),
+  dayOfWeek: z.enum(DAYS, { error: "Choose a day for each service." }),
   startTime: z.string().trim().min(1, "Give each service a start time.").max(20),
   endTime: z.string().trim().max(20).optional(),
   language: z.string().trim().max(40).optional(),

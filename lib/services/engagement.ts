@@ -331,7 +331,7 @@ type ResourceCategoryValue = (typeof RESOURCE_CATEGORIES)[number]["value"];
 
 const resourceSchema = z.object({
   category: z.enum(RESOURCE_CATEGORIES.map((c) => c.value) as [ResourceCategoryValue, ...ResourceCategoryValue[]], {
-    errorMap: () => ({ message: "Choose a category." })
+    error: "Choose a category."
   }),
   title: z.string().trim().min(3, "Give the program a name.").max(120),
   description: z.string().trim().min(10, "Describe the program in a sentence or two.").max(2000),

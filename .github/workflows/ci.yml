@@ -48,5 +48,5 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Dependency audit (production, critical)
-        run: npm audit --omit=dev --audit-level=critical
+      - name: Dependency audit (all dependencies, high)
+        run: npm audit --audit-level=high

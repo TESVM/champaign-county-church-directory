@@ -19,7 +19,7 @@ const claimSchema = z.object({
   contactEmail: z.string().trim().email("Enter a valid email address.").max(254),
   role: z.string().trim().min(2, "Tell us your role at the church.").max(120),
   verificationMethod: z.enum(["DOMAIN_EMAIL", "PUBLIC_PHONE", "MANUAL_REVIEW"], {
-    errorMap: () => ({ message: "Choose how we should verify you." })
+    error: "Choose how we should verify you."
   }),
   evidence: z.string().trim().min(10, "Describe how we can confirm you are authorised (at least 10 characters).").max(3000),
   phone: z.string().optional()

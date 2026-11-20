@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -91,6 +92,7 @@ function yesNo(value: boolean | null | undefined, yes: string, no?: string) {
 const pill = "inline-flex min-h-[44px] items-center gap-2 rounded-full border border-line bg-white px-5 text-sm font-semibold text-ink hover:border-brand-700 focus-ring";
 
 export default async function ChurchProfilePage({ params }: { params: Promise<{ slug: string }> }) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const { slug } = await params;
   const result = await getChurchBySlug(slug);
   if (!result) notFound();
@@ -181,7 +183,7 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
+      <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       <JsonLd
         data={breadcrumbs([
           { name: "Home", path: "/" },

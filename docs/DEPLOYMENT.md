@@ -117,7 +117,72 @@ keeps them under Logs and can forward them with a log drain. Error pages show a
 reference code that matches the `digest` in the logs. There is no third-party
 error tracker; if the owner wants alerts, add a Vercel log drain or Sentry.
 
-## Dependency advisories
+## Security follow-up (2026-11-20)
+
+The owner authorized the necessary remaining security changes after release #17.
+This follow-up upgrades root/shared/mobile application Zod to **4.6.7**, updates
+Zod error options and the shared client's type signature, and preserves the API
+v1 response envelopes, default values and field-error paths. The mobile change
+is limited to validation compatibility and lockfile metadata; no mobile features,
+native builds or store releases are included. Expo retains a separate internal
+Zod 3 dependency; no claim of a full mobile SDK security audit is made.
+
+Website `npm audit` and `npm audit --omit=dev` now both report **zero findings**.
+This includes development-tool fixes: Vitest 4.1.12 (first patched 4.x line),
+explicit Vite 7.3.8 (preserves the previous transformer major), tsx 4.23.15 and
+compatible TypeScript-ESLint / selector-parser dependency updates. Integration
+configuration uses Vitest 4's `maxWorkers: 1` with file parallelism disabled,
+preserving serial access to the isolated database. CI now audits all website
+dependencies at the high severity threshold, rather than only production
+critical findings. Audit results are time-specific and must be rechecked later.
+
+### Enforced browser policy
+
+The previous report-only CSP is replaced by an enforced policy in Next.js 15
+`middleware.ts`. Each matched request gets a new 128-bit cryptographic nonce.
+The middleware overwrites incoming nonce/CSP headers and forwards its trusted
+policy to Next, which adds the nonce to its bootstrap. The root WebSite JSON-LD,
+shared JSON-LD component and profile's Church JSON-LD use the same request nonce.
+Existing escaping and structured-data content are preserved.
+
+Production policy (`NONCE` is fresh per response):
+
+```text
+default-src 'self'; script-src 'self' 'nonce-NONCE'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self'; frame-src https://www.google.com; form-action 'self' https://checkout.stripe.com https://billing.stripe.com; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
+```
+
+Arbitrary inline JavaScript and inline event handlers are blocked. Same-origin
+scripts remain allowed; this is not a strict-dynamic policy. Inline styles remain
+allowed for React and Leaflet positioning, and arbitrary HTTPS image hosts remain
+allowed for church-supplied photos/flyers. These are deliberate compatibility
+allowances, not claims of a complete XSS defense. Public JSON APIs and Next static
+assets/image optimizer bypass the nonce middleware; existing global security
+headers and public API CORS remain intact. Pages already use force-dynamic and
+no-store; do not add shared HTML caching or static rendering without redesigning
+nonce handling. No database queries are added to the middleware.
+
+Local development alone permits unsafe-eval and WebSocket connections for HMR.
+Vercel Preview alone permits its existing toolbar origin (vercel.live for scripts,
+frames and connections; ws-us3.pusher.com for its WebSocket). Production receives
+none of these toolbar/development allowances. No report endpoint, third-party
+monitoring integration or real environment/password change is introduced.
+
+Validation before release: 116 unit tests, 80 isolated integration tests, website
+and mobile typechecks, lint, production build, and a real Chrome local fixture
+proving trusted scripts run while untrusted inline scripts/event handlers are
+blocked. Built login HTML is checked with the password flag on/off: all 29 script
+tags match the response nonce, a new request gets a different nonce, spoofed
+headers are overwritten, and cache-control remains no-store. Preview and final
+live evidence are tracked in the security follow-up PR and review report.
+
+Sources: [Zod migration guide](https://zod.dev/v4/changelog),
+[Zod advisory](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5),
+[Next.js 15 nonce guidance](https://nextjs.org/docs/15/app/guides/content-security-policy).
+
+## Dependency advisories — historical release #17
+
+The table below records the first release's disposition. Its remaining root/shared
+Zod finding and report-only stage are superseded by the follow-up above.
 
 Security release review: **2026-11-20**. Audit scope is the production dependency
 graph (`npm audit --omit=dev`), not proof that every advisory is reachable.

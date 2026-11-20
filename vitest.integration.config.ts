@@ -9,7 +9,7 @@ export default defineConfig({
     setupFiles: ["tests/integration/env.ts"],
     // One database, one connection: run files one after another.
     pool: "forks",
-    poolOptions: { forks: { singleFork: true } },
+    maxWorkers: 1,
     fileParallelism: false,
     testTimeout: 30_000,
     hookTimeout: 60_000
