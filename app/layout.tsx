@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
@@ -63,7 +64,8 @@ export const viewport: Viewport = {
   maximumScale: 5
 };
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en">
       <body>
@@ -71,6 +73,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           Skip to main content
         </a>
         <script
+          nonce={nonce}
           type="application/ld+json"
           // Static, server-generated JSON; no user input.
           dangerouslySetInnerHTML={{

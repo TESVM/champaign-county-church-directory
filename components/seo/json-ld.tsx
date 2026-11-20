@@ -1,9 +1,11 @@
+import { headers } from "next/headers";
 import { siteUrl } from "@/lib/site";
 
 /** Structured data for search engines. Content is server-generated, never user HTML. */
-export function JsonLd({ data }: { data: Record<string, unknown> }) {
+export async function JsonLd({ data }: { data: Record<string, unknown> }) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   // Escape "<" so a church name can never close the script tag.
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }} />;
+  return <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }} />;
 }
 
 /** BreadcrumbList for Google's breadcrumb trail in results. Paths are site-relative. */
