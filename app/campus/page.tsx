@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/json-ld";
 import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
 import { CampusNav, ListOrgCallout } from "@/components/campus/campus-nav";
@@ -38,7 +39,7 @@ export default async function CampusPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-12 px-4 py-10 sm:px-6 lg:px-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={jsonLd} />
       <section className="section-strong overflow-hidden rounded-[36px] border border-white/70 px-6 py-10 shadow-soft sm:px-10 sm:py-14">
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-700">Campus Faith</p>
         <h1 className="mt-3 max-w-3xl font-display text-4xl leading-tight text-ink sm:text-6xl">Find your people. Keep your faith.</h1>
