@@ -4,16 +4,16 @@ Last updated: 2026-11-20 by the release engineer. Update this file whenever a ta
 
 ## Summary
 
-Owner authorized finishing review and releasing security work on 2026-11-20. A security-only release candidate is prepared directly against main: SEC-001, SEC-003, SEC-002 and the sign-in label fix. UI-001 fonts remain outside the production release. Candidate audit is 0 critical / 0 moderate / 1 high (Zod 3, documented in deployment notes). Production release checks are in progress; final deployment evidence will be recorded in the release review.
+Owner authorized finishing review and releasing security work on 2026-11-20. A security-only release candidate is prepared directly against main: SEC-001, SEC-003, SEC-002 and the sign-in label fix. UI-001 fonts remain outside the production release. Candidate audit is 0 critical / 0 moderate / 1 high (Zod 3, documented in deployment notes). Local verification and GitHub CI pass. Release/deployment status and final live evidence are tracked in [security release #17](https://github.com/TESVM/champaign-county-church-directory/pull/17).
 
 ## Tasks
 
 | ID | Title | Priority | State | PR | Reviewer verdict |
 |---|---|---|---|---|---|
-| SEC-001 | Next.js critical advisory and triage | P0 | Reviewed security release candidate | — | — |
+| SEC-001 | Next.js critical advisory and triage | P0 | Implemented; security release #17 | [#17](https://github.com/TESVM/champaign-county-church-directory/pull/17) | Tests and CI passed; owner authorized release |
 | UI-001 | Load brand fonts | P1 | Implemented in preview only; held from security release | [#15](https://github.com/TESVM/champaign-county-church-directory/pull/15) | Final QA pending |
-| SEC-003 | Admin password sign-in hardening | P1 | Reviewed security release candidate | Release PR pending | Release checks in progress |
-| SEC-002 | CSP report-only | P1 | Implemented; final Preview observation pending | Release PR pending | — |
+| SEC-003 | Admin password sign-in hardening | P1 | Implemented; security release #17 | [#17](https://github.com/TESVM/champaign-county-church-directory/pull/17) | Tests and CI passed; owner authorized release |
+| SEC-002 | CSP report-only | P1 | Implemented; reporting-only release #17 | [#17](https://github.com/TESVM/champaign-county-church-directory/pull/17) | Local header checks and Preview observation complete; enforcement deferred |
 | UI-002 | Color tokens | P1 | Pending | — | — |
 | UX-004 | Claim prompt | P1 | Pending | — | — |
 | UI-004 | Church card | P1 | Pending | — | — |
@@ -56,6 +56,16 @@ Owner authorized finishing review and releasing security work on 2026-11-20. A s
 - Next.js/lint config patched to 15.5.29; undici 6.29.1. Scoped dependency overrides fix Prisma-config deepmerge-ts/effect and the Vercel OIDC CLI-config Zod chain, without a Prisma/framework/OIDC major upgrade. See `docs/DEPLOYMENT.md` for IDs, ranges, compatibility and the one remaining Zod 3 high finding.
 - Administrator sign-in has per-client/per-account limits, safe audit rows and an optional default-on password-login switch. No real password or environment flag changed. The duplicate login email IDs are corrected with a caller-provided TextField ID, preserving form-data names and other callers.
 - Review checks include the standard commands, isolated auth tests, field-label regression tests, local on/off login rendering, Preview inspection, no-migration diff and live before/after page/health checks. No production login attempts, form submissions or uploads will be used for verification.
-- Production deployment and final results pending the release PR/CI. The remaining Zod 3 migration, CSP enforcement and full ongoing accessibility/performance program remain separate work; no claim that all security work is complete.
+- Production deployment and final live results are tracked in the release PR #17. The remaining Zod 3 migration, CSP enforcement and full ongoing accessibility/performance program remain separate work; no claim that all security work is complete.
 
 - SEC-002 adds the approved report-only CSP, retaining all existing headers and public API CORS. No enforcing policy or report endpoint is added. Inline bootstrap/JSON-LD allowances remain until nonce support is separately reviewed.
+
+### Release verification record
+
+- Node 22.23.4: clean install / Prisma generation, schema validation, typecheck, lint, 110 unit tests, 80 integration tests and production build passed. GitHub CI and Vercel Preview passed for the security candidate; final docs-only update re-runs CI before merge.
+- Fresh production-lockfile audit: 1 critical / 9 high. Release audit: 0 critical / 1 high; critical gate passes. The remaining high is the documented shared/root Zod 3 migration.
+- Preview: `/`, `/directory`, `/map`, `/live`, `/events`, the Sheriff Temple profile, `/login`, and signed-out `/dashboard` inspected in authenticated Chrome. Map: 68 markers and loaded OpenStreetMap tiles; profile Google map iframe present. Dashboard redirects to login. Login labels point to distinct inputs at 375 and 1366 px with no horizontal overflow.
+- Preview `/api/health`: database ok, 70 active churches, email/cron configured, Blob uploads configured. Preview billing is not configured; no billing changes made. Production billing was configured in the baseline.
+- Captured app warning/error/info messages on the inspected routes: none; extension debug messages excluded. No report-only violations surfaced through the available browser log interface. This is not an exhaustive native DevTools security-console audit; CSP enforcement remains deferred.
+- Direct unauthenticated Preview HTTP requests redirect to Vercel SSO, so they are not counted as application 200/header checks. Existing Preview protection remains enabled. Local built-server headers were verified, and public production headers/routes are checked after deployment.
+- Owner sign-in/email delivery, paid checkout, real Blob upload, full axe/VoiceOver/performance tests and production log/drain monitoring are not claimed as completed. Auth/service behaviors are covered in the isolated database tests.
