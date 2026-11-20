@@ -4,13 +4,15 @@ Last updated: 2026-11-20 by the release engineer. Update this file whenever a ta
 
 ## Summary
 
-Owner authorized finishing review and releasing security work on 2026-11-20. A security-only release candidate is prepared directly against main: SEC-001, SEC-003, SEC-002 and the sign-in label fix. UI-001 fonts remain outside the production release. Candidate audit is 0 critical / 0 moderate / 1 high (Zod 3, documented in deployment notes). Local verification and GitHub CI pass. Release/deployment status and final live evidence are tracked in [security release #17](https://github.com/TESVM/champaign-county-church-directory/pull/17).
+Owner authorized the remaining security changes on 2026-11-20 after security release #17. SEC-004 patches validation and development tooling; SEC-005 enforces the reviewed browser policy with per-request nonces. Local tests pass and both website dependency audits report zero findings. Release/Preview tracking will be linked in the follow-up review. Design work remains held. Vercel authenticator enrollment requires the owner; no account credentials are changed by this implementation.
 
 ## Tasks
 
 | ID | Title | Priority | State | PR | Reviewer verdict |
 |---|---|---|---|---|---|
 | SEC-001 | Next.js critical advisory and triage | P0 | Implemented; security release #17 | [#17](https://github.com/TESVM/champaign-county-church-directory/pull/17) | Tests and CI passed; owner authorized release |
+| SEC-004 | Patch shared validation and development tooling | P1 | Implemented; release verification in progress | Follow-up PR | 116 unit / 80 integration; mobile typecheck pass |
+| SEC-005 | Enforce nonce-based browser CSP | P1 | Implemented; release verification in progress | Follow-up PR | Local built-server and Chrome blocking checks pass |
 | UI-001 | Load brand fonts | P1 | Implemented in preview only; held from security release | [#15](https://github.com/TESVM/champaign-county-church-directory/pull/15) | Final QA pending |
 | SEC-003 | Admin password sign-in hardening | P1 | Implemented; security release #17 | [#17](https://github.com/TESVM/champaign-county-church-directory/pull/17) | Tests and CI passed; owner authorized release |
 | SEC-002 | CSP report-only | P1 | Implemented; reporting-only release #17 | [#17](https://github.com/TESVM/champaign-county-church-directory/pull/17) | Local header checks and Preview observation complete; enforcement deferred |
@@ -69,3 +71,12 @@ Owner authorized finishing review and releasing security work on 2026-11-20. A s
 - Captured app warning/error/info messages on the inspected routes: none; extension debug messages excluded. No report-only violations surfaced through the available browser log interface. This is not an exhaustive native DevTools security-console audit; CSP enforcement remains deferred.
 - Direct unauthenticated Preview HTTP requests redirect to Vercel SSO, so they are not counted as application 200/header checks. Existing Preview protection remains enabled. Local built-server headers were verified, and public production headers/routes are checked after deployment.
 - Owner sign-in/email delivery, paid checkout, real Blob upload, full axe/VoiceOver/performance tests and production log/drain monitoring are not claimed as completed. Auth/service behaviors are covered in the isolated database tests.
+
+## Security follow-up — 2026-11-20
+
+- User's "make necessary changes" instruction authorizes the previously explained Zod migration and CSP enforcement follow-up. Earlier plan limits on independent major upgrades are superseded only for these necessary, tested security changes.
+- Root/shared/mobile app Zod 4.6.7 preserve public API and saved-record behavior. Expo's own internal Zod 3 stays outside the website audit scope; no blind SDK upgrade.
+- Dev-only high/critical findings discovered by a complete audit were patched with Vitest 4.1.12, Vite 7.3.8, tsx 4.23.15 and compatible lint dependencies. Full website audit and production audit are both zero. CI now gates all website dependencies at high severity.
+- CSP enforcement uses trusted request nonces, blocks untrusted inline scripts and event handlers, preserves JSON-LD, maps and existing headers/CORS. Styles and HTTPS image compatibility allowances remain documented. No design, schema, migration, billing, password or real environment change.
+- 116 unit / 80 integration tests, website/mobile typecheck, lint and production build pass. Local HTTP verifies on/off login, all bootstrap/JSON-LD nonces, fresh nonce, spoof replacement and no-store. A real Chrome fixture confirms blocked inline script and blocked event handler with a working trusted script.
+- Final Preview and production checks and the released commit are recorded in the linked follow-up PR; no claim that local tests alone prove deployment.
