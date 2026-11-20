@@ -80,3 +80,7 @@ Owner authorized the remaining security changes on 2026-11-20 after security rel
 - CSP enforcement uses trusted request nonces, blocks untrusted inline scripts and event handlers, preserves JSON-LD, maps and existing headers/CORS. Styles and HTTPS image compatibility allowances remain documented. No design, schema, migration, billing, password or real environment change.
 - 116 unit / 80 integration tests, website/mobile typecheck, lint and production build pass. Local HTTP verifies on/off login, all bootstrap/JSON-LD nonces, fresh nonce, spoof replacement and no-store. A real Chrome fixture confirms blocked inline script and blocked event handler with a working trusted script.
 - Final Preview and production checks and the released commit are recorded in follow-up PR #18; no claim that local tests alone prove deployment.
+
+### Campus CSP coverage follow-up
+
+Live verification after #18 identified two direct campus JSON-LD tags outside the shared helper. Both now use the existing nonce-bearing, HTML-safe JsonLd component. A server-render regression verifies nonce propagation and malicious closing-tag escaping; a source audit guards every direct inline script in app/components. Vitest uses the automatic JSX runtime to match Next when rendering server components. Checks: 118 unit / 80 integration, typecheck and lint pass; build/Preview/release evidence is tracked with #18 and its linked campus follow-up PR. No new runtime dependency, UI, schema or environment change.

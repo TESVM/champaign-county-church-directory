@@ -175,6 +175,18 @@ tags match the response nonce, a new request gets a different nonce, spoofed
 headers are overwritten, and cache-control remains no-store. Preview and final
 live evidence are tracked in the security follow-up PR and review report.
 
+Campus coverage follow-up: the campus landing and organization detail pages now
+use the same nonce-bearing, HTML-safe JsonLd component. A regression test checks
+nonce output and escaping of a closing-script payload without changing decoded
+structured-data values. A source coverage test guards all direct inline script
+tags in app/components. Unit-test JSX uses Next's automatic runtime. Current unit
+count is 118, integration count remains 80; release evidence is linked from #18.
+
+Cloudflare can insert its same-origin external email-decode script without a
+nonce. The production policy intentionally permits same-origin external scripts;
+HTTP verification requires nonces on inline tags, checks supplied nonces match,
+and separately validates any unnonced external script is same-origin.
+
 Sources: [Zod migration guide](https://zod.dev/v4/changelog),
 [Zod advisory](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5),
 [Next.js 15 nonce guidance](https://nextjs.org/docs/15/app/guides/content-security-policy).
