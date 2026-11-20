@@ -51,7 +51,7 @@ const orgSchema = z.object({
   submitterRole: z.string().trim().min(2, "Enter your role.").max(120),
   submitterEmail: z.string().trim().email("Enter a valid email address.").max(254),
   publishContact: z.boolean(),
-  consentToPublish: z.literal(true, { errorMap: () => ({ message: "Please confirm we may publish the information you supplied." }) })
+  consentToPublish: z.literal(true, { error: "Please confirm we may publish the information you supplied." })
 });
 
 export async function submitOrganization(input: Record<string, unknown>, clientKey: string) {

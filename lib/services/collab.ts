@@ -35,7 +35,7 @@ const postSchema = z
     contactEmail: z.string().trim().max(254).optional().transform((v) => v || null).refine((v) => v === null || z.string().email().safeParse(v).success, "Enter a valid email address."),
     expiresOn: z.string().refine(isValidDateString, "Choose when this post should come down."),
     organizationName: text(140),
-    consent: z.literal(true, { errorMap: () => ({ message: "Confirm the contact details may be shown publicly." }) })
+    consent: z.literal(true, { error: "Confirm the contact details may be shown publicly." })
   })
   .superRefine((v, ctx) => {
     const today = chicagoDateOf(new Date());
