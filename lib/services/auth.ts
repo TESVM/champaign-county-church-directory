@@ -1,10 +1,10 @@
 import { z } from "zod";
 import type { Actor, MembershipRef, StaffRole, UserActor } from "@/lib/actor";
-import { env } from "@/lib/env";
+import { authSecret, env } from "@/lib/env";
 import { db } from "@/lib/db";
-import { ValidationError } from "@/lib/errors";
+import { RateLimitedError, ValidationError } from "@/lib/errors";
 import { log } from "@/lib/log";
-import { constantTimeEquals, normalizeEmail, randomToken, sha256 } from "@/lib/security";
+import { constantTimeEquals, keyedHash, normalizeEmail, randomToken, sha256 } from "@/lib/security";
 import { audit } from "@/lib/services/audit";
 import { sendEmail } from "@/lib/services/email";
 import { rateLimit } from "@/lib/services/rate-limit";
@@ -125,12 +125,31 @@ export async function passwordSignIn(rawEmail: unknown, rawPassword: unknown, cl
   const email = typeof rawEmail === "string" ? normalizeEmail(rawEmail) : "";
   const password = typeof rawPassword === "string" ? rawPassword : "";
 
-  await rateLimit("password-ip", clientKey, 10, 60 * 15);
-  if (!email || !password || !env.adminEmail || !env.adminPassword) return null;
+  const failed = async (reason: "disabled" | "rate_limited" | "invalid_credentials") => {
+    await audit({ kind: "anonymous" }, {
+      action: "auth.password_failed",
+      entityType: "User",
+      summary: "Administrator password sign-in failed",
+      // Never record the submitted email, password, or raw client address.
+      details: { reason, clientKeyHash: keyedHash(clientKey, authSecret) }
+    });
+    return null;
+  };
+
+  if (env.adminPasswordLogin === "off") return failed("disabled");
+
+  try {
+    await rateLimit("password-ip", clientKey, 10, 60 * 15);
+    await rateLimit("password-account", email, 5, 60 * 15);
+  } catch (error) {
+    if (error instanceof RateLimitedError) return failed("rate_limited");
+    throw error;
+  }
+  if (!email || !password || !env.adminEmail || !env.adminPassword) return failed("invalid_credentials");
 
   const emailOk = constantTimeEquals(email, env.adminEmail);
   const passwordOk = constantTimeEquals(password, env.adminPassword);
-  if (!emailOk || !passwordOk) return null;
+  if (!emailOk || !passwordOk) return failed("invalid_credentials");
 
   const prisma = await db();
   const user = await prisma.user.upsert({
@@ -138,7 +157,21 @@ export async function passwordSignIn(rawEmail: unknown, rawPassword: unknown, cl
     create: { email, name: "Directory Admin", role: "ADMIN" },
     update: { role: "ADMIN", disabledAt: null }
   });
-  return createSession(user.id);
+  const session = await createSession(user.id);
+  await audit({
+    kind: "user",
+    id: user.id,
+    email: user.email,
+    name: user.name ?? user.email,
+    staffRole: "ADMIN",
+    memberships: []
+  }, {
+    action: "auth.password_signed_in",
+    entityType: "User",
+    entityId: user.id,
+    summary: "Administrator signed in with a password"
+  });
+  return session;
 }
 
 export async function createSession(userId: string) {

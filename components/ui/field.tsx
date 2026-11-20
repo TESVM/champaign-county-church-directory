@@ -82,7 +82,7 @@ export function FieldShell({
   );
 }
 
-type TextFieldProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "id"> & {
+type TextFieldProps = React.InputHTMLAttributes<HTMLInputElement> & {
   name: string;
   label: string;
   hint?: string;
@@ -92,6 +92,7 @@ type TextFieldProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "id"> & 
 
 export function TextField({
   name,
+  id = `field-${name}`,
   label,
   hint,
   error,
@@ -99,8 +100,6 @@ export function TextField({
   wrapperClassName,
   ...inputProps
 }: TextFieldProps) {
-  const id = `field-${name}`;
-
   return (
     <FieldShell
       id={id}

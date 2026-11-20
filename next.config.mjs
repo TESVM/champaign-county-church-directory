@@ -65,6 +65,25 @@ const nextConfig = {
       {
         source: "/:path*",
         headers: [
+          {
+            // Observe violations before a separate, reviewed enforcement change.
+            // Next's bootstrap and JSON-LD need inline scripts until nonce support.
+            key: "Content-Security-Policy-Report-Only",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline'",
+              // Published church photos/flyers can use any secure origin.
+              "img-src 'self' data: blob: https:",
+              "font-src 'self'",
+              "connect-src 'self'",
+              "frame-src https://www.google.com",
+              "form-action 'self' https://checkout.stripe.com https://billing.stripe.com",
+              "base-uri 'self'",
+              "object-src 'none'",
+              "frame-ancestors 'none'"
+            ].join("; ")
+          },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           // Nothing in this product needs to be framed by another site, and the
