@@ -4,15 +4,15 @@ Last updated: 2026-11-20 by the release engineer. Update this file whenever a ta
 
 ## Summary
 
-Owner authorized the remaining security changes on 2026-11-20 after security release #17. SEC-004 patches validation and development tooling; SEC-005 enforces the reviewed browser policy with per-request nonces. Local tests pass and both website dependency audits report zero findings. Release/Preview tracking will be linked in the follow-up review. Design work remains held. Vercel authenticator enrollment requires the owner; no account credentials are changed by this implementation.
+Owner authorized the remaining security changes on 2026-11-20 after security release #17. SEC-004 patches validation and development tooling; SEC-005 enforces the reviewed browser policy with per-request nonces. Local tests pass and both website dependency audits report zero findings. Release status and final evidence are tracked in [security follow-up #18](https://github.com/TESVM/champaign-county-church-directory/pull/18). Design work remains held. Vercel authenticator enrollment requires the owner; no account credentials are changed by this implementation.
 
 ## Tasks
 
 | ID | Title | Priority | State | PR | Reviewer verdict |
 |---|---|---|---|---|---|
 | SEC-001 | Next.js critical advisory and triage | P0 | Implemented; security release #17 | [#17](https://github.com/TESVM/champaign-county-church-directory/pull/17) | Tests and CI passed; owner authorized release |
-| SEC-004 | Patch shared validation and development tooling | P1 | Implemented; release verification in progress | Follow-up PR | 116 unit / 80 integration; mobile typecheck pass |
-| SEC-005 | Enforce nonce-based browser CSP | P1 | Implemented; release verification in progress | Follow-up PR | Local built-server and Chrome blocking checks pass |
+| SEC-004 | Patch shared validation and development tooling | P1 | Implemented; release tracked in #18 | [#18](https://github.com/TESVM/champaign-county-church-directory/pull/18) | 116 unit / 80 integration; mobile typecheck pass |
+| SEC-005 | Enforce nonce-based browser CSP | P1 | Implemented; release tracked in #18 | [#18](https://github.com/TESVM/champaign-county-church-directory/pull/18) | Local built-server and Chrome blocking checks pass |
 | UI-001 | Load brand fonts | P1 | Implemented in preview only; held from security release | [#15](https://github.com/TESVM/champaign-county-church-directory/pull/15) | Final QA pending |
 | SEC-003 | Admin password sign-in hardening | P1 | Implemented; security release #17 | [#17](https://github.com/TESVM/champaign-county-church-directory/pull/17) | Tests and CI passed; owner authorized release |
 | SEC-002 | CSP report-only | P1 | Implemented; reporting-only release #17 | [#17](https://github.com/TESVM/champaign-county-church-directory/pull/17) | Local header checks and Preview observation complete; enforcement deferred |
@@ -79,4 +79,4 @@ Owner authorized the remaining security changes on 2026-11-20 after security rel
 - Dev-only high/critical findings discovered by a complete audit were patched with Vitest 4.1.12, Vite 7.3.8, tsx 4.23.15 and compatible lint dependencies. Full website audit and production audit are both zero. CI now gates all website dependencies at high severity.
 - CSP enforcement uses trusted request nonces, blocks untrusted inline scripts and event handlers, preserves JSON-LD, maps and existing headers/CORS. Styles and HTTPS image compatibility allowances remain documented. No design, schema, migration, billing, password or real environment change.
 - 116 unit / 80 integration tests, website/mobile typecheck, lint and production build pass. Local HTTP verifies on/off login, all bootstrap/JSON-LD nonces, fresh nonce, spoof replacement and no-store. A real Chrome fixture confirms blocked inline script and blocked event handler with a working trusted script.
-- Final Preview and production checks and the released commit are recorded in the linked follow-up PR; no claim that local tests alone prove deployment.
+- Final Preview and production checks and the released commit are recorded in follow-up PR #18; no claim that local tests alone prove deployment.
