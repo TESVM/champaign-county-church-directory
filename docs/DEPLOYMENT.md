@@ -116,3 +116,82 @@ Server code writes JSON lines (`{"level","event",…}`) to stdout/stderr; Vercel
 keeps them under Logs and can forward them with a log drain. Error pages show a
 reference code that matches the `digest` in the logs. There is no third-party
 error tracker; if the owner wants alerts, add a Vercel log drain or Sentry.
+
+## Dependency advisories
+
+Security release review: **2026-11-20**. Audit scope is the production dependency
+graph (`npm audit --omit=dev`), not proof that every advisory is reachable.
+The refreshed previously reviewed candidate had 8 high / 1 moderate package
+findings. This release candidate has **0 critical / 0 moderate / 1 high**.
+The critical CI gate exits 0. The remaining high finding is open, not dismissed.
+
+| Component | Release version / disposition | Advisory |
+| --- | --- | --- |
+| Next.js / matching lint config | **15.5.29**, current patched 15.x. No framework major upgrade. | Fixes [critical image optimization](https://github.com/advisories/GHSA-2464-fhr4-w9xw), [Server Actions DoS](https://github.com/advisories/GHSA-p3m5-59mp-jv5r), [SVG bypass](https://github.com/advisories/GHSA-7qx7-33qx-rqx2), [Edge cookie exposure](https://github.com/advisories/GHSA-f3mh-rxg3-f5g2), [forwarded response issue](https://github.com/advisories/GHSA-pc58-hwjq-p385). The three November findings affect releases through 15.5.28. |
+| undici | **6.29.1**, compatible refresh within Blob's existing range. | Fixed ranges all end below 6.29.1: [EventSource](https://github.com/advisories/GHSA-4qv8-2p9j-2685) (`>=6.5.0`), [encodings](https://github.com/advisories/GHSA-xjj6-f33q-929c) (`>=6.23.0`), [Agent TLS](https://github.com/advisories/GHSA-2m5v-pch6-74hx) (`>=4.0.0`), [renegotiation](https://github.com/advisories/GHSA-qrxm-fqhp-jwvm) (`>=4.2.1`), [WebSocket](https://github.com/advisories/GHSA-9fm3-97px-rjf6) (`>=5.15.0`). |
+| deepmerge-ts through Prisma config | **8.0.0**, scoped override under `@prisma/config`; first patched release. | [Recursive graph exhaustion](https://github.com/advisories/GHSA-ggr8-5vv4-36mx), affected `<8.0.0`. Latest Prisma 6.19.3 still pins 7.1.5; its override follows SEC-001's specified fallback when no parent patch exists. Version 8 retains CommonJS/ESM exports and supports Node 22. Prisma generation, validation and real migrations in the temporary integration database are verified before release. |
+| effect through Prisma config | **3.22.1**, scoped override under `@prisma/config`, same major. | [TemplateLiteral regex exhaustion](https://github.com/advisories/GHSA-7589-6fvf-x4pw), affected `<=3.22.0`. Parent Prisma 6 has no fixed release. No direct application use of this API was found; override removes the affected tooling dependency. |
+| Vercel Blob / OIDC / CLI config | Blob **2.8.0** and OIDC **3.8.10** retained; scoped OIDC override selects CLI config **0.3.6**, which uses patched Zod **4.6.7**. | [Zod exhaustion](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5). Affects CLI config `<=0.3.5`, OIDC `3.6.0 - 4.0.5`, and Blob `>=2.4.1-b7027de-20260616193056` transitively. Newest Blob 2.9.0 still requests the affected parent chain, so no blind downgrade or OIDC major upgrade. Explicit-token `put()` options remain unchanged; no production upload was made. |
+| Root/shared Zod | **3.25.76 retained: one high finding remains.** | [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5), affected `<4.6.6`; first patch 4.6.6. Public submission schemas do call the affected array API, so this is not classified as unused or fixed. Root and shared API/client schemas use Zod 3 conventions; a coordinated 3→4 migration affects validation errors and the mobile/shared contract. It remains a separate architecture-reviewed task under the approved plan's major-upgrade rule. |
+
+Prisma CLI and client remain paired at **6.19.3**. No database schema change,
+new production migration, storage setting or password value is part of this
+release. Existing sharp/postcss overrides remain. Keep the scoped overrides
+until compatible parent releases include the fixes; re-audit before removing
+them. Never use `npm audit fix --force`.
+
+## Administrator password sign-in
+
+`ADMIN_PASSWORD_LOGIN` accepts `on` (default) or `off`. The default preserves
+existing password access when `ADMIN_PASSWORD` is configured. With `off`, the
+password section is hidden and the server refuses password sign-in before any
+credential comparison. Email-link sign-in and existing sessions are unchanged.
+Test the emailed sign-in link before choosing email-only access.
+
+Password sign-in is limited to 10 attempts per client address and 5 per
+normalized submitted email per 15-minute fixed window, using the existing
+Postgres-backed limiter. Changing client address does not bypass the account
+limit; changing email case or whitespace does not create another account key.
+After the window resets, password sign-in can be attempted again. This can
+also temporarily delay a legitimate administrator if someone targets their
+email; email links remain a separate sign-in path.
+
+Expected authentication failures (wrong/missing credentials, password login
+off, or either limit exceeded) all return the same existing form message:
+"That email and password did not match." Operational database failures retain
+the existing safe error handling. No authentication failure reason is shown
+to the visitor.
+
+Audit actions: `auth.password_failed` and `auth.password_signed_in`. Failed
+attempts are attributed to anonymous and contain only a reason code and the
+existing HMAC hash of the client key. Submitted passwords, full IPs and failed
+email addresses are never included. Success is attributed to the configured
+administrator's user record. Audit write failures do not bypass sign-in checks.
+
+Owner note: set `ADMIN_PASSWORD_LOGIN=off` in Vercel when you are comfortable
+using email links only. **This task does not change deployed environment
+values.** The new setting is documented in `.env.example`; no real `.env`
+file or configured password is changed.
+
+## Content Security Policy — reporting only
+
+SEC-002 adds `Content-Security-Policy-Report-Only` to all routes through the
+existing Next.js header rule. It does **not enforce** resource restrictions,
+and no reporting endpoint is configured. Violations appear in the browser
+console and must be reviewed before any future enforced policy.
+
+Policy: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'
+'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src
+'self'; frame-src https://www.google.com; form-action 'self'
+https://checkout.stripe.com https://billing.stripe.com; base-uri 'self';
+object-src 'none'; frame-ancestors 'none'`.
+
+Next's inline bootstrap and JSON-LD need `unsafe-inline` until a separate
+nonce-based implementation is approved. Arbitrary HTTPS images remain allowed
+because churches supply photo/flyer links from many hosts; redundant individual
+HTTPS image hosts were omitted because the `https:` scheme covers them all.
+Google Maps is the existing embedded frame. Existing X-Frame-Options DENY,
+HSTS, nosniff, permissions/referrer policies and public API CORS are unchanged.
+Preview tooling can produce expected report-only violations for Vercel's
+external toolbar/feedback resources; record observed violations in the release
+review rather than widening the production policy for developer tooling.

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@/lib/db";
 import { RateLimitedError, ValidationError } from "@/lib/errors";
 import { actorFromSessionToken, consumeSignInToken, createSession, endSession, requestSignInLink } from "@/lib/services/auth";
@@ -115,5 +115,139 @@ describe("email sign-in and sessions", () => {
   it("ignores forged or oversized cookies", async () => {
     expect((await actorFromSessionToken("forged-token")).kind).toBe("anonymous");
     expect((await actorFromSessionToken("x".repeat(500))).kind).toBe("anonymous");
+  });
+});
+
+
+describe("administrator password sign-in", () => {
+  const password = "integration-only-admin-password";
+  let passwordAuth: typeof import("@/lib/services/auth");
+
+  async function loadPasswordAuth(flag: "on" | "off" | undefined) {
+    vi.stubEnv("ADMIN_PASSWORD", password);
+    vi.stubEnv("ADMIN_PASSWORD_LOGIN", flag);
+    vi.resetModules();
+    passwordAuth = await import("@/lib/services/auth");
+  }
+
+  beforeEach(async () => {
+    await resetDatabase();
+    // Keep attempts inside one fixed window, even if the suite starts near its boundary.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-19T18:05:00Z"));
+    await loadPasswordAuth("on");
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  it("refuses the sixth normalized account attempt even from a different client", async () => {
+    for (let i = 0; i < 5; i += 1) {
+      const email = i % 2 ? " ADMIN@TEST.INVALID " : "admin@test.invalid";
+      expect(await passwordAuth.passwordSignIn(email, "wrong-password", `client-${i}`)).toBeNull();
+    }
+    expect(await passwordAuth.passwordSignIn("admin@test.invalid", password, "new-client")).toBeNull();
+    const prisma = await db();
+    expect(await prisma.session.count()).toBe(0);
+    expect(await prisma.auditLog.count({ where: { action: "auth.password_failed" } })).toBe(6);
+    const blocked = await prisma.auditLog.findFirst({ where: { details: { path: ["reason"], equals: "rate_limited" } } });
+    expect(blocked).not.toBeNull();
+  });
+
+  it("preserves the IP limit when an attacker changes submitted accounts", async () => {
+    for (let i = 0; i < 10; i += 1) {
+      expect(await passwordAuth.passwordSignIn(`unknown-${i}@test.invalid`, "wrong-password", "one-client")).toBeNull();
+    }
+    expect(await passwordAuth.passwordSignIn("admin@test.invalid", password, "one-client")).toBeNull();
+    const prisma = await db();
+    expect(await prisma.session.count()).toBe(0);
+  });
+
+  it("audits failed and successful attempts without passwords, failed email, or raw IP", async () => {
+    const rawIp = "192.0.2.42";
+    const unknownEmail = "private-submission@test.invalid";
+    expect(await passwordAuth.passwordSignIn(unknownEmail, "submitted-wrong-password", rawIp)).toBeNull();
+    const session = await passwordAuth.passwordSignIn("ADMIN@TEST.INVALID", password, rawIp);
+    expect(session?.token).toBeTruthy();
+    expect(await passwordAuth.actorFromSessionToken(session!.token)).toMatchObject({ kind: "user", staffRole: "ADMIN" });
+
+    const prisma = await db();
+    const failure = await prisma.auditLog.findFirstOrThrow({ where: { action: "auth.password_failed" } });
+    const success = await prisma.auditLog.findFirstOrThrow({ where: { action: "auth.password_signed_in" } });
+    const { keyedHash } = await import("@/lib/security");
+    const { authSecret } = await import("@/lib/env");
+    expect(failure).toMatchObject({ actorId: null, actorEmail: "anonymous", details: { clientKeyHash: keyedHash(rawIp, authSecret), reason: "invalid_credentials" } });
+    expect(success).toMatchObject({ actorEmail: "admin@test.invalid", entityType: "User" });
+    expect(success.actorId).toBeTruthy();
+    expect(success.entityId).toBe(success.actorId);
+    const serialized = JSON.stringify([failure, success]);
+    for (const sensitive of [password, "submitted-wrong-password", rawIp, unknownEmail, session!.token]) {
+      expect(serialized).not.toContain(sensitive);
+    }
+    const rateRows = JSON.stringify(await prisma.rateLimit.findMany());
+    expect(rateRows).not.toContain(rawIp);
+    expect(rateRows).not.toContain(unknownEmail);
+  });
+
+  it("refuses a correct password with the flag off without comparing credentials", async () => {
+    await loadPasswordAuth("off");
+    const security = await import("@/lib/security");
+    const compare = vi.spyOn(security, "constantTimeEquals");
+    expect(await passwordAuth.passwordSignIn("admin@test.invalid", password, "client-off")).toBeNull();
+    expect(compare).not.toHaveBeenCalled();
+    const prisma = await db();
+    expect(await prisma.session.count()).toBe(0);
+    expect(await prisma.auditLog.findFirst({ where: { action: "auth.password_failed" } })).toMatchObject({ details: { reason: "disabled" } });
+  });
+
+  it("returns the same failure result for missing and incorrect credentials", async () => {
+    expect(await passwordAuth.passwordSignIn(undefined, undefined, "missing-client")).toBeNull();
+    expect(await passwordAuth.passwordSignIn("admin@test.invalid", "wrong-password", "wrong-client")).toBeNull();
+    const prisma = await db();
+    expect(await prisma.session.count()).toBe(0);
+    expect(await prisma.auditLog.count({ where: { action: "auth.password_failed" } })).toBe(2);
+  });
+
+  it("defaults password login to on when the new flag is absent", async () => {
+    await loadPasswordAuth(undefined);
+    const { env } = await import("@/lib/env");
+    expect(env.adminPasswordLogin).toBe("on");
+    expect((await passwordAuth.passwordSignIn("admin@test.invalid", password, "default-client"))?.token).toBeTruthy();
+  });
+
+  it("rejects an invalid password-login flag during environment validation", async () => {
+    vi.stubEnv("ADMIN_PASSWORD_LOGIN", "invalid");
+    vi.resetModules();
+    await expect(import("@/lib/env")).rejects.toThrow(/ADMIN_PASSWORD_LOGIN/);
+  });
+
+  it("allows another attempt after the fixed account window resets", async () => {
+    for (let i = 0; i < 5; i += 1) {
+      expect(await passwordAuth.passwordSignIn("admin@test.invalid", "wrong-password", `window-client-${i}`)).toBeNull();
+    }
+    expect(await passwordAuth.passwordSignIn("admin@test.invalid", password, "window-client-new")).toBeNull();
+    vi.setSystemTime(new Date("2026-11-19T18:20:00Z"));
+    expect((await passwordAuth.passwordSignIn("admin@test.invalid", password, "window-client-new"))?.token).toBeTruthy();
+  });
+
+  it("keeps email-link sign-in working when password login is off", async () => {
+    await loadPasswordAuth("off");
+    await passwordAuth.requestSignInLink("admin@test.invalid", "email-client");
+    const { token } = await lastLinkTokenFor("admin@test.invalid");
+    expect(token).toBeTruthy();
+    const session = await passwordAuth.consumeSignInToken(token!);
+    expect(session?.token).toBeTruthy();
+    expect(await passwordAuth.actorFromSessionToken(session!.token)).toMatchObject({ kind: "user", staffRole: "ADMIN" });
+  });
+
+  it("does not authenticate if recording a failed attempt is unavailable", async () => {
+    const auditModule = await import("@/lib/services/audit");
+    vi.spyOn(auditModule, "audit").mockRejectedValueOnce(new Error("Audit unavailable"));
+    await expect(passwordAuth.passwordSignIn("admin@test.invalid", "wrong-password", "audit-client")).rejects.toThrow("Audit unavailable");
+    expect(await (await db()).session.count()).toBe(0);
   });
 });

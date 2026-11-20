@@ -37,13 +37,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <SubmitButton pendingLabel="Sending…">Email me a sign-in link</SubmitButton>
           </ActionForm>
         </div>
-        {env.adminPassword ? (
+        {env.adminPasswordLogin === "on" && env.adminPassword ? (
           <details className="mt-8 rounded-2xl border border-line p-4">
             <summary className="cursor-pointer text-sm font-semibold text-ink">Directory administrator password sign-in</summary>
             <div className="mt-4">
               <ActionForm action={passwordSignInAction}>
                 <input type="hidden" name="next" value={safeReturnPath(params.next, "/admin")} />
-                <TextField name="email" label="Administrator email" type="email" required autoComplete="username" />
+                <TextField id="admin-password-email" name="email" label="Administrator email" type="email" required autoComplete="username" />
                 <TextField name="password" label="Password" type="password" required autoComplete="current-password" />
                 <SubmitButton pendingLabel="Signing in…" variant="secondary">Sign in</SubmitButton>
               </ActionForm>
