@@ -13,6 +13,7 @@ import { shouldOptimizeImage } from "@/lib/images";
 import { getOrganization, listCampusEvents } from "@/lib/services/campus";
 import { siteUrl } from "@/lib/site";
 import { formatChicago } from "@/lib/time/chicago";
+import { snippet } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!org) return { title: "Organization not found", robots: { index: false } };
   return {
     title: `${org.name}: Campus Ministry in Champaign-Urbana`,
-    description: org.description.slice(0, 160),
+    description: snippet(org.description, 160),
     alternates: { canonical: `/campus/organizations/${org.slug}` }
   };
 }

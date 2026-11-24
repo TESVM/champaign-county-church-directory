@@ -47,7 +47,7 @@ import { RESOURCE_CATEGORIES, listResources, listUpcomingEvents } from "@/lib/se
 import { siteUrl } from "@/lib/site";
 import { formatChicago } from "@/lib/time/chicago";
 import { nextService } from "@/lib/time/next-service";
-import { externalUrl, formatDate } from "@/lib/utils";
+import { externalUrl, formatDate, snippet } from "@/lib/utils";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -136,7 +136,7 @@ export default async function ChurchProfilePage({ params }: { params: Promise<{ 
     "@type": "Church",
     name: church.name,
     url: profileUrl,
-    ...(church.shortDescription || church.description ? { description: (church.shortDescription || church.description).slice(0, 300) } : {}),
+    ...(church.shortDescription || church.description ? { description: snippet(church.shortDescription || church.description, 300) } : {}),
     ...(church.address1
       ? {
           address: {

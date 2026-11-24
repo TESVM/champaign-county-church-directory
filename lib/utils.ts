@@ -76,3 +76,19 @@ export function musicianDirectoryUrl(path = "/") {
   );
   return new URL(path, base).toString();
 }
+
+/**
+ * Shortens text to at most `max` characters without cutting a word in half.
+ * Text that already fits is returned whole; shortened text ends with "…".
+ */
+export function snippet(text: string | null | undefined, max: number) {
+  const clean = (text ?? "").replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max - 1);
+  // The cut already ends on a whole word when the next character is a space or punctuation.
+  const endsOnWord = /[\s,;:.!?)]/.test(clean.charAt(cut.length));
+  const lastSpace = cut.lastIndexOf(" ");
+  // A single very long word has no space to break at; cut it rather than return nothing.
+  const head = endsOnWord ? cut : lastSpace > max * 0.5 ? cut.slice(0, lastSpace) : cut;
+  return `${head.replace(/[\s,;:.\-–—(]+$/, "")}…`;
+}
