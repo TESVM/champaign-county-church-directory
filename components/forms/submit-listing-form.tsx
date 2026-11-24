@@ -33,7 +33,7 @@ export function SubmitListingForm({ cities }: { cities: Array<{ slug: string; na
           <TextField name="contactName" label="Your name" required autoComplete="name" />
           <TextField name="contactEmail" label="Your email" type="email" required autoComplete="email" hint="We email you when it is published. Not shown publicly." />
         </div>
-        <TextField name="relationship" label="Your connection to the church" placeholder="Member, pastor, neighbour…" />
+        <TextField name="relationship" label="Your connection to the church" placeholder="Member, pastor, neighbor…" />
       </fieldset>
       <SubmitButton pendingLabel="Submitting…">Submit for review</SubmitButton>
     </ActionForm>

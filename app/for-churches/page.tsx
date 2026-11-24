@@ -78,7 +78,7 @@ export default async function ForChurchesPage({ searchParams }: { searchParams: 
         <h2 className="font-display text-3xl">How managing a listing works</h2>
         <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-6 text-stone-700">
           <li>Find your church and choose “Manage this listing”, or use the claim form.</li>
-          <li>A reviewer confirms you are authorised, for example through an email on the church’s own domain or a call to the church’s public number.</li>
+          <li>A reviewer confirms you are authorized, for example through an email on the church’s own domain or a call to the church’s public number.</li>
           <li>Once approved, sign in with your email. We send a one-time link; there is no password.</li>
           <li>Update service times, add “Plan your first visit” details, invite other staff as editors, and see activity counts.</li>
         </ol>

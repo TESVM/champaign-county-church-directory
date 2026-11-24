@@ -54,7 +54,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <Card className="bg-brand-900 p-6 text-white sm:p-8">
         <h2 className="font-display text-3xl">Don’t have access yet?</h2>
         <p className="mt-3 text-sm leading-6 text-white/85">
-          Church leaders request access to their church’s listing first. A reviewer confirms you are authorised, then you can sign in here. It is free.
+          Church leaders request access to their church’s listing first. A reviewer confirms you are authorized, then you can sign in here. It is free.
         </p>
         <Link href="/claim" className="mt-5 inline-flex min-h-[44px] items-center rounded-full bg-white px-5 text-sm font-semibold text-brand-900 focus-ring">
           Request to manage a listing

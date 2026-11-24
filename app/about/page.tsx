@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 const labels = [
-  ["Confirmed by church", "Someone the directory verified as authorised by the church reviewed and saved the listing. The date shows when."],
+  ["Confirmed by church", "Someone the directory verified as authorized by the church reviewed and saved the listing. The date shows when."],
   ["Source checked", "A directory reviewer compared the listing with the church’s own website or another public source on the date shown. The church itself has not confirmed it."],
   ["Not yet verified", "The details come from public listings and have not been checked. Please confirm with the church before visiting."],
   ["Church-managed", "Church staff have access to keep the listing current."]

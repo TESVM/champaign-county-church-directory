@@ -22,17 +22,17 @@ export default function AccessibilityPage() {
             <a href="https://www.w3.org/TR/WCAG22/" className="underline" target="_blank" rel="noopener noreferrer">
               Web Content Accessibility Guidelines (WCAG) 2.2, Level AA
             </a>
-            , the standard commonly applied under the Americans with Disabilities Act and Section 508. We test pages with automated checks (axe-core) and by hand, including keyboard-only use and colour contrast.
+            , the standard commonly applied under the Americans with Disabilities Act and Section 508. We test pages with automated checks (axe-core) and by hand, including keyboard-only use and color contrast.
           </p>
         </section>
         <section>
           <h2 className="font-display text-2xl text-ink">What the site does</h2>
           <ul className="list-disc space-y-1 pl-5">
             <li>Every page works with a keyboard, shows where focus is, and has a “Skip to main content” link.</li>
-            <li>Text and controls meet AA colour contrast, and buttons and links are at least 44 by 44 pixels on touch screens.</li>
+            <li>Text and controls meet AA color contrast, and buttons and links are at least 44 by 44 pixels on touch screens.</li>
             <li>Pages have one main heading and a logical heading order, and form fields have visible labels.</li>
             <li>Form errors say what went wrong and link to the field that needs attention.</li>
-            <li>Photos have text descriptions; church photos that are not yet provided are labelled as such.</li>
+            <li>Photos have text descriptions; church photos that are not yet provided are labeled as such.</li>
             <li>The map has a list view with the same information, and sharing your location for “Near me” is optional.</li>
             <li>Pages zoom to 400% and reflow on small screens, and animation is reduced when your device asks for it.</li>
           </ul>

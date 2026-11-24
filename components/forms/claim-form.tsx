@@ -8,7 +8,7 @@ export function ClaimForm({ churches, churchSlug }: { churches: Array<{ slug: st
       action={submitClaimAction}
       honeypot
       resetOnSuccess
-      fieldLabels={{ churchSlug: "Church", contactName: "Your name", contactEmail: "Your email", role: "Your role", verificationMethod: "Verification method", evidence: "Proof of authorisation" }}
+      fieldLabels={{ churchSlug: "Church", contactName: "Your name", contactEmail: "Your email", role: "Your role", verificationMethod: "Verification method", evidence: "Proof of authorization" }}
     >
       <p className="text-sm leading-6 text-stone-600">Fields marked with an asterisk are required.</p>
       <SelectField
@@ -38,7 +38,7 @@ export function ClaimForm({ churches, churchSlug }: { churches: Array<{ slug: st
       />
       <TextAreaField
         name="evidence"
-        label="How can we confirm you are authorised to manage this listing?"
+        label="How can we confirm you are authorized to manage this listing?"
         required
         hint="For example: a staff page that lists you, who we should ask for when we call, or another public source."
       />
