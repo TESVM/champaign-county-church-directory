@@ -11,6 +11,7 @@ import { parseTimeToMinutes } from "@/lib/time/chicago";
 import { nextService } from "@/lib/time/next-service";
 import type { ChurchRecord, CityRecord, SocialPlatform } from "@/lib/types";
 import { LinkError, normalizeLink, normalizePhone, SOCIAL_KINDS } from "@/lib/validation/links";
+import { snippet } from "@/lib/utils";
 
 /**
  * The directory's single read/write path for church records.
@@ -63,7 +64,7 @@ export function mapChurchRow(row: ChurchRow, now = new Date()): ChurchRecord {
     city: row.cityRecord?.name ?? row.city,
     denomination: opt(row.denomination),
     description: row.description ?? "",
-    shortDescription: (row.description ?? "").slice(0, 180),
+    shortDescription: snippet(row.description, 180),
     address1: row.address1 ?? "",
     address2: opt(row.address2),
     state: row.state,

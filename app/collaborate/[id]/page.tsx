@@ -6,13 +6,14 @@ import { ReportForm } from "@/components/collab/report-form";
 import { collabCategoryLabel } from "@/lib/collab";
 import { getCollabPost } from "@/lib/services/collab";
 import { formatChicago } from "@/lib/time/chicago";
+import { snippet } from "@/lib/utils";
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getCollabPost((await params).id);
   if (!post) return { title: "Post not found", robots: { index: false } };
-  return { title: `${post.title} · Church Collaboration Board`, description: post.body.slice(0, 160), robots: { index: false } };
+  return { title: `${post.title} · Church Collaboration Board`, description: snippet(post.body, 160), robots: { index: false } };
 }
 
 export default async function CollabPostPage({ params }: Props) {
