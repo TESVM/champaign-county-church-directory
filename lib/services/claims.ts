@@ -21,7 +21,7 @@ const claimSchema = z.object({
   verificationMethod: z.enum(["DOMAIN_EMAIL", "PUBLIC_PHONE", "MANUAL_REVIEW"], {
     error: "Choose how we should verify you."
   }),
-  evidence: z.string().trim().min(10, "Describe how we can confirm you are authorised (at least 10 characters).").max(3000),
+  evidence: z.string().trim().min(10, "Describe how we can confirm you are authorized (at least 10 characters).").max(3000),
   phone: z.string().optional()
 });
 

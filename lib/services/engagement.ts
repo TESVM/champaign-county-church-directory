@@ -201,7 +201,7 @@ export async function cancelEvent(actor: Actor, eventId: string) {
   if (!event) throw new NotFoundError("That event was not found.");
   assertCanEditChurch(actor, event.churchId);
   await prisma.event.update({ where: { id: eventId }, data: { status: "CANCELLED" } });
-  await audit(actor, { action: "event.cancelled", entityType: "Event", entityId: eventId, churchId: event.churchId, summary: `Cancelled event “${event.title}”` });
+  await audit(actor, { action: "event.cancelled", entityType: "Event", entityId: eventId, churchId: event.churchId, summary: `Canceled event “${event.title}”` });
 }
 
 export type EventOccurrence = {

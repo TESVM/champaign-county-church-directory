@@ -44,7 +44,7 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
         </Card>
         <Card className="p-6">
           <h2 className="font-display text-2xl">Invite a colleague</h2>
-          <p className="mt-1 text-sm text-stone-600">They will get an email and sign in with a one-time link. Only invite people authorised by your church.</p>
+          <p className="mt-1 text-sm text-stone-600">They will get an email and sign in with a one-time link. Only invite people authorized by your church.</p>
           <div className="mt-4">
             <ActionForm action={inviteMemberAction} resetOnSuccess>
               <input type="hidden" name="churchId" value={church.id} />

@@ -69,7 +69,7 @@ export default async function EventsDashboardPage({ params }: { params: Promise<
                     <p className="text-sm text-stone-600">
                       {e.startDate}
                       {e.startTime ? ` · ${displayTime(e.startTime)}` : " · all day"}
-                      {e.recurrence === "WEEKLY" ? ` · weekly until ${e.recurrenceUntil}` : ""} · {e.status === "CANCELLED" ? "Cancelled" : "Published"}
+                      {e.recurrence === "WEEKLY" ? ` · weekly until ${e.recurrenceUntil}` : ""} · {e.status === "CANCELLED" ? "Canceled" : "Published"}
                     </p>
                     {e.flyerUrl ? (
                       <a href={e.flyerUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-brand-900 underline">

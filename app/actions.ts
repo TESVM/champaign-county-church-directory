@@ -290,7 +290,7 @@ export async function cancelEventAction(_: FormState, formData: FormData) {
     await cancelEvent(actor, str(formData, "eventId") ?? "");
     revalidatePath("/events");
     revalidatePath("/dashboard", "layout");
-    return "Event cancelled and removed from the calendar.";
+    return "Event canceled and removed from the calendar.";
   });
 }
 

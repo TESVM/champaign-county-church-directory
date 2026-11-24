@@ -10,7 +10,7 @@ export function ContactForm() {
         <TextField name="name" label="Your name" required autoComplete="name" />
         <TextField name="email" label="Your email" type="email" required autoComplete="email" />
       </div>
-      <TextField name="organization" label="Church or organisation" autoComplete="organization" />
+      <TextField name="organization" label="Church or organization" autoComplete="organization" />
       <TextAreaField name="message" label="Message" required hint="At least 10 characters. To fix a specific listing, “Report outdated information” on that church’s page is fastest." />
       <SubmitButton pendingLabel="Sending…">Send message</SubmitButton>
     </ActionForm>

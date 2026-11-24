@@ -15,7 +15,7 @@ const STATUS_TEXT: Record<string, string> = {
   trialing: "Trial",
   past_due: "Payment failed — Stripe is retrying. Update your card to keep features on.",
   unpaid: "Unpaid — features are off",
-  canceled: "Cancelled",
+  canceled: "Canceled",
   incomplete: "Checkout not finished",
   incomplete_expired: "Checkout expired"
 };
@@ -39,7 +39,7 @@ export default async function BillingPage({ params, searchParams }: { params: Pr
           {billing.active ? " Your enhanced profile is active." : " Refresh this page shortly to see the updated status."}
         </p>
       ) : null}
-      {checkout === "cancelled" ? <p role="status" className="mt-6 rounded-2xl bg-brand-50 p-4 text-sm">Checkout was cancelled. Nothing was charged.</p> : null}
+      {checkout === "cancelled" ? <p role="status" className="mt-6 rounded-2xl bg-brand-50 p-4 text-sm">Checkout was canceled. Nothing was charged.</p> : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1fr]">
         <Card className="p-6">
