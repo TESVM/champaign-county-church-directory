@@ -1,6 +1,6 @@
 # 09 · Project Status
 
-Last updated: 2026-11-20 by the release engineer. Update this file whenever a task changes state.
+Last updated: 2026-11-24 (live site, settings and listing data changes; see the 2026-11-24 section). Update this file whenever a task changes state.
 
 ## Summary
 
@@ -40,8 +40,11 @@ Owner authorized the remaining security changes on 2026-11-20 after security rel
 | Apple Developer, Google Play, Expo accounts | Open |
 | Hero and site photography (shot list in 02) | Open |
 | Outreach to churches to claim listings (0 of 70 claimed) | Open |
+| Sign-up guide PDF for church leaders made 2026-11-24 (kept outside the repo); share with churches | Open |
 | Decide: analytics provider; Google Business Profile; delete or keep hidden test listing | Open |
-| Set `SUPPORT_EMAIL` in Vercel (verify whether still missing) | Open |
+| Set `SUPPORT_EMAIL` in Vercel | Done 2026-11-24: support@champaigncountychurches.com (Production) |
+| Add service times for the 23 listings that have none (see 2026-11-24 section) | Open |
+| Decide how admin-posted events become public (complimentary Enhanced vs. code change) | Open |
 | Read Search Console and record the baseline | Open |
 
 ## Decisions log
@@ -84,3 +87,31 @@ Owner authorized the remaining security changes on 2026-11-20 after security rel
 ### Campus CSP coverage follow-up
 
 Live verification after #18 identified two direct campus JSON-LD tags outside the shared helper. Both now use the existing nonce-bearing, HTML-safe JsonLd component. A server-render regression verifies nonce propagation and malicious closing-tag escaping; a source audit guards every direct inline script in app/components. Vitest uses the automatic JSX runtime to match Next when rendering server components. Checks: 118 unit / 80 integration, typecheck and lint pass; build/Preview/release evidence is tracked with #18 and its linked campus follow-up PR. No new runtime dependency, UI, schema or environment change.
+
+## Live site and data changes — 2026-11-24
+
+Settings (Vercel, Production; redeployed, no code change):
+- `SUPPORT_EMAIL` = support@champaigncountychurches.com. Shows on Contact, footer, Privacy, Terms and Accessibility, and is the reply-to on site email.
+- `ADMIN_NOTIFY_EMAIL` = support@champaigncountychurches.com. All staff alerts (contact form, claims, corrections, submissions, campus and Collaboration Board reviews) now go to that inbox instead of `ADMIN_EMAIL`. The mailbox is hosted on the owner's self-hosted MailFlare.
+
+Code merged to main:
+- [#20](https://github.com/TESVM/champaign-county-church-directory/pull/20) American spelling in visitor-facing text ("Church or organization" on Contact, authorized, neighbor, color, labeled, canceled). Stored values, URL params and identifiers unchanged.
+- [#21](https://github.com/TESVM/champaign-county-church-directory/pull/21) `snippet()` helper: shortened descriptions end on a whole word with "…" (card `shortDescription` and page meta descriptions).
+
+Site audit (122 sitemap pages): no broken pages, internal links or images; no console errors on sampled pages; no misspellings in page text; phone-width layout clean on main pages.
+
+Listing edits made in the admin editor (each recorded in the audit log):
+| Church | Change | Source |
+|---|---|---|
+| Pilgrim Missionary Baptist | Website https → `http://www.pilgrimmb.org/` (host serves a WP Engine certificate on https) | Site loads over http with 1310 N 6th St |
+| St. Joseph United Methodist | Website `sjumchurch.org` (down for everyone) → facebook.com/trulywelcome; also set as Facebook link | Facebook page shows 205 N 3rd St |
+| Faith Church of Urbana | Website `fccurbana.org` (down for everyone) → facebook.com/FCCUrbana; also set as Facebook link | Facebook page shows 2111 N Willow Rd |
+| Salem Baptist | Website `salembaptistchurchcu.org` (down) → its Facebook page (already its Facebook link) | Facebook page shows 500 E Park St |
+| Twin City Apostolic W.O.H. | Dead Tripod website link removed; phone kept | No current site found |
+| Sheriff Temple AOH | "Bibile Study" → "Bible Study"; Senior Bible Study at the Haven end time 6:00 AM → 6:00 PM | Obvious typos; confirm end time with the church |
+
+Facebook links entered in the Facebook field only show publicly on Enhanced profiles, so the Facebook page was also put in the Website field. St. Joseph UMC's listed email (office@sjumchurch.org) uses the dead domain and may bounce; no replacement found.
+
+Service-time scan of all 70 listings: no other end-before-start times, odd hours, duplicates or misspellings. 23 listings have no service times and show "Service times have not been listed yet": bible-baptist-church-champaign, canaan-baptist-church-urbana, center-of-hope-champaign, champaign-church-of-christ, church-of-the-living-god-champaign, community-united-church-of-christ-champaign, emmanuel-memorial-episcopal-champaign, exceed-church-rantoul, first-baptist-church-urbana, grove-street-cogic-champaign, liberty-temple-cogic-champaign, macedonia-baptist-church-champaign, midwest-believers-church-champaign, mount-calvary-missionary-baptist-church-champaign, mt-olive-missionary-baptist-church-champaign, new-foundation-missionary-baptist-church-champaign, new-free-will-baptist-church-champaign, new-horizon-church-champaign, new-life-of-champaign, temple-baptist-church-champaign, twin-city-bible-church-urbana, united-in-christ-church-champaign, unity-baptist-church-champaign.
+
+Events: 15 events taken from the churches' own 2026 pages were posted by the admin for First UMC Champaign (6), Emmanuel Memorial Episcopal (4), Meadowbrook Community (3), Pennsylvania Avenue Baptist (1) and University Baptist (1). The public calendar only lists events from entitled (Enhanced) churches, so they are saved but hidden. A complimentary Enhanced trial was granted to those five churches and removed the same day at the owner's request (both in the audit log). Meadowbrook's Christmas services have no times yet.
