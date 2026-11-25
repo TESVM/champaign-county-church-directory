@@ -43,7 +43,7 @@ Owner authorized the remaining security changes on 2026-11-20 after security rel
 | Sign-up guide PDF for church leaders made 2026-11-24 (kept outside the repo); share with churches | Open |
 | Decide: analytics provider; Google Business Profile; delete or keep hidden test listing | Open |
 | Set `SUPPORT_EMAIL` in Vercel | Done 2026-11-24: support@champaigncountychurches.com (Production) |
-| Add service times for the 23 listings that have none (see 2026-11-24 section) | Open |
+| Service times for listings that had none: 12 of 23 added 2026-11-24; 11 still need a call or a current source (see section) | Open |
 | Decide how admin-posted events become public (complimentary Enhanced vs. code change) | Open |
 | Read Search Console and record the baseline | Open |
 
@@ -115,3 +115,29 @@ Facebook links entered in the Facebook field only show publicly on Enhanced prof
 Service-time scan of all 70 listings: no other end-before-start times, odd hours, duplicates or misspellings. 23 listings have no service times and show "Service times have not been listed yet": bible-baptist-church-champaign, canaan-baptist-church-urbana, center-of-hope-champaign, champaign-church-of-christ, church-of-the-living-god-champaign, community-united-church-of-christ-champaign, emmanuel-memorial-episcopal-champaign, exceed-church-rantoul, first-baptist-church-urbana, grove-street-cogic-champaign, liberty-temple-cogic-champaign, macedonia-baptist-church-champaign, midwest-believers-church-champaign, mount-calvary-missionary-baptist-church-champaign, mt-olive-missionary-baptist-church-champaign, new-foundation-missionary-baptist-church-champaign, new-free-will-baptist-church-champaign, new-horizon-church-champaign, new-life-of-champaign, temple-baptist-church-champaign, twin-city-bible-church-urbana, united-in-christ-church-champaign, unity-baptist-church-champaign.
 
 Events: 15 events taken from the churches' own 2026 pages were posted by the admin for First UMC Champaign (6), Emmanuel Memorial Episcopal (4), Meadowbrook Community (3), Pennsylvania Avenue Baptist (1) and University Baptist (1). The public calendar only lists events from entitled (Enhanced) churches, so they are saved but hidden. A complimentary Enhanced trial was granted to those five churches and removed the same day at the owner's request (both in the audit log). Meadowbrook's Christmas services have no times yet.
+
+## Service times added — 2026-11-24
+
+Times were added in the admin editor only where the church's own website states them (each save is in the audit log). Third-party directories and AI search summaries were not used as sources.
+
+| Church | Times added | Source |
+|---|---|---|
+| Bible Baptist | Sun 9:00 AM Sunday School, 10:15 AM Worship; Wed 6:15 PM Awana & Youth, 6:30 PM Midweek Service & Bible Study; Thu 10:00 AM and 6:00 PM Bible Study | bbccu.org |
+| Canaan Baptist | Sun 8:30 AM Christian Education, 9:45 AM Praise & Worship; Wed 7–8 PM Bible Study | canaanbaptistchurchurbana.org/services |
+| Champaign Church of Christ | Sun 10:30 AM Family Worship | champaignchurch.org/about |
+| Community UCC | Sun 10:15 AM Worship | community-ucc.org |
+| Emmanuel Memorial Episcopal | Sun 8:00 AM Mass (traditional), 10:15 AM Mass (contemporary), 5:30 PM Evensong; Wed 12:15 PM Mass | church's service-times page and calendar (its homepage misprints "10:30 p.m.") |
+| Midwest Believers | Sun 9:00 and 10:30 AM; Wed 7:00 PM | midwestbelieverschurch.org |
+| Mount Calvary MBC | Sun 10:00 AM Sunday School, 11:00 AM Worship; Wed 6:30 PM Intercessory Prayer, 7:00 PM Bible Study | mtcalvarychampaign.org/worship |
+| New Horizon | Sun 10:30 AM | newhorizonchurch.org |
+| New Life of Champaign | Sun 10:30 AM Family Worship; Wed 7:00 PM Worship & The Word / Student Connect | newlifeofchampaign.com/schedule-events |
+| Temple Baptist | Sun 11:00 AM (also on YouTube) | tbcchampaign.com |
+| Twin City Bible | Sun 9:00 AM Sunday School (school year), 10:00 AM Worship (in person and Zoom); Wed 7–8 PM Prayer (Zoom) | tcbc.cc |
+| Unity Baptist | Sun 9:00 AM Sunday School, 10:15 AM Worship; Wed 6–7 PM Prayer Meeting | unitybaptistchampaignil.com |
+
+Still without times (11): exceed-church-rantoul (only a June 2026 Facebook post for Wed 6 PM Bible study), first-baptist-church-urbana (newest source a 2023 Facebook post), grove-street-cogic-champaign, liberty-temple-cogic-champaign, macedonia-baptist-church-champaign, mt-olive-missionary-baptist-church-champaign, new-foundation-missionary-baptist-church-champaign, new-free-will-baptist-church-champaign, united-in-christ-church-champaign (Facebook-only or no web presence; needs a phone call), plus the two address conflicts below.
+
+Address conflicts found (listing not changed; confirm with the church):
+- center-of-hope-champaign: the church's site says it "has officially moved" to 1409 W. Dublin Street, Urbana (Sunday 11:00 AM, Wednesday 7 PM class). Listing still says 409 E Grove Street, Champaign.
+- church-of-the-living-god-champaign: the church's site gives 312 E. Bradley Ave (Sunday 11:00 AM; Wednesday Bible study 1:00 and 6:00 PM). Listing says 1109 N 4th St.
+- united-in-christ-church-champaign: its Facebook page gives 1109 N Fourth St (the address the directory has for Church of the Living God). Listing says 801 Stratford Drive.
