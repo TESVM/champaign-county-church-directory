@@ -43,7 +43,7 @@ Owner authorized the remaining security changes on 2026-11-20 after security rel
 | Sign-up guide PDF for church leaders made 2026-11-24 (kept outside the repo); share with churches | Open |
 | Decide: analytics provider; Google Business Profile; delete or keep hidden test listing | Open |
 | Set `SUPPORT_EMAIL` in Vercel | Done 2026-11-24: support@champaigncountychurches.com (Production) |
-| Service times for listings that had none: 12 of 23 added 2026-11-24; 11 still need a call or a current source (see section) | Open |
+| Service times for listings that had none: 14 of 23 added 2026-11-24; 9 still need a call or a current source (see sections) | Open |
 | Decide how admin-posted events become public (complimentary Enhanced vs. code change) | Open |
 | Read Search Console and record the baseline | Open |
 
@@ -137,7 +137,19 @@ Times were added in the admin editor only where the church's own website states 
 
 Still without times (11): exceed-church-rantoul (only a June 2026 Facebook post for Wed 6 PM Bible study), first-baptist-church-urbana (newest source a 2023 Facebook post), grove-street-cogic-champaign, liberty-temple-cogic-champaign, macedonia-baptist-church-champaign, mt-olive-missionary-baptist-church-champaign, new-foundation-missionary-baptist-church-champaign, new-free-will-baptist-church-champaign, united-in-christ-church-champaign (Facebook-only or no web presence; needs a phone call), plus the two address conflicts below.
 
-Address conflicts found (listing not changed; confirm with the church):
+Address conflicts found (resolved later the same day; see "Addresses updated" below):
 - center-of-hope-champaign: the church's site says it "has officially moved" to 1409 W. Dublin Street, Urbana (Sunday 11:00 AM, Wednesday 7 PM class). Listing still says 409 E Grove Street, Champaign.
 - church-of-the-living-god-champaign: the church's site gives 312 E. Bradley Ave (Sunday 11:00 AM; Wednesday Bible study 1:00 and 6:00 PM). Listing says 1109 N 4th St.
 - united-in-christ-church-champaign: its Facebook page gives 1109 N Fourth St (the address the directory has for Church of the Living God). Listing says 801 Stratford Drive.
+
+## Addresses updated — 2026-11-24
+
+Changed in the admin editor at the owner's request, using each church's own public source. The editor re-geocoded each map pin automatically.
+
+| Church | Old address | New address | Source | Also added |
+|---|---|---|---|---|
+| Center of Hope | 409 E Grove Street, Champaign 61820 | 1409 W. Dublin Street, Urbana 61801 | cohdministries.org ("has officially moved to our new home") | Sun 11:00 AM service; Wed 7:00 PM Through the Bible in One Year class |
+| Church of the Living God | 1109 N 4th St, Champaign 61820 | 312 E. Bradley Ave, Champaign 61820 | thechurchofthelivinggod.com | Sun 11:00 AM worship (in person or online); Wed Bible study 1:00 and 6:00 PM |
+| United in Christ | 801 Stratford Drive, Champaign 61821 | 1109 N. Fourth Street, Champaign 61820 | facebook.com/UnitedInChristChampaign | No times found |
+
+Still without service times (9): exceed-church-rantoul, first-baptist-church-urbana, grove-street-cogic-champaign, liberty-temple-cogic-champaign, macedonia-baptist-church-champaign, mt-olive-missionary-baptist-church-champaign, new-foundation-missionary-baptist-church-champaign, new-free-will-baptist-church-champaign, united-in-christ-church-champaign. The Center of Hope listing slug still ends in "-champaign" although the church is now in Urbana.
